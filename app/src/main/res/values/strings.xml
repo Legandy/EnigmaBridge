@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Enigma Bridge</string>
+    <string name="record_menu_label">Record on Enigma</string>
+    <string name="receiver_settings">Receiver Settings</string>
+    <string name="hint_ip_address">IP Address or Hostname</string>
+    <string name="hint_username">Username (e.g., root)</string>
+    <string name="hint_password">Password</string>
+    <string name="button_save_and_test">Save &amp; Test Connection</string>
+
+    <!-- Status Strings -->
+    <string name="status_enigma_unchecked">Enigma Receiver: Untested</string>
+    <string name="status_enigma_success">Enigma Receiver: Connected</string>
+    <string name="status_enigma_failed">Enigma Receiver: Connection Failed</string>
+    <string name="status_tvbrowser_unchecked">TV-Browser: Not Checked</string>
+    <string name="status_tvbrowser_found">TV-Browser: Found</string>
+    <string name="status_tvbrowser_not_found">TV-Browser: Not Installed</string>
+</resources>
