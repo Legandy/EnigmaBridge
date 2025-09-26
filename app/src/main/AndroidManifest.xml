@@ -2,10 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permission to connect to the Enigma2 receiver over the network -->
+    <!-- Permission to connect to the Enigma2 receiver -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Application definition -->
+    <!-- This allows TV-Browser to bind to our plugin service -->
+    <uses-permission android:name="org.tvbrowser.permission.BIND_PLUGIN" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -20,40 +22,23 @@
         <activity
             android:name=".MainActivity"
             android:exported="true">
-            <!-- Filter 1: Standard LAUNCHER for the app drawer -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-            <!-- Filter 2: Declares this Activity as the PREFERENCES screen for TV-Browser -->
-            <intent-filter>
-                <action android:name="org.tvbrowser.tvbrowser.plugins.PLUGIN_PREFERENCES" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
         </activity>
 
-        <!-- Activity 2: The invisible "plugin" activity -->
-        <activity
-            android:name=".RecordActivity"
+        <!-- The core of the plugin, now with the corrected integer label -->
+        <service
+            android:name=".RecordService"
             android:exported="true"
-            android:label="@string/record_menu_label"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar">
-
-            <!-- Meta-data block providing full information to TV-Browser's plugin manager -->
-            <meta-data android:name="org.tvbrowser.tvbrowser.plugins.VERSION" android:value="1.0" />
-            <meta-data android:name="org.tvbrowser.tvbrowser.plugins.DESCRIPTION" android:value="A plugin to schedule recordings on Enigma2 receivers directly from TV-Browser." />
-            <meta-data android:name="org.tvbrowser.tvbrowser.plugins.AUTHOR" android:value="Legandy" />
-            <meta-data android:name="org.tvbrowser.tvbrowser.plugins.LICENSE" android:value="Apache License, Version 2.0" />
-
-            <!-- This intent filter correctly registers the app as a context menu plugin -->
+            android:label="1"
+            android:permission="org.tvbrowser.permission.BIND_PLUGIN">
+            <!-- This is the corrected discovery action from the Share Plugin's manifest -->
             <intent-filter>
-                <action android:name="org.tvbrowser.tvbrowser.plugins.ACTION_SEND_PROGRAM" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="org.tvbrowser.tvbrowser.plugins.CATEGORY_PROGRAM_CONTEXT_PLUGIN" />
-                <data android:scheme="tvb" android:host="program" />
+                <action android:name="org.tvbrowser.intent.action.PLUGIN" />
             </intent-filter>
-        </activity>
+        </service>
 
     </application>
 

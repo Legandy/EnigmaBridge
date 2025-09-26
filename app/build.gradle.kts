@@ -19,22 +19,24 @@ android {
             isMinifyEnabled = false
         }
     }
+    // Updated to Java 17
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         viewBinding = true
+        aidl = true
     }
 }
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
+    // THE CRITICAL FIX: Using a real, stable version of the Appcompat library.
     implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.12.0")
     implementation("com.google.android.material:material:1.12.0")
 
     // Coroutines for background tasks
@@ -43,3 +45,4 @@ dependencies {
     // OkHttp for networking
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
+

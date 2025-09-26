@@ -14,4 +14,8 @@
     <string name="status_tvbrowser_unchecked">TV-Browser: Not Checked</string>
     <string name="status_tvbrowser_found">TV-Browser: Found</string>
     <string name="status_tvbrowser_not_found">TV-Browser: Not Installed</string>
+
+    <!-- New strings for Plugin Manager -->
+    <string name="plugin_description">A plugin to schedule recordings on Enigma2 receivers directly from TV-Browser.</string>
+    <string name="plugin_author">Legandy</string>
 </resources>

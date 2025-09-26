@@ -19,6 +19,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setupSettingsUI()
+    }
+
+    private fun setupSettingsUI() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -31,18 +35,16 @@ class MainActivity : AppCompatActivity() {
 
         // Save button logic
         binding.buttonSave.setOnClickListener {
-            // 1. Save the new settings
             prefs.edit().apply {
                 putString("IP_ADDRESS", binding.editIpAddress.text.toString().trim())
                 putString("USERNAME", binding.editUsername.text.toString().trim())
                 putString("PASSWORD", binding.editPassword.text.toString())
                 apply()
             }
-            // 2. Run the connection checks
             runChecks()
         }
 
-        // Run checks once when the app starts
+        // Run checks once when the settings screen is opened
         runChecks()
     }
 
@@ -56,7 +58,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun runChecks() {
-        // --- TV-Browser Check (Instant) ---
+        // TV-Browser Check
         if (isTvBrowserInstalled()) {
             binding.statusTvBrowserIcon.setImageResource(R.drawable.ic_check_circle)
             binding.statusTvBrowserIcon.setColorFilter(ContextCompat.getColor(this, android.R.color.holo_green_dark))
@@ -67,13 +69,13 @@ class MainActivity : AppCompatActivity() {
             binding.statusTvBrowserText.text = getString(R.string.status_tvbrowser_not_found)
         }
 
-        // --- Enigma Receiver Check (Network Operation) ---
+        // Enigma Receiver Check
         val ip = binding.editIpAddress.text.toString().trim()
         val user = binding.editUsername.text.toString().trim()
         val pass = binding.editPassword.text.toString()
 
         if (ip.isEmpty()) {
-            Toast.makeText(this, "Please enter an IP address.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Please enter an IP address to test.", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -99,3 +101,4 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
+
