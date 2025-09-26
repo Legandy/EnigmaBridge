@@ -13,16 +13,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/**
+ * A dedicated settings activity for the plugin.
+ * This can be named MainActivity and act as the launcher.
+ */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setupSettingsUI()
-    }
-
-    private fun setupSettingsUI() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -41,10 +41,10 @@ class MainActivity : AppCompatActivity() {
                 putString("PASSWORD", binding.editPassword.text.toString())
                 apply()
             }
-            runChecks()
+            Toast.makeText(this, "Settings Saved!", Toast.LENGTH_SHORT).show()
+            runConnectionCheck()
         }
 
-        // Run checks once when the settings screen is opened
         runChecks()
     }
 
@@ -69,13 +69,18 @@ class MainActivity : AppCompatActivity() {
             binding.statusTvBrowserText.text = getString(R.string.status_tvbrowser_not_found)
         }
 
-        // Enigma Receiver Check
+        runConnectionCheck()
+    }
+
+    private fun runConnectionCheck() {
         val ip = binding.editIpAddress.text.toString().trim()
         val user = binding.editUsername.text.toString().trim()
         val pass = binding.editPassword.text.toString()
 
         if (ip.isEmpty()) {
-            Toast.makeText(this, "Please enter an IP address to test.", Toast.LENGTH_SHORT).show()
+            binding.statusEnigmaIcon.setImageResource(R.drawable.ic_error)
+            binding.statusEnigmaIcon.setColorFilter(Color.RED)
+            binding.statusEnigmaText.text = getString(R.string.status_enigma_failed)
             return
         }
 
@@ -101,4 +106,3 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
-

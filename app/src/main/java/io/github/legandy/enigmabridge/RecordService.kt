@@ -3,147 +3,136 @@ package io.github.legandy.enigmabridge
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.os.Bundle
+import android.content.SharedPreferences
 import android.os.IBinder
+import android.util.Log
 import android.widget.Toast
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.tvbrowser.devplugin.Channel
 import org.tvbrowser.devplugin.Plugin
-import java.io.ByteArrayOutputStream
+import org.tvbrowser.devplugin.PluginManager
+import org.tvbrowser.devplugin.PluginMenu
+import org.tvbrowser.devplugin.Program
+import org.tvbrowser.devplugin.ReceiveTarget
 
+/**
+ * The corrected plugin Service that implements the modern TV Browser AIDL interface.
+ */
 class RecordService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    // A variable to hold a stable reference to our plugin's own, clean context.
-    private var mPluginContext: Context? = null
+    companion object {
+        private const val TAG = "EnigmaBridgePlugin"
+        private const val MENU_ID_SCHEDULE_RECORDING = 1
+    }
 
     /**
-     * onCreate() is guaranteed to be called before any client binds.
-     * We create a dedicated, clean Package Context to ensure reliable resource access.
+     * This is the implementation of the modern AIDL Plugin.Stub interface.
+     * It correctly handles Program objects instead of raw Bundles.
      */
-    override fun onCreate() {
-        super.onCreate()
-        try {
-            // This is the robust method for getting a stable context.
-            mPluginContext = createPackageContext(packageName, CONTEXT_IGNORE_SECURITY)
-        } catch (e: PackageManager.NameNotFoundException) {
-            e.printStackTrace()
+    private val binder: Plugin.Stub = object : Plugin.Stub() {
+
+        override fun getVersion(): String {
+            return try {
+                packageManager.getPackageInfo(packageName, 0).versionName ?: "1.0"
+            } catch (e: Exception) {
+                Log.e(TAG, "Could not get package info.", e)
+                "1.0"
+            }
         }
-    }
 
-    private val binder = object : Plugin.Stub() {
-
-        override fun getName(): String = mPluginContext?.getString(R.string.app_name) ?: "Enigma Bridge"
-
-        override fun getVersionName(): String = try {
-            mPluginContext?.packageManager?.getPackageInfo(mPluginContext!!.packageName, 0)?.versionName ?: "1.0"
-        } catch (e: Exception) { "1.0" }
-
-        override fun getDescription(): String = mPluginContext?.getString(R.string.plugin_description) ?: ""
-
-        override fun getAuthor(): String = mPluginContext?.getString(R.string.plugin_author) ?: ""
-
+        override fun getName(): String = "EnigmaBridge"
+        override fun getDescription(): String = "Schedules recordings on an Enigma2 receiver."
+        override fun getAuthor(): String = "Legandy"
         override fun getLicense(): String = "Apache License, Version 2.0"
 
-        /**
-         * THIS IS THE DEFINITIVE FIX (PART 1):
-         * Per the robust plugin model, this method now returns null.
-         * This signals TV-Browser to use the getIconAsByteArray() fallback.
-         */
-        override fun getIcon(): Bitmap? {
-            return null
+        override fun getContextMenuActionsForProgram(program: Program): Array<PluginMenu> {
+            val scheduleMenu = PluginMenu(MENU_ID_SCHEDULE_RECORDING, "Schedule with Enigma2")
+            return arrayOf(scheduleMenu)
         }
 
-        /**
-         * THIS IS THE DEFINITIVE FIX (PART 2):
-         * This is a direct copy of the robust icon handling logic from official plugins.
-         * It uses the clean package context and the getIdentifier() method to reliably
-         * load the icon and convert it to a safe byte array.
-         */
-        override fun getIconAsByteArray(): ByteArray {
-            try {
-                if (mPluginContext != null) {
-                    // Manually look up the resource ID by its name and type.
-                    val resourceId = mPluginContext!!.resources.getIdentifier("ic_plugin_icon", "drawable", mPluginContext!!.packageName)
-
-                    if (resourceId != 0) {
-                        val bitmap = BitmapFactory.decodeResource(mPluginContext!!.resources, resourceId)
-                        val stream = ByteArrayOutputStream()
-                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-                        return stream.toByteArray()
-                    }
-                }
-            } catch (e: Exception) {
-                // Safety net in case of any error.
+        override fun onProgramContextMenuSelected(program: Program, pluginMenu: PluginMenu): Boolean {
+            if (pluginMenu.id == MENU_ID_SCHEDULE_RECORDING) {
+                Log.d(TAG, "Menu item selected for program: ${program.title}")
+                scheduleRecording(program)
             }
-            // Return an empty byte array as the official plugins do.
-            return ByteArray(0)
+            return false // We are not "marking" the program
         }
 
-        override fun getProgramContextMenuActions(programValues: Bundle?): Bundle {
-            val actions = arrayOf(mPluginContext?.getString(R.string.record_menu_label) ?: "Record")
-            val result = Bundle()
-            result.putStringArray("ACTIONS", actions)
-            return result
-        }
+        override fun hasPreferences(): Boolean = true
 
-        override fun onProgramContextMenuActionSelected(action: String?, programValues: Bundle?) {
-            if (programValues != null) {
-                handleRecording(programValues)
+        override fun openPreferences(subscribedChannels: MutableList<Channel>?) {
+            val intent = Intent(applicationContext, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
+            startActivity(intent)
         }
 
-        // --- Added Stub Implementations to fix build error ---
-        // We provide these empty implementations to satisfy the complete interface
-        // and prevent any communication errors during the handshake.
-        override fun getSettings(): IBinder? = null
-        override fun getMarkingIcons(): IBinder? = null
-        override fun onActivation(isActive: Boolean) { /* Do nothing */ }
-        override fun onVersionUpdate(newVersionCode: Int): Boolean = true
-    }
-
-    private fun handleRecording(programData: Bundle) {
-        val title = programData.getString("TITLE") ?: "Recording"
-        val startTime = programData.getLong("START_TIME", 0) / 1000
-        val endTime = programData.getLong("END_TIME", 0) / 1000
-        val sRef = programData.getString("CHANNEL_ID_SERVICE_REFERENCE") ?: ""
-
-        val prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
-        val ip = prefs.getString("IP_ADDRESS", "") ?: ""
-        val user = prefs.getString("USERNAME", "root") ?: ""
-        val pass = prefs.getString("PASSWORD", "") ?: ""
-
-        if (ip.isEmpty() || sRef.isEmpty()) {
-            showToast("Error: IP Address or Channel Reference missing!")
-            return
-        }
-
-        showToast("Scheduling '$title'...")
-
-        serviceScope.launch {
-            val client = EnigmaClient(ip, user, pass)
-            val success = client.addTimer(title, sRef, startTime, endTime)
-            val message = if (success) "Recording Scheduled!" else "Failed to Schedule Recording."
-            showToast(message)
-        }
-    }
-
-    private fun showToast(message: String) {
-        CoroutineScope(Dispatchers.Main).launch {
-            Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
-        }
+        // --- STUB METHODS (not needed for this plugin's core function) ---
+        override fun getMarkIcon(): ByteArray? = null
+        override fun getMarkedPrograms(): LongArray = longArrayOf()
+        override fun isMarked(programId: Long): Boolean = false
+        override fun onActivation(pluginManager: PluginManager?) {}
+        override fun onDeactivation() {}
+        override fun handleFirstKnownProgramId(programId: Long) {}
+        override fun getAvailableProgramReceiveTargets(): Array<ReceiveTarget>? = null
+        override fun receivePrograms(programs: Array<Program>?, target: ReceiveTarget?) {}
     }
 
     override fun onBind(intent: Intent): IBinder {
+        Log.d(TAG, "TV Browser bound to RecordService.")
         return binder
     }
 
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
+    }
+
+    private fun scheduleRecording(program: Program) {
+        serviceScope.launch {
+            val prefs: SharedPreferences = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
+            val ip = prefs.getString("IP_ADDRESS", "") ?: ""
+            val user = prefs.getString("USERNAME", "root") ?: ""
+            val pass = prefs.getString("PASSWORD", "") ?: ""
+
+            // TODO: CRITICAL - You must implement a way to map the TV Browser channel to an Enigma2 sRef.
+            // This is a placeholder and will need to be customized for your setup.
+            val sRef = getServiceReferenceForChannel(program.channel.channelName)
+
+            if (ip.isBlank() || sRef.isBlank()) {
+                showToast("Error: IP Address or Channel Reference missing!")
+                return@launch
+            }
+
+            showToast("Scheduling '${program.title}'...")
+            val client = EnigmaClient(ip, user, pass)
+            val success = client.addTimer(program.title, sRef, program.startTimeInUTC / 1000, program.endTimeInUTC / 1000)
+            val message = if (success) "Recording Scheduled!" else "Failed to Schedule Recording."
+            showToast(message)
+        }
+    }
+
+    // TODO: This is where you must add your logic to map channel names to sRefs.
+    private fun getServiceReferenceForChannel(channelName: String): String {
+        return when {
+            channelName.contains("Das Erste HD", ignoreCase = true) -> "1:0:19:283D:3FB:1:C00000:0:0:0:"
+            channelName.contains("ZDF HD", ignoreCase = true) -> "1:0:19:2B66:3F3:1:C00000:0:0:0:"
+            // Add more of your channels here
+            else -> "" // Return empty if no match, so the error can be caught
+        }
+    }
+
+    private suspend fun showToast(message: String) {
+        withContext(Dispatchers.Main) {
+            Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
+        }
     }
 }
 
