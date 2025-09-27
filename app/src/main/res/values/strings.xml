@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">Enigma Bridge</string>
-    <string name="record_menu_label">Record on Enigma</string>
     <string name="receiver_settings">Receiver Settings</string>
     <string name="hint_ip_address">IP Address or Hostname</string>
     <string name="hint_username">Username (e.g., root)</string>
@@ -15,7 +14,52 @@
     <string name="status_tvbrowser_found">TV-Browser: Found</string>
     <string name="status_tvbrowser_not_found">TV-Browser: Not Installed</string>
 
-    <!-- New strings for Plugin Manager -->
-    <string name="plugin_description">A plugin to schedule recordings on Enigma2 receivers directly from TV-Browser.</string>
+    <!-- Plugin Metadata -->
+    <string name="plugin_description">Schedules recordings on an Enigma2 receiver.</string>
     <string name="plugin_author">Legandy</string>
+    <string name="plugin_license">Apache License, Version 2.0</string>
+    <string name="context_menu_schedule">Schedule with Enigma2</string>
+    <string name="menu_description">Options menu</string>
+
+    <!-- Toasts and Messages -->
+    <string name="error_channel_list_not_synced">Error: Channel list not synced. Please open the app and sync.</string>
+    <string name="error_channel_not_found">Error: Channel \'%1$s\' not found in synced list.</string>
+    <string name="error_ip_not_set">Error: IP Address not set.</string>
+    <string name="scheduling_toast">Scheduling \'%1$s\'...</string>
+    <string name="schedule_success">Recording Scheduled!</string>
+    <string name="schedule_failed">Failed to Schedule Recording.</string>
+    <string name="bouquets_found_toast">%1$d bouquets found.</string>
+    <string name="error_fetch_bouquets">Failed to fetch bouquets.</string>
+    <string name="error_no_bouquet_selected">No bouquet selected.</string>
+    <string name="error_sref_not_found">Could not find sRef for selected bouquet.</string>
+    <string name="sync_success_toast">Successfully synced %1$d channels!</string>
+    <string name="error_sync_channels">Failed to sync channels from bouquet.</string>
+    <string name="error_enter_ip">Please enter an IP address.</string>
+    <string name="error_ip_not_configured">IP Address not configured.</string>
+    <string name="error_fetch_timers">Failed to fetch timer list.</string>
+    <string name="no_timers_found">No scheduled timers found.</string>
+    <string name="label_scheduled_timers">Scheduled Timers</string>
+    <string name="sync_selected_bouquet">Sync Selected Bouquet</string>
+    <string name="view_scheduled_timers">View Scheduled Timers</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_name">EnigmaBridge Notifications</string>
+    <string name="notification_channel_description">Notifications for scheduled recordings</string>
+    <string name="notification_title">Recording Scheduled</string>
+    <string name="notification_content">\'%1$s\' on %2$s at %3$s</string>
+    <string name="permission_granted">Notification permission granted.</string>
+    <string name="permission_denied">Notification permission denied. You will not receive status updates.</string>
+
+    <!-- Timer List Item -->
+    <string name="timer_time_range">%1$s - %2$s</string>
+
+    <!-- Deletion Dialog -->
+    <string name="delete_timer_title">Delete Timer</string>
+    <string name="delete_timer_message">Are you sure you want to delete the timer for \"%1$s\"?</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="delete_timer_success">Timer deleted successfully.</string>
+    <string name="delete_timer_failed">Failed to delete timer.</string>
+
 </resources>
+

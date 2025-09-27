@@ -2,11 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permission to connect to the Enigma2 receiver -->
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- This allows TV-Browser to bind to our plugin service -->
     <uses-permission android:name="org.tvbrowser.permission.BIND_PLUGIN" />
+    <!-- Required for Android 13 (API 33) and above to show notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
         android:allowBackup="true"
@@ -18,7 +17,6 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
 
-        <!-- Activity 1: The user-facing settings screen -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -28,13 +26,15 @@
             </intent-filter>
         </activity>
 
-        <!-- The core of the plugin, now with the corrected integer label -->
+        <activity
+            android:name=".TimerListActivity"
+            android:label="@string/label_scheduled_timers" />
+
         <service
             android:name=".RecordService"
             android:exported="true"
             android:label="1"
             android:permission="org.tvbrowser.permission.BIND_PLUGIN">
-            <!-- This is the corrected discovery action from the Share Plugin's manifest -->
             <intent-filter>
                 <action android:name="org.tvbrowser.intent.action.PLUGIN" />
             </intent-filter>
@@ -42,7 +42,6 @@
 
     </application>
 
-    <!-- This block allows your app to check if TV-Browser is installed -->
     <queries>
         <package android:name="org.tvbrowser.tvbrowser" />
     </queries>

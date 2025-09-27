@@ -1,25 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:padding="24dp"
     tools:context=".MainActivity">
 
     <TextView
+        android:id="@+id/header_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/receiver_settings"
-        android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall" />
+        android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Material 3 Text Fields -->
+    <!-- IP Address -->
     <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
+        android:id="@+id/ipAddressLayout"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:hint="@string/hint_ip_address">
+        android:hint="@string/hint_ip_address"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/header_title">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editIpAddress"
@@ -28,11 +34,16 @@
             android:inputType="textUri" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Username -->
     <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
+        android:id="@+id/usernameLayout"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:hint="@string/hint_username">
+        android:hint="@string/hint_username"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/ipAddressLayout">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editUsername"
@@ -41,12 +52,17 @@
             android:text="root" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Password -->
     <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
+        android:id="@+id/passwordLayout"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:hint="@string/hint_password"
         app:passwordToggleEnabled="true"
-        android:hint="@string/hint_password">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/usernameLayout">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editPassword"
@@ -55,60 +71,105 @@
             android:inputType="textPassword" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Status Check Section -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-        <ImageView
-            android:id="@+id/statusEnigmaIcon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            app:tint="?attr/colorOnSurface"
-            android:src="@drawable/ic_error"/>
-        <TextView
-            android:id="@+id/statusEnigmaText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="@string/status_enigma_unchecked"
-            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
+    <!-- Bouquet Spinner -->
+    <Spinner
+        android:id="@+id/bouquets_spinner"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-        <ImageView
-            android:id="@+id/statusTvBrowserIcon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            app:tint="?attr/colorOnSurface"
-            android:src="@drawable/ic_error"/>
-        <TextView
-            android:id="@+id/statusTvBrowserText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="@string/status_tvbrowser_unchecked"
-            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
-    </LinearLayout>
+        android:minHeight="48dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/passwordLayout" />
 
-
-    <View
+    <!-- Sync Button -->
+    <Button
+        android:id="@+id/button_sync_channels"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Sync Selected Bouquet"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/bouquets_spinner" />
+    
+    <!-- Status Checks -->
+    <ImageView
+        android:id="@+id/statusEnigmaIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="24dp"
+        android:src="@drawable/ic_error"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button_sync_channels"
+        app:tint="?attr/colorOnSurface" />
 
+    <TextView
+        android:id="@+id/statusEnigmaText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="@string/status_enigma_unchecked"
+        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+        app:layout_constraintBottom_toBottomOf="@+id/statusEnigmaIcon"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/statusEnigmaIcon"
+        app:layout_constraintTop_toTopOf="@+id/statusEnigmaIcon" />
+
+    <ImageView
+        android:id="@+id/statusTvBrowserIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="16dp"
+        android:src="@drawable/ic_error"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/statusEnigmaIcon"
+        app:tint="?attr/colorOnSurface" />
+
+    <TextView
+        android:id="@+id/statusTvBrowserText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="@string/status_tvbrowser_unchecked"
+        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+        app:layout_constraintBottom_toBottomOf="@+id/statusTvBrowserIcon"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/statusTvBrowserIcon"
+        app:layout_constraintTop_toTopOf="@+id/statusTvBrowserIcon" />
+        
+    <!-- Progress Bar (centered) -->
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/buttonSave"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/statusTvBrowserText" />
+
+    <!-- Save Button (at the bottom) -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonSave"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:paddingVertical="12dp"
-        android:text="@string/button_save_and_test" />
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:text="@string/button_save_and_test"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-</LinearLayout>
+    <Button
+        android:id="@+id/button_view_timers"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="View Scheduled Timers"
+        app:layout_constraintEnd_toEndOf="@+id/button_sync_channels"
+        app:layout_constraintStart_toStartOf="@+id/button_sync_channels"
+        app:layout_constraintTop_toBottomOf="@+id/button_sync_channels" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
