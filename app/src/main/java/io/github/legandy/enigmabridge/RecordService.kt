@@ -39,6 +39,7 @@ class RecordService : Service() {
     }
 
     private val binder: Plugin.Stub = object : Plugin.Stub() {
+        // All metadata methods (getName, getVersion, etc.) remain the same
         override fun getVersion(): String {
             return try {
                 packageManager.getPackageInfo(packageName, 0).versionName ?: "1.0"
@@ -110,15 +111,12 @@ class RecordService : Service() {
         } else {
             showToast(getString(R.string.scheduling_toast, program.title))
             serviceScope.launch {
-                // FIX: Pass the new 'repeated' and 'afterEvent' parameters with default values.
                 val success = SchedulingHelper.scheduleTimer(
                     context = applicationContext,
                     title = program.title,
                     sRef = sRef,
                     startTimeMillis = program.startTimeInUTC,
                     endTimeMillis = program.endTimeInUTC,
-                    repeated = 0, // 0 = Once
-                    afterEvent = 0  // 0 = Do Nothing
                 )
 
                 val message = if (success) getString(R.string.schedule_success) else getString(R.string.schedule_failed)
@@ -157,3 +155,4 @@ class RecordService : Service() {
         serviceScope.cancel()
     }
 }
+

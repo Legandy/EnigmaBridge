@@ -1,9 +1,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.EnigmaBridge" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <!-- Base application theme for ALL API levels. -->
+    <style name="Theme.EnigmaBridge" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- You can customize base colors here if needed for older devices -->
     </style>
 
-    <style name="Theme.EnigmaBridge" parent="Base.Theme.EnigmaBridge" />
+    <!-- A specific theme for dialog-like activities -->
+    <style name="Theme.EnigmaBridge.Dialog" parent="Theme.Material3.DayNight.Dialog.Alert" />
 </resources>
+

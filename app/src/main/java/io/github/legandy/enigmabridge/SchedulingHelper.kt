@@ -26,8 +26,6 @@ object SchedulingHelper {
         sRef: String,
         startTimeMillis: Long,
         endTimeMillis: Long,
-        repeated: Int,
-        afterEvent: Int
     ): Boolean {
         val prefs = context.getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
 
@@ -36,49 +34,51 @@ object SchedulingHelper {
         val pass = prefs.getString("PASSWORD", "") ?: ""
 
         if (ip.isEmpty()) {
-            Log.e(TAG, "IP address is empty. Cannot schedule timer.")
             return false
         }
 
-        // Apply the buffer to the provided times using direct time calculation
+        // Apply the buffer to the provided times
         val (finalStartTimeSeconds, finalEndTimeSeconds) = applyBuffer(prefs, startTimeMillis, endTimeMillis)
 
-        // Create a client and send the command
+        // Create a client and send the command with default values for a simple recording
         val client = EnigmaClient(ip, user, pass)
-        return client.addTimer(title, sRef, finalStartTimeSeconds, finalEndTimeSeconds, repeated, afterEvent)
+        return client.addTimer(
+            title = title,
+            description = title, // Use title as description for simple schedules
+            sRef = sRef,
+            startTime = finalStartTimeSeconds,
+            endTime = finalEndTimeSeconds,
+            repeated = 0, // Not repeated
+            afterEvent = 0, // Do Nothing
+            justPlay = 0 // Record, don't just zap
+        )
     }
 
     /**
-     * Private helper to calculate the buffered times using direct second conversion.
-     * This version includes enhanced logging to debug the calculation step-by-step.
+     * Private helper to calculate the buffered times.
      */
     private fun applyBuffer(prefs: SharedPreferences, startTimeMillis: Long, endTimeMillis: Long): Pair<Long, Long> {
-        // --- ENHANCED LOGGING ---
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-
         val minutesBefore = prefs.getInt("MINUTES_BEFORE", 0)
         val minutesAfter = prefs.getInt("MINUTES_AFTER", 0)
 
-        Log.d(TAG, "--- Buffer Calculation ---")
-        Log.d(TAG, "Original Start Time: ${dateFormat.format(Date(startTimeMillis))} ($startTimeMillis ms)")
-        Log.d(TAG, "Original End Time:   ${dateFormat.format(Date(endTimeMillis))} ($endTimeMillis ms)")
-        Log.d(TAG, "Buffer Before: $minutesBefore minutes")
-        Log.d(TAG, "Buffer After:  $minutesAfter minutes")
-
-        // Convert original milliseconds to seconds
         val originalStartTimeSeconds = startTimeMillis / 1000
         val originalEndTimeSeconds = endTimeMillis / 1000
 
-        // Convert buffer minutes to seconds
         val bufferSecondsBefore = minutesBefore * 60
         val bufferSecondsAfter = minutesAfter * 60
 
-        // Apply the buffer using simple addition/subtraction
         val finalStartTimeSeconds = originalStartTimeSeconds - bufferSecondsBefore
         val finalEndTimeSeconds = originalEndTimeSeconds + bufferSecondsAfter
 
-        Log.d(TAG, "Final Start Time (Epoch Seconds): $finalStartTimeSeconds")
-        Log.d(TAG, "Final End Time (Epoch Seconds):   $finalEndTimeSeconds")
+        // --- ENHANCED LOGGING ---
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        Log.d(TAG, "--- Buffer Calculation ---")
+        Log.d(TAG, "Original Start: ${dateFormat.format(Date(startTimeMillis))} ($originalStartTimeSeconds)")
+        Log.d(TAG, "Original End:   ${dateFormat.format(Date(endTimeMillis))} ($originalEndTimeSeconds)")
+        Log.d(TAG, "Buffer Before:  $minutesBefore min ($bufferSecondsBefore s)")
+        Log.d(TAG, "Buffer After:   $minutesAfter min ($bufferSecondsAfter s)")
+        Log.d(TAG, "Final Start:    ${dateFormat.format(Date(finalStartTimeSeconds * 1000))} ($finalStartTimeSeconds)")
+        Log.d(TAG, "Final End:      ${dateFormat.format(Date(finalEndTimeSeconds * 1000))} ($finalEndTimeSeconds)")
         Log.d(TAG, "--------------------------")
 
 

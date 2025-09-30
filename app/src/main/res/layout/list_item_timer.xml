@@ -12,74 +12,76 @@
         android:layout_height="wrap_content"
         android:padding="16dp">
 
-        <!-- Status Indicator -->
-        <View
-            android:id="@+id/status_indicator"
-            android:layout_width="12dp"
-            android:layout_height="12dp"
+        <ImageView
+            android:id="@+id/statusIcon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:background="@drawable/indicator_background"
+            android:padding="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/text_timer_title"
-            app:layout_constraintBottom_toBottomOf="@+id/text_timer_title" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@android:color/white"
+            tools:src="@drawable/ic_timer" />
 
         <TextView
-            android:id="@+id/text_timer_title"
+            android:id="@+id/textTimerChannel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+            android:textAppearance="?attr/textAppearanceBody2"
+            android:textColor="?android:attr/textColorSecondary"
             app:layout_constraintEnd_toStartOf="@+id/button_menu"
-            app:layout_constraintStart_toEndOf="@id/status_indicator"
+            app:layout_constraintStart_toEndOf="@id/statusIcon"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="Tatort" />
+            tools:text="Warner TV Film HD" />
 
         <TextView
-            android:id="@+id/text_timer_channel"
+            android:id="@+id/textTimerTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?attr/textAppearanceHeadline6"
+            app:layout_constraintEnd_toEndOf="@+id/textTimerChannel"
+            app:layout_constraintStart_toStartOf="@+id/textTimerChannel"
+            app:layout_constraintTop_toBottomOf="@id/textTimerChannel"
+            tools:text="The Shining" />
+
+        <TextView
+            android:id="@+id/textTimerTime"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
-            app:layout_constraintStart_toStartOf="@+id/text_timer_title"
-            app:layout_constraintEnd_toEndOf="@id/text_timer_title"
-            app:layout_constraintTop_toBottomOf="@+id/text_timer_title"
-            tools:text="Das Erste HD" />
+            android:textAppearance="?attr/textAppearanceCaption"
+            app:layout_constraintEnd_toEndOf="@+id/textTimerTitle"
+            app:layout_constraintStart_toStartOf="@+id/textTimerTitle"
+            app:layout_constraintTop_toBottomOf="@id/textTimerTitle"
+            tools:text="28.09.2025 00:33 - 28.09.2025 02:40" />
 
         <TextView
-            android:id="@+id/text_timer_date"
+            android:id="@+id/textTimerType"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-            app:layout_constraintStart_toStartOf="@+id/text_timer_channel"
-            app:layout_constraintTop_toBottomOf="@+id/text_timer_channel"
-            tools:text="26.09.2025" />
+            android:layout_marginTop="4dp"
+            android:textAppearance="?attr/textAppearanceCaption"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="@+id/textTimerTime"
+            app:layout_constraintTop_toBottomOf="@id/textTimerTime"
+            tools:text="Recording" />
 
-        <TextView
-            android:id="@+id/text_timer_time"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-            app:layout_constraintBaseline_toBaselineOf="@+id/text_timer_date"
-            app:layout_constraintStart_toEndOf="@+id/text_timer_date"
-            tools:text="20:15 - 21:45" />
-
-        <!-- 3-Dot Menu Button -->
         <ImageView
             android:id="@+id/button_menu"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
+            android:contentDescription="@string/menu_description"
             android:focusable="true"
             android:padding="8dp"
             android:src="@drawable/ic_more_vert"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:tint="?attr/colorOnSurface"
-            android:contentDescription="@string/menu_description" />
+            app:tint="?attr/colorOnSurface" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </com.google.android.material.card.MaterialCardView>
 

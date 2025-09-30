@@ -1,191 +1,214 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp"
-    tools:context=".MainActivity">
+    android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/header_title"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/receiver_settings"
-        android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:padding="24dp"
+        tools:context=".MainActivity">
 
-    <!-- IP Address -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/ipAddressLayout"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:hint="@string/hint_ip_address"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/header_title">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/editIpAddress"
-            android:layout_width="match_parent"
+        <!-- Header -->
+        <TextView
+            android:id="@+id/header_title"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:inputType="textUri" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:text="@string/receiver_settings"
+            android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Username -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/usernameLayout"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:hint="@string/hint_username"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/ipAddressLayout">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/editUsername"
-            android:layout_width="match_parent"
+        <!-- IP Address -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/ipAddressLayout"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="root" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginTop="24dp"
+            android:hint="@string/hint_ip_address"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/header_title">
 
-    <!-- Password -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/passwordLayout"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:hint="@string/hint_password"
-        app:passwordToggleEnabled="true"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/usernameLayout">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editIpAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textUri" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/editPassword"
-            android:layout_width="match_parent"
+        <!-- Username -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/usernameLayout"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:inputType="textPassword" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginTop="16dp"
+            android:hint="@string/hint_username"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/ipAddressLayout">
 
-    <!-- Bouquet Spinner -->
-    <Spinner
-        android:id="@+id/bouquets_spinner"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:minHeight="48dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/passwordLayout" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editUsername"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="root" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Sync Button -->
-    <Button
-        android:id="@+id/button_sync_channels"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="@string/sync_selected_bouquet"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/bouquets_spinner" />
+        <!-- Password -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/passwordLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="@string/hint_password"
+            app:passwordToggleEnabled="true"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/usernameLayout">
 
-    <!-- View Timers Button -->
-    <Button
-        android:id="@+id/button_view_timers"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="@string/view_scheduled_timers"
-        app:layout_constraintEnd_toEndOf="@+id/button_sync_channels"
-        app:layout_constraintStart_toStartOf="@+id/button_sync_channels"
-        app:layout_constraintTop_toBottomOf="@+id/button_sync_channels" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Recording Settings Button -->
-    <Button
-        android:id="@+id/button_recording_settings"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="@string/button_recording_settings"
-        app:layout_constraintEnd_toEndOf="@+id/button_view_timers"
-        app:layout_constraintStart_toStartOf="@+id/button_view_timers"
-        app:layout_constraintTop_toBottomOf="@+id/button_view_timers" />
+        <!-- Status Checks -->
+        <ImageView
+            android:id="@+id/statusEnigmaIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginTop="24dp"
+            android:src="@drawable/ic_help"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/passwordLayout"
+            app:tint="?attr/colorOnSurface"
+            android:contentDescription="@null" />
 
+        <TextView
+            android:id="@+id/statusEnigmaText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="@string/status_enigma_unchecked"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+            app:layout_constraintBottom_toBottomOf="@+id/statusEnigmaIcon"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/statusEnigmaIcon"
+            app:layout_constraintTop_toTopOf="@+id/statusEnigmaIcon" />
 
-    <!-- Status Checks -->
-    <ImageView
-        android:id="@+id/statusEnigmaIcon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginTop="24dp"
-        android:src="@drawable/ic_error"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button_recording_settings"
-        app:tint="?attr/colorOnSurface"
-        android:contentDescription="@null" />
+        <ImageView
+            android:id="@+id/statusTvBrowserIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginTop="16dp"
+            android:src="@drawable/ic_help"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/statusEnigmaIcon"
+            app:tint="?attr/colorOnSurface"
+            android:contentDescription="@null" />
 
-    <TextView
-        android:id="@+id/statusEnigmaText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="@string/status_enigma_unchecked"
-        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
-        app:layout_constraintBottom_toBottomOf="@+id/statusEnigmaIcon"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/statusEnigmaIcon"
-        app:layout_constraintTop_toTopOf="@+id/statusEnigmaIcon" />
+        <TextView
+            android:id="@+id/statusTvBrowserText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="@string/status_tvbrowser_unchecked"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+            app:layout_constraintBottom_toBottomOf="@+id/statusTvBrowserIcon"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/statusTvBrowserIcon"
+            app:layout_constraintTop_toTopOf="@+id/statusTvBrowserIcon" />
 
-    <ImageView
-        android:id="@+id/statusTvBrowserIcon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginTop="16dp"
-        android:src="@drawable/ic_error"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/statusEnigmaIcon"
-        app:tint="?attr/colorOnSurface"
-        android:contentDescription="@null" />
+        <!-- Actions Section -->
+        <View
+            android:id="@+id/divider"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginTop="24dp"
+            android:background="?attr/colorOutlineVariant"
+            app:layout_constraintTop_toBottomOf="@id/statusTvBrowserText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
-    <TextView
-        android:id="@+id/statusTvBrowserText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="@string/status_tvbrowser_unchecked"
-        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
-        app:layout_constraintBottom_toBottomOf="@+id/statusTvBrowserIcon"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/statusTvBrowserIcon"
-        app:layout_constraintTop_toTopOf="@+id/statusTvBrowserIcon" />
+        <!-- Bouquet Spinner -->
+        <Spinner
+            android:id="@+id/bouquets_spinner"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:minHeight="48dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/divider" />
 
-    <!-- Progress Bar (centered) -->
-    <ProgressBar
-        android:id="@+id/progress_bar"
-        style="?android:attr/progressBarStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@+id/buttonSave"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/statusTvBrowserText" />
+        <!-- Sync Button -->
+        <Button
+            android:id="@+id/button_sync_channels"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/sync_selected_bouquet"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/bouquets_spinner" />
 
-    <!-- Save Button (at the bottom) -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/buttonSave"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp"
-        android:text="@string/button_save_and_test"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        <!-- View Timers Button -->
+        <Button
+            android:id="@+id/button_view_timers"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/view_scheduled_timers"
+            app:layout_constraintEnd_toEndOf="@+id/button_sync_channels"
+            app:layout_constraintStart_toStartOf="@+id/button_sync_channels"
+            app:layout_constraintTop_toBottomOf="@+id/button_sync_channels" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <!-- Recording Settings Button -->
+        <Button
+            android:id="@+id/button_recording_settings"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/button_recording_settings"
+            app:layout_constraintEnd_toEndOf="@+id/button_view_timers"
+            app:layout_constraintStart_toStartOf="@+id/button_view_timers"
+            app:layout_constraintTop_toBottomOf="@+id/button_view_timers" />
+
+        <!-- Save Button (at the bottom) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonSave"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
+            android:text="@string/button_save_and_test"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/button_recording_settings"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintVertical_bias="1.0"/>
+
+        <!-- Progress Bar (centered) -->
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/divider"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/header_title"
+            app:layout_constraintVertical_bias="0.8"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
 
