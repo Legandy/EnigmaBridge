@@ -7,6 +7,6 @@
     <color name="status_recording">#D32F2F</color> <!-- A strong, standard Red (Red 700) -->
     <color name="status_scheduled">#FFA000</color> <!-- A vibrant Amber (Amber 700) -->
     <color name="status_finished">#43A047</color>  <!-- A visible, vibrant Green (Green 600) -->
-    <color name="status_unknown">#43A047</color>   <!-- A visible, vibrant Green (Green 600) -->
+    <color name="status_unknown">#757575</color>   <!-- A clear Grey (Grey 600) -->
 </resources>
 

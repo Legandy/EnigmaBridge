@@ -14,8 +14,9 @@ data class BouquetResponse(@SerializedName("bouquets") val bouquets: List<List<S
 data class ServiceResponse(@SerializedName("services") val services: List<Service>)
 data class Service(@SerializedName("servicereference") val sRef: String, @SerializedName("servicename") val sName: String)
 data class TimerListResponse(@SerializedName("timers") val timers: List<Timer>)
+
 data class Timer(
-    @SerializedName("servicereference") val sRef: String,
+    @SerializedName("servicereference") val sRef: String?,
     @SerializedName("servicename") val sName: String,
     @SerializedName("name") val name: String,
     @SerializedName("begin") val beginTimestamp: Long,
@@ -40,7 +41,27 @@ class EnigmaClient(private val ipAddress: String, private val user: String, priv
     suspend fun addTimer(title: String, sRef: String, startTime: Long, endTime: Long): Boolean {
         val encodedTitle = URLEncoder.encode(title, "UTF-8")
         val encodedSRef = URLEncoder.encode(sRef, "UTF-8")
-        val url = "http://$ipAddress/api/timeradd?sRef=$encodedSRef&name=$encodedTitle&begin=$startTime&end=$endTime&description=$encodedTitle&justplay=0&afterevent=0"
+
+        // DEFINITIVE FIX: The "One-Second Trick"
+        // Add one second to the start and end times. This prevents the Enigma2 box
+        // from matching the timer to an EPG event and overriding our buffered times.
+        // It forces the box to treat this as a manual timer.
+        val finalStartTime = startTime + 1
+        val finalEndTime = endTime + 1
+
+        Log.d(TAG, "Applying one-second trick. Final times sent: Start=$finalStartTime, End=$finalEndTime")
+
+        val url = "http://$ipAddress/api/timeradd?sRef=$encodedSRef&name=$encodedTitle&begin=$finalStartTime&end=$finalEndTime&description=$encodedTitle&justplay=0&afterevent=0"
+        return executeRequest(url) != null
+    }
+
+    suspend fun deleteTimer(timer: Timer): Boolean {
+        if (timer.sRef.isNullOrEmpty()) {
+            Log.e(TAG, "Cannot delete timer '${timer.name}' because it has no Service Reference (sRef).")
+            return false
+        }
+        val encodedSRef = URLEncoder.encode(timer.sRef, "UTF-8")
+        val url = "http://$ipAddress/api/timerdelete?sRef=$encodedSRef&begin=${timer.beginTimestamp}&end=${timer.endTimestamp}"
         return executeRequest(url) != null
     }
 
@@ -49,7 +70,7 @@ class EnigmaClient(private val ipAddress: String, private val user: String, priv
         return if (jsonString != null) {
             try {
                 val response = gson.fromJson(jsonString, BouquetResponse::class.java)
-                val bouquetMap = response.bouquets.associate { it[1] to it[0] }
+                val bouquetMap = response.bouquets.associate { it[1] to it[0] } // Name -> sRef
                 Log.d(TAG, "Successfully parsed ${bouquetMap.size} bouquets.")
                 bouquetMap
             } catch (e: Exception) {
@@ -57,6 +78,7 @@ class EnigmaClient(private val ipAddress: String, private val user: String, priv
                 null
             }
         } else {
+            Log.e(TAG, "getBouquets: Received null response from executeRequest.")
             null
         }
     }
@@ -76,6 +98,7 @@ class EnigmaClient(private val ipAddress: String, private val user: String, priv
                 null
             }
         } else {
+            Log.e(TAG, "getChannelsInBouquet: Received null response from executeRequest.")
             null
         }
     }
@@ -84,20 +107,17 @@ class EnigmaClient(private val ipAddress: String, private val user: String, priv
         val jsonString = executeRequest("http://$ipAddress/api/timerlist")
         return if (jsonString != null) {
             try {
-                gson.fromJson(jsonString, TimerListResponse::class.java).timers
+                val response = gson.fromJson(jsonString, TimerListResponse::class.java)
+                Log.d(TAG, "Successfully parsed ${response.timers.size} timers.")
+                response.timers
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to parse timer list JSON.", e)
                 null
             }
         } else {
+            Log.e(TAG, "getTimerList: Received null response from executeRequest.")
             null
         }
-    }
-
-    suspend fun deleteTimer(timer: Timer): Boolean {
-        val encodedSRef = URLEncoder.encode(timer.sRef, "UTF-8")
-        val url = "http://$ipAddress/api/timerdelete?sRef=${encodedSRef}&begin=${timer.beginTimestamp}&end=${timer.endTimestamp}"
-        return executeRequest(url) != null
     }
 
     private fun executeRequest(url: String): String? {
@@ -110,13 +130,13 @@ class EnigmaClient(private val ipAddress: String, private val user: String, priv
         return try {
             val response = client.newCall(requestBuilder.build()).execute()
             if (response.isSuccessful) {
-                response.body?.string().also { Log.d(TAG, "Raw response: $it") }
+                response.body?.string()
             } else {
-                Log.e(TAG, "Request failed with code: ${response.code}")
+                Log.e(TAG, "Request failed with code: ${response.code} for URL: $url")
                 null
             }
         } catch (e: IOException) {
-            Log.e(TAG, "IOException during request.", e)
+            Log.e(TAG, "IOException during request for URL: $url", e)
             null
         }
     }

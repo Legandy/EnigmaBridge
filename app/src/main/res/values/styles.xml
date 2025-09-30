@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Custom Dialog Theme for the Advanced Scheduling Activity -->
+    <style name="Theme.EnigmaBridge.Dialog" parent="Theme.AppCompat.DayNight.Dialog">
+        <!-- This removes the default title bar from the dialog -->
+        <item name="windowNoTitle">true</item>
+        <!-- This makes the dialog wider -->
+        <item name="android:windowMinWidthMajor">90%</item>
+        <item name="android:windowMinWidthMinor">90%</item>
+    </style>
+</resources>
+

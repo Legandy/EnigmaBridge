@@ -29,7 +29,9 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerInteractionLi
     }
 
     private fun setupRecyclerView() {
-        timerAdapter = TimerAdapter(mutableListOf(), this)
+        // Initialize with an empty list
+        timerAdapter = TimerAdapter(mutableListOf())
+        timerAdapter.listener = this // Set the activity as the listener
         binding.timersRecyclerView.apply {
             adapter = timerAdapter
             layoutManager = LinearLayoutManager(this@TimerListActivity)
@@ -79,7 +81,7 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerInteractionLi
         }
     }
 
-    override fun onDeleteClicked(timer: Timer) {
+    override fun onTimerDeleteClicked(timer: Timer) {
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.delete_timer_title))
             .setMessage(getString(R.string.delete_timer_message, timer.name))
@@ -102,7 +104,12 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerInteractionLi
             withContext(Dispatchers.Main) {
                 if (success) {
                     Toast.makeText(applicationContext, getString(R.string.delete_timer_success), Toast.LENGTH_SHORT).show()
-                    fetchTimerList() // Refresh the list
+                    // Remove from adapter directly for instant UI update
+                    timerAdapter.removeItem(timer)
+                    if (timerAdapter.itemCount == 0) {
+                        binding.emptyView.visibility = View.VISIBLE
+                        binding.timersRecyclerView.visibility = View.GONE
+                    }
                 } else {
                     Toast.makeText(applicationContext, getString(R.string.delete_timer_failed), Toast.LENGTH_LONG).show()
                 }

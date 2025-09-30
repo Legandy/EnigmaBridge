@@ -5,6 +5,7 @@
     <string name="hint_username">Username (e.g., root)</string>
     <string name="hint_password">Password</string>
     <string name="button_save_and_test">Save &amp; Test Connection</string>
+    <string name="button_save">Save</string>
 
     <!-- Status Strings -->
     <string name="status_enigma_unchecked">Enigma Receiver: Untested</string>
@@ -18,8 +19,8 @@
     <string name="plugin_description">Schedules recordings on an Enigma2 receiver.</string>
     <string name="plugin_author">Legandy</string>
     <string name="plugin_license">Apache License, Version 2.0</string>
-    <string name="context_menu_schedule">Schedule with Enigma2</string>
-    <string name="menu_description">Options menu</string>
+    <string name="context_menu_schedule_simple">Schedule Recording</string>
+    <string name="context_menu_schedule_advanced">Advanced Scheduling...</string>
 
     <!-- Toasts and Messages -->
     <string name="error_channel_list_not_synced">Error: Channel list not synced. Please open the app and sync.</string>
@@ -41,6 +42,7 @@
     <string name="label_scheduled_timers">Scheduled Timers</string>
     <string name="sync_selected_bouquet">Sync Selected Bouquet</string>
     <string name="view_scheduled_timers">View Scheduled Timers</string>
+    <string name="error_program_data_missing">Error: Program data missing.</string>
 
     <!-- Notifications -->
     <string name="notification_channel_name">EnigmaBridge Notifications</string>
@@ -52,6 +54,7 @@
 
     <!-- Timer List Item -->
     <string name="timer_time_range">%1$s - %2$s</string>
+    <string name="menu_description">Menu for timer actions</string>
 
     <!-- Deletion Dialog -->
     <string name="delete_timer_title">Delete Timer</string>
@@ -60,6 +63,25 @@
     <string name="action_cancel">Cancel</string>
     <string name="delete_timer_success">Timer deleted successfully.</string>
     <string name="delete_timer_failed">Failed to delete timer.</string>
+
+    <!-- Recording Settings -->
+    <string name="title_recording_settings">Recording Settings</string>
+    <string name="button_recording_settings">Recording Settings</string>
+    <string name="hint_minutes_before">Start recording minutes earlier</string>
+    <string name="hint_minutes_after">Stop recording minutes later</string>
+    <string name="toast_recording_settings_saved">Recording settings saved.</string>
+
+    <!-- Advanced Scheduling -->
+    <string name="title_advanced_schedule">Advanced Scheduling</string>
+    <string name="label_start_time">Start:</string>
+    <string name="label_end_time">End:</string>
+    <string name="label_repeat">Repeat</string>
+    <string name="label_program_title">Program Title</string>
+    <string-array name="repeat_options">
+        <item>Once</item>
+        <item>Daily</item>
+        <item>Weekly</item>
+    </string-array>
 
 </resources>
 

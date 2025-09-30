@@ -4,7 +4,6 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="org.tvbrowser.permission.BIND_PLUGIN" />
-    <!-- Required for Android 13 (API 33) and above to show notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
@@ -17,6 +16,7 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
 
+        <!-- MainActivity is now correctly marked as the LAUNCHER -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -29,6 +29,19 @@
         <activity
             android:name=".TimerListActivity"
             android:label="@string/label_scheduled_timers" />
+
+        <activity
+            android:name=".RecordingSettingsActivity"
+            android:label="@string/title_recording_settings"
+            android:parentActivityName=".MainActivity"/>
+
+        <!-- The popup activity now uses our custom dialog theme -->
+        <activity
+            android:name=".AdvancedScheduleActivity"
+            android:theme="@style/Theme.EnigmaBridge.Dialog"
+            android:label="@string/title_advanced_schedule"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"/>
 
         <service
             android:name=".RecordService"

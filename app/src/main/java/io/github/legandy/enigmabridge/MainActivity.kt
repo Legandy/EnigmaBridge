@@ -77,6 +77,10 @@ class MainActivity : AppCompatActivity() {
         binding.buttonViewTimers.setOnClickListener {
             startActivity(Intent(this, TimerListActivity::class.java))
         }
+
+        binding.buttonRecordingSettings.setOnClickListener {
+            startActivity(Intent(this, RecordingSettingsActivity::class.java))
+        }
     }
 
     private fun fetchBouquets() {
@@ -149,11 +153,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun isTvBrowserInstalled(): Boolean {
         return try {
+            val pm = packageManager
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                packageManager.getPackageInfo("org.tvbrowser.tvbrowser", PackageManager.PackageInfoFlags.of(0))
+                pm.getPackageInfo("org.tvbrowser.tvbrowser", PackageManager.PackageInfoFlags.of(0))
             } else {
                 @Suppress("DEPRECATION")
-                packageManager.getPackageInfo("org.tvbrowser.tvbrowser", 0)
+                pm.getPackageInfo("org.tvbrowser.tvbrowser", 0)
             }
             true
         } catch (e: PackageManager.NameNotFoundException) {
@@ -187,13 +192,13 @@ class MainActivity : AppCompatActivity() {
             val isConnected = client.checkConnection()
 
             withContext(Dispatchers.Main) {
+                showLoading(false)
                 if (isConnected) {
                     binding.statusEnigmaIcon.setImageResource(R.drawable.ic_check_circle)
                     binding.statusEnigmaIcon.setColorFilter(ContextCompat.getColor(applicationContext, android.R.color.holo_green_dark))
                     binding.statusEnigmaText.text = getString(R.string.status_enigma_success)
                     fetchBouquets()
                 } else {
-                    showLoading(false)
                     binding.statusEnigmaIcon.setImageResource(R.drawable.ic_error)
                     binding.statusEnigmaIcon.setColorFilter(Color.RED)
                     binding.statusEnigmaText.text = getString(R.string.status_enigma_failed)

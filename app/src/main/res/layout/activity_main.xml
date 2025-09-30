@@ -88,11 +88,34 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Sync Selected Bouquet"
+        android:text="@string/sync_selected_bouquet"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/bouquets_spinner" />
-    
+
+    <!-- View Timers Button -->
+    <Button
+        android:id="@+id/button_view_timers"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/view_scheduled_timers"
+        app:layout_constraintEnd_toEndOf="@+id/button_sync_channels"
+        app:layout_constraintStart_toStartOf="@+id/button_sync_channels"
+        app:layout_constraintTop_toBottomOf="@+id/button_sync_channels" />
+
+    <!-- Recording Settings Button -->
+    <Button
+        android:id="@+id/button_recording_settings"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/button_recording_settings"
+        app:layout_constraintEnd_toEndOf="@+id/button_view_timers"
+        app:layout_constraintStart_toStartOf="@+id/button_view_timers"
+        app:layout_constraintTop_toBottomOf="@+id/button_view_timers" />
+
+
     <!-- Status Checks -->
     <ImageView
         android:id="@+id/statusEnigmaIcon"
@@ -101,8 +124,9 @@
         android:layout_marginTop="24dp"
         android:src="@drawable/ic_error"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button_sync_channels"
-        app:tint="?attr/colorOnSurface" />
+        app:layout_constraintTop_toBottomOf="@+id/button_recording_settings"
+        app:tint="?attr/colorOnSurface"
+        android:contentDescription="@null" />
 
     <TextView
         android:id="@+id/statusEnigmaText"
@@ -124,7 +148,8 @@
         android:src="@drawable/ic_error"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/statusEnigmaIcon"
-        app:tint="?attr/colorOnSurface" />
+        app:tint="?attr/colorOnSurface"
+        android:contentDescription="@null" />
 
     <TextView
         android:id="@+id/statusTvBrowserText"
@@ -137,7 +162,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/statusTvBrowserIcon"
         app:layout_constraintTop_toTopOf="@+id/statusTvBrowserIcon" />
-        
+
     <!-- Progress Bar (centered) -->
     <ProgressBar
         android:id="@+id/progress_bar"
@@ -162,14 +187,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <Button
-        android:id="@+id/button_view_timers"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="View Scheduled Timers"
-        app:layout_constraintEnd_toEndOf="@+id/button_sync_channels"
-        app:layout_constraintStart_toStartOf="@+id/button_sync_channels"
-        app:layout_constraintTop_toBottomOf="@+id/button_sync_channels" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>
+

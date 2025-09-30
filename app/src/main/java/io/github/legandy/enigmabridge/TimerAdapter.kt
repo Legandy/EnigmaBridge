@@ -1,8 +1,10 @@
 package io.github.legandy.enigmabridge
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
-import android.widget.PopupMenu
+import android.widget.ImageView
+import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import io.github.legandy.enigmabridge.databinding.ListItemTimerBinding
@@ -11,13 +13,15 @@ import java.util.Date
 import java.util.Locale
 
 class TimerAdapter(
-    private var timers: MutableList<Timer>,
-    private val listener: OnTimerInteractionListener
+    private var timers: MutableList<Timer>
 ) : RecyclerView.Adapter<TimerAdapter.TimerViewHolder>() {
 
+    // Listener interface to communicate clicks back to the Activity
     interface OnTimerInteractionListener {
-        fun onDeleteClicked(timer: Timer)
+        fun onTimerDeleteClicked(timer: Timer)
     }
+    var listener: OnTimerInteractionListener? = null
+
 
     inner class TimerViewHolder(val binding: ListItemTimerBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -41,29 +45,18 @@ class TimerAdapter(
         holder.binding.textTimerDate.text = startDate
         holder.binding.textTimerTime.text = context.getString(R.string.timer_time_range, startTime, endTime)
 
-        // Set status indicator color based on timer state from the API
+        // Set status indicator color based on timer state
         val statusColor = when (timer.state) {
-            0 -> R.color.status_scheduled // State 0: Scheduled
-            1 -> R.color.status_recording // State 1: Recording
-            2 -> R.color.status_finished  // State 2: Finished
-            else -> R.color.status_unknown
+            0 -> R.color.status_scheduled // Scheduled
+            1 -> R.color.status_recording // Recording
+            2 -> R.color.status_finished  // Finished
+            else -> R.color.status_unknown // Unknown
         }
-        holder.binding.statusIndicator.background?.setTint(ContextCompat.getColor(context, statusColor))
+        holder.binding.statusIndicator.background.setTint(ContextCompat.getColor(context, statusColor))
 
-        // Handle 3-dot menu click
+        // Handle 3-dot menu clicks
         holder.binding.buttonMenu.setOnClickListener { view ->
-            val popup = PopupMenu(context, view)
-            popup.inflate(R.menu.timer_item_menu)
-            popup.setOnMenuItemClickListener { menuItem ->
-                when (menuItem.itemId) {
-                    R.id.action_delete_timer -> {
-                        listener.onDeleteClicked(timer)
-                        true
-                    }
-                    else -> false
-                }
-            }
-            popup.show()
+            showPopupMenu(view, timer)
         }
     }
 
@@ -73,6 +66,29 @@ class TimerAdapter(
         this.timers.clear()
         this.timers.addAll(newTimers)
         notifyDataSetChanged()
+    }
+
+    fun removeItem(timer: Timer) {
+        val position = timers.indexOf(timer)
+        if (position > -1) {
+            timers.removeAt(position)
+            notifyItemRemoved(position)
+        }
+    }
+
+    private fun showPopupMenu(view: View, timer: Timer) {
+        val popup = PopupMenu(view.context, view)
+        popup.menuInflater.inflate(R.menu.timer_item_menu, popup.menu)
+        popup.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.action_delete_timer -> {
+                    listener?.onTimerDeleteClicked(timer)
+                    true
+                }
+                else -> false
+            }
+        }
+        popup.show()
     }
 }
 
