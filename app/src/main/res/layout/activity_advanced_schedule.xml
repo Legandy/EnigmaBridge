@@ -12,8 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/title_advanced_schedule"
-        android:textSize="20sp"
-        android:textStyle="bold"
+        android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -100,7 +99,7 @@
             tools:text="23:40" />
     </LinearLayout>
 
-    <!-- Repeat Spinner Label -->
+    <!-- Repeat Spinner -->
     <TextView
         android:id="@+id/label_repeat_spinner"
         android:layout_width="wrap_content"
@@ -111,7 +110,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/time_info_layout" />
 
-    <!-- Repeat Spinner -->
     <Spinner
         android:id="@+id/spinner_repeat"
         android:layout_width="0dp"
@@ -121,25 +119,51 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/label_repeat_spinner" />
 
-    <!-- Action Buttons (Constrained to the right side) -->
-    <Button
-        android:id="@+id/button_save"
+    <!-- After Event Spinner -->
+    <TextView
+        android:id="@+id/label_after_event_spinner"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="@string/button_save"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"
+        android:labelFor="@id/spinner_after_event"
+        android:text="@string/label_after_event"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/spinner_repeat" />
 
-    <Button
-        android:id="@+id/button_cancel"
-        style="?attr/materialButtonOutlinedStyle"
-        android:layout_width="wrap_content"
+    <Spinner
+        android:id="@+id/spinner_after_event"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:text="@string/action_cancel"
-        app:layout_constraintBaseline_toBaselineOf="@id/button_save"
-        app:layout_constraintEnd_toStartOf="@id/button_save" />
+        android:minHeight="48dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/label_after_event_spinner" />
+
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:gravity="end"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/spinner_after_event">
+
+        <Button
+            android:id="@+id/button_cancel"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="@string/action_cancel" />
+
+        <Button
+            android:id="@+id/button_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/button_save" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-

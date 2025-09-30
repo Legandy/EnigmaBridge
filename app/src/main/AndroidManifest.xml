@@ -16,7 +16,6 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
 
-        <!-- MainActivity is now correctly marked as the LAUNCHER -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -35,7 +34,11 @@
             android:label="@string/title_recording_settings"
             android:parentActivityName=".MainActivity"/>
 
-        <!-- The popup activity now uses our custom dialog theme -->
+        <activity
+            android:name=".EditTimerActivity"
+            android:label="@string/title_edit_schedule"
+            android:parentActivityName=".TimerListActivity" />
+
         <activity
             android:name=".AdvancedScheduleActivity"
             android:theme="@style/Theme.EnigmaBridge.Dialog"
@@ -60,4 +63,3 @@
     </queries>
 
 </manifest>
-

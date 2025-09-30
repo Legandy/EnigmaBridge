@@ -25,7 +25,9 @@ object SchedulingHelper {
         title: String,
         sRef: String,
         startTimeMillis: Long,
-        endTimeMillis: Long
+        endTimeMillis: Long,
+        repeated: Int,
+        afterEvent: Int
     ): Boolean {
         val prefs = context.getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
 
@@ -34,6 +36,7 @@ object SchedulingHelper {
         val pass = prefs.getString("PASSWORD", "") ?: ""
 
         if (ip.isEmpty()) {
+            Log.e(TAG, "IP address is empty. Cannot schedule timer.")
             return false
         }
 
@@ -42,7 +45,7 @@ object SchedulingHelper {
 
         // Create a client and send the command
         val client = EnigmaClient(ip, user, pass)
-        return client.addTimer(title, sRef, finalStartTimeSeconds, finalEndTimeSeconds)
+        return client.addTimer(title, sRef, finalStartTimeSeconds, finalEndTimeSeconds, repeated, afterEvent)
     }
 
     /**
@@ -56,6 +59,11 @@ object SchedulingHelper {
         val minutesBefore = prefs.getInt("MINUTES_BEFORE", 0)
         val minutesAfter = prefs.getInt("MINUTES_AFTER", 0)
 
+        Log.d(TAG, "--- Buffer Calculation ---")
+        Log.d(TAG, "Original Start Time: ${dateFormat.format(Date(startTimeMillis))} ($startTimeMillis ms)")
+        Log.d(TAG, "Original End Time:   ${dateFormat.format(Date(endTimeMillis))} ($endTimeMillis ms)")
+        Log.d(TAG, "Buffer Before: $minutesBefore minutes")
+        Log.d(TAG, "Buffer After:  $minutesAfter minutes")
 
         // Convert original milliseconds to seconds
         val originalStartTimeSeconds = startTimeMillis / 1000
@@ -68,6 +76,10 @@ object SchedulingHelper {
         // Apply the buffer using simple addition/subtraction
         val finalStartTimeSeconds = originalStartTimeSeconds - bufferSecondsBefore
         val finalEndTimeSeconds = originalEndTimeSeconds + bufferSecondsAfter
+
+        Log.d(TAG, "Final Start Time (Epoch Seconds): $finalStartTimeSeconds")
+        Log.d(TAG, "Final End Time (Epoch Seconds):   $finalEndTimeSeconds")
+        Log.d(TAG, "--------------------------")
 
 
         return Pair(finalStartTimeSeconds, finalEndTimeSeconds)

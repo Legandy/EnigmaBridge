@@ -3,10 +3,11 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <!-- Timer Status Colors - High contrast for both Light and Dark themes -->
-    <color name="status_recording">#D32F2F</color> <!-- A strong, standard Red (Red 700) -->
-    <color name="status_scheduled">#FFA000</color> <!-- A vibrant Amber (Amber 700) -->
-    <color name="status_finished">#43A047</color>  <!-- A visible, vibrant Green (Green 600) -->
-    <color name="status_unknown">#757575</color>   <!-- A clear Grey (Grey 600) -->
+    <!-- Timer Status Colors -->
+    <color name="status_scheduled">#FFC107</color> <!-- Amber -->
+    <color name="status_preparing">#FF9800</color> <!-- Orange -->
+    <color name="status_recording">#E91E63</color> <!-- Pink -->
+    <color name="status_finished">#4CAF50</color>  <!-- Green -->
+    <color name="status_error">#F44336</color>     <!-- Red -->
+    <color name="status_unknown">#9E9E9E</color>   <!-- Grey -->
 </resources>
-

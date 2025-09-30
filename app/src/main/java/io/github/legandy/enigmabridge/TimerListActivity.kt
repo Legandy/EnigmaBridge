@@ -1,6 +1,7 @@
 package io.github.legandy.enigmabridge
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -25,13 +26,17 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerInteractionLi
 
         setupRecyclerView()
         setupPullToRefresh()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh the list every time the user comes back to this screen
         fetchTimerList()
     }
 
     private fun setupRecyclerView() {
-        // Initialize with an empty list
         timerAdapter = TimerAdapter(mutableListOf())
-        timerAdapter.listener = this // Set the activity as the listener
+        timerAdapter.listener = this
         binding.timersRecyclerView.apply {
             adapter = timerAdapter
             layoutManager = LinearLayoutManager(this@TimerListActivity)
@@ -81,6 +86,13 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerInteractionLi
         }
     }
 
+    override fun onTimerEditClicked(timer: Timer) {
+        val intent = Intent(this, EditTimerActivity::class.java).apply {
+            putExtra(EditTimerActivity.EXTRA_TIMER, timer)
+        }
+        startActivity(intent)
+    }
+
     override fun onTimerDeleteClicked(timer: Timer) {
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.delete_timer_title))
@@ -104,7 +116,6 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerInteractionLi
             withContext(Dispatchers.Main) {
                 if (success) {
                     Toast.makeText(applicationContext, getString(R.string.delete_timer_success), Toast.LENGTH_SHORT).show()
-                    // Remove from adapter directly for instant UI update
                     timerAdapter.removeItem(timer)
                     if (timerAdapter.itemCount == 0) {
                         binding.emptyView.visibility = View.VISIBLE
@@ -117,4 +128,3 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerInteractionLi
         }
     }
 }
-

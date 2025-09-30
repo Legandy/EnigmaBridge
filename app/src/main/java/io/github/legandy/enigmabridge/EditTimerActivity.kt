@@ -1,58 +1,63 @@
 package io.github.legandy.enigmabridge
 
 import android.app.TimePickerDialog
+import android.content.Context
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import io.github.legandy.enigmabridge.databinding.ActivityAdvancedScheduleBinding
+import io.github.legandy.enigmabridge.databinding.ActivityEditTimerBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.tvbrowser.devplugin.Program
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
-class AdvancedScheduleActivity : AppCompatActivity() {
+class EditTimerActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityAdvancedScheduleBinding
-    private var program: Program? = null
-    private var sRef: String? = null
+    // DEFINITIVE FIX: Use the correct binding for the layout file provided.
+    private lateinit var binding: ActivityEditTimerBinding
+    private var originalTimer: Timer? = null
 
     private val startCalendar = Calendar.getInstance()
     private val endCalendar = Calendar.getInstance()
     private val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
+    companion object {
+        const val EXTRA_TIMER = "EXTRA_TIMER"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityAdvancedScheduleBinding.inflate(layoutInflater)
+        // Inflate the correct layout
+        binding = ActivityEditTimerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         @Suppress("DEPRECATION")
-        program = intent.getParcelableExtra("PROGRAM_EXTRA")
-        sRef = intent.getStringExtra("SREF_EXTRA")
+        originalTimer = intent.getParcelableExtra(EXTRA_TIMER)
 
-        if (program == null || sRef == null) {
-            Toast.makeText(this, getString(R.string.error_program_data_missing), Toast.LENGTH_LONG).show()
+        if (originalTimer == null) {
+            Toast.makeText(this, getString(R.string.error_timer_data_missing), Toast.LENGTH_LONG).show()
             finish()
             return
         }
 
-        startCalendar.timeInMillis = program!!.startTimeInUTC
-        endCalendar.timeInMillis = program!!.endTimeInUTC
+        startCalendar.timeInMillis = originalTimer!!.beginTimestamp * 1000
+        endCalendar.timeInMillis = originalTimer!!.endTimestamp * 1000
 
         setupUI()
     }
 
     private fun setupUI() {
-        binding.editProgramTitle.setText(program!!.title)
-        binding.textChannelName.text = program!!.channel.channelName
+        binding.textDialogTitle.text = getString(R.string.title_edit_schedule)
+        binding.editProgramTitle.setText(originalTimer!!.name)
+        binding.textChannelName.text = originalTimer!!.sName
         updateTimeTextViews()
 
         // Setup Repeat Spinner
-        val repeatAdapter = ArrayAdapter.createFromResource(
+        ArrayAdapter.createFromResource(
             this, R.array.repeat_options, android.R.layout.simple_spinner_item
         ).also { adapter ->
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -60,7 +65,7 @@ class AdvancedScheduleActivity : AppCompatActivity() {
         }
 
         // Setup After Event Spinner
-        val afterEventAdapter = ArrayAdapter.createFromResource(
+        ArrayAdapter.createFromResource(
             this, R.array.after_event_options, android.R.layout.simple_spinner_item
         ).also { adapter ->
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -69,8 +74,8 @@ class AdvancedScheduleActivity : AppCompatActivity() {
 
         binding.textStartTime.setOnClickListener { showTimePickerDialog(isStartTime = true) }
         binding.textEndTime.setOnClickListener { showTimePickerDialog(isStartTime = false) }
-        binding.buttonCancel.setOnClickListener { finish() }
-        binding.buttonSave.setOnClickListener { scheduleAdvancedTimer() }
+        // Note: There is no cancel button in activity_edit_timer.xml
+        binding.buttonSave.setOnClickListener { saveEditedTimer() }
     }
 
     private fun showTimePickerDialog(isStartTime: Boolean) {
@@ -92,54 +97,50 @@ class AdvancedScheduleActivity : AppCompatActivity() {
         binding.textEndTime.text = timeFormat.format(endCalendar.time)
     }
 
-    private fun getRepeatedValue(): Int {
-        return when (binding.spinnerRepeat.selectedItemPosition) {
-            1 -> 127 // Daily (bitmask for all 7 days)
-            2 -> { // Weekly
-                when (startCalendar.get(Calendar.DAY_OF_WEEK)) {
-                    Calendar.MONDAY -> 64
-                    Calendar.TUESDAY -> 32
-                    Calendar.WEDNESDAY -> 16
-                    Calendar.THURSDAY -> 8
-                    Calendar.FRIDAY -> 4
-                    Calendar.SATURDAY -> 2
-                    Calendar.SUNDAY -> 1
-                    else -> 0
-                }
-            }
+    private fun saveEditedTimer() {
+        val editedTitle = binding.editProgramTitle.text.toString()
+        val sRef = originalTimer?.sRef
+
+        if (sRef.isNullOrEmpty()) {
+            Toast.makeText(this, "Cannot save timer, service reference is missing.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val repeated = when (binding.spinnerRepeat.selectedItemPosition) {
+            1 -> 254 // Daily
+            2 -> 127 // Weekly
             else -> 0 // Once
         }
-    }
-
-
-    private fun scheduleAdvancedTimer() {
-        val editedTitle = binding.editProgramTitle.text.toString()
         val afterEvent = binding.spinnerAfterEvent.selectedItemPosition
-        val repeated = getRepeatedValue()
 
-
-        Toast.makeText(this, getString(R.string.scheduling_toast, editedTitle), Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, getString(R.string.saving_toast, editedTitle), Toast.LENGTH_SHORT).show()
 
         lifecycleScope.launch(Dispatchers.IO) {
-            val success = SchedulingHelper.scheduleTimer(
-                context = applicationContext,
-                title = editedTitle,
-                sRef = sRef!!,
-                startTimeMillis = startCalendar.timeInMillis,
-                endTimeMillis = endCalendar.timeInMillis,
+            val prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
+            val ip = prefs.getString("IP_ADDRESS", "") ?: ""
+            val user = prefs.getString("USERNAME", "root") ?: ""
+            val pass = prefs.getString("PASSWORD", "") ?: ""
+            val client = EnigmaClient(ip, user, pass)
+
+            val success = client.editTimer(
+                originalTimer = originalTimer!!,
+                newTitle = editedTitle,
+                newSRef = sRef,
+                newStartTime = startCalendar.timeInMillis / 1000,
+                newEndTime = endCalendar.timeInMillis / 1000,
                 repeated = repeated,
                 afterEvent = afterEvent
             )
 
-            val message = if (success) getString(R.string.schedule_success) else getString(R.string.schedule_failed)
+            val message = if (success) getString(R.string.save_success) else getString(R.string.save_failed)
 
             withContext(Dispatchers.Main) {
                 Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
                 if (success) {
-                    NotificationHelper.sendSuccessNotification(applicationContext, program!!)
                     finish()
                 }
             }
         }
     }
 }
+

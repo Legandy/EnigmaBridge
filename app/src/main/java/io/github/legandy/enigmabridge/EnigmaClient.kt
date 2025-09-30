@@ -1,5 +1,7 @@
 package io.github.legandy.enigmabridge
 
+import android.os.Parcel
+import android.os.Parcelable
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
@@ -22,7 +24,40 @@ data class Timer(
     @SerializedName("begin") val beginTimestamp: Long,
     @SerializedName("end") val endTimestamp: Long,
     @SerializedName("state") val state: Int
-)
+) : Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readString(),
+        parcel.readString()!!,
+        parcel.readString()!!,
+        parcel.readLong(),
+        parcel.readLong(),
+        parcel.readInt()
+    )
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(sRef)
+        parcel.writeString(sName)
+        parcel.writeString(name)
+        parcel.writeLong(beginTimestamp)
+        parcel.writeLong(endTimestamp)
+        parcel.writeInt(state)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<Timer> {
+        override fun createFromParcel(parcel: Parcel): Timer {
+            return Timer(parcel)
+        }
+
+        override fun newArray(size: Int): Array<Timer?> {
+            return arrayOfNulls(size)
+        }
+    }
+}
+
 
 class EnigmaClient(private val ipAddress: String, private val user: String, private val pass: String) {
 
@@ -31,42 +66,88 @@ class EnigmaClient(private val ipAddress: String, private val user: String, priv
 
     companion object {
         private const val TAG = "EnigmaClient"
+        private const val API_ABOUT = "/api/about"
+        private const val API_TIMER_ADD = "/api/timeradd"
+        private const val API_TIMER_DELETE = "/api/timerdelete"
+        private const val API_BOUQUETS = "/api/bouquets"
+        private const val API_GET_SERVICES = "/api/getservices"
+        private const val API_TIMER_LIST = "/api/timerlist"
+    }
+
+    private fun buildUrl(path: String, query: String? = null): String {
+        return if (query.isNullOrEmpty()) {
+            "http://$ipAddress$path"
+        } else {
+            "http://$ipAddress$path?$query"
+        }
     }
 
     suspend fun checkConnection(): Boolean {
-        val url = "http://$ipAddress/api/about"
+        val url = buildUrl(API_ABOUT)
         return executeRequest(url) != null
     }
 
-    suspend fun addTimer(title: String, sRef: String, startTime: Long, endTime: Long): Boolean {
+    suspend fun addTimer(
+        title: String,
+        sRef: String,
+        startTime: Long,
+        endTime: Long,
+        repeated: Int,
+        afterEvent: Int
+    ): Boolean {
         val encodedTitle = URLEncoder.encode(title, "UTF-8")
         val encodedSRef = URLEncoder.encode(sRef, "UTF-8")
 
-        // DEFINITIVE FIX: The "One-Second Trick"
-        // Add one second to the start and end times. This prevents the Enigma2 box
-        // from matching the timer to an EPG event and overriding our buffered times.
-        // It forces the box to treat this as a manual timer.
-        val finalStartTime = startTime + 1
-        val finalEndTime = endTime + 1
+        Log.d(TAG, "Final times sent to receiver: Start=$startTime, End=$endTime")
 
-        Log.d(TAG, "Applying one-second trick. Final times sent: Start=$finalStartTime, End=$finalEndTime")
-
-        val url = "http://$ipAddress/api/timeradd?sRef=$encodedSRef&name=$encodedTitle&begin=$finalStartTime&end=$finalEndTime&description=$encodedTitle&justplay=0&afterevent=0"
+        val query = "sRef=$encodedSRef&name=$encodedTitle&begin=$startTime&end=$endTime" +
+                "&description=$encodedTitle&justplay=0&repeated=$repeated&afterevent=$afterEvent"
+        val url = buildUrl(API_TIMER_ADD, query)
         return executeRequest(url) != null
     }
 
-    suspend fun deleteTimer(timer: Timer): Boolean {
-        if (timer.sRef.isNullOrEmpty()) {
-            Log.e(TAG, "Cannot delete timer '${timer.name}' because it has no Service Reference (sRef).")
+    suspend fun editTimer(
+        originalTimer: Timer,
+        newTitle: String,
+        newSRef: String,
+        newStartTime: Long,
+        newEndTime: Long,
+        repeated: Int,
+        afterEvent: Int
+    ): Boolean {
+        val deleteSuccess = deleteTimer(originalTimer)
+        if (!deleteSuccess) {
+            Log.e(TAG, "editTimer failed because the original timer could not be deleted.")
             return false
         }
-        val encodedSRef = URLEncoder.encode(timer.sRef, "UTF-8")
-        val url = "http://$ipAddress/api/timerdelete?sRef=$encodedSRef&begin=${timer.beginTimestamp}&end=${timer.endTimestamp}"
+        return addTimer(newTitle, newSRef, newStartTime, newEndTime, repeated, afterEvent)
+    }
+
+    suspend fun deleteTimer(timer: Timer): Boolean {
+        val beginTimestamp = timer.beginTimestamp
+        val endTimestamp = timer.endTimestamp
+        val query: String
+
+        // DEFINITIVE FIX: Implement the fallback deletion method.
+        // If the sRef is missing, we send the command without it,
+        // relying on the timestamps alone, just like other clients do.
+        if (timer.sRef.isNullOrEmpty()) {
+            Log.w(TAG, "Timer '${timer.name}' is missing sRef. Using fallback delete method (timestamps only).")
+            query = "begin=$beginTimestamp&end=$endTimestamp"
+        } else {
+            Log.d(TAG, "Using standard delete method (sRef + timestamps) for timer '${timer.name}'.")
+            val encodedSRef = URLEncoder.encode(timer.sRef, "UTF-8")
+            query = "sRef=$encodedSRef&begin=$beginTimestamp&end=$endTimestamp"
+        }
+
+        val url = buildUrl(API_TIMER_DELETE, query)
+        Log.d(TAG, "Attempting to delete timer with URL: $url")
         return executeRequest(url) != null
     }
 
     suspend fun getBouquets(): Map<String, String>? {
-        val jsonString = executeRequest("http://$ipAddress/api/bouquets")
+        val url = buildUrl(API_BOUQUETS)
+        val jsonString = executeRequest(url)
         return if (jsonString != null) {
             try {
                 val response = gson.fromJson(jsonString, BouquetResponse::class.java)
@@ -85,7 +166,7 @@ class EnigmaClient(private val ipAddress: String, private val user: String, priv
 
     suspend fun getChannelsInBouquet(bouquetSref: String): Map<String, String>? {
         val encodedSref = URLEncoder.encode(bouquetSref, "UTF-8")
-        val url = "http://$ipAddress/api/getservices?sRef=$encodedSref"
+        val url = buildUrl(API_GET_SERVICES, "sRef=$encodedSref")
         val jsonString = executeRequest(url)
         return if (jsonString != null) {
             try {
@@ -104,7 +185,8 @@ class EnigmaClient(private val ipAddress: String, private val user: String, priv
     }
 
     suspend fun getTimerList(): List<Timer>? {
-        val jsonString = executeRequest("http://$ipAddress/api/timerlist")
+        val url = buildUrl(API_TIMER_LIST)
+        val jsonString = executeRequest(url)
         return if (jsonString != null) {
             try {
                 val response = gson.fromJson(jsonString, TimerListResponse::class.java)
@@ -130,7 +212,9 @@ class EnigmaClient(private val ipAddress: String, private val user: String, priv
         return try {
             val response = client.newCall(requestBuilder.build()).execute()
             if (response.isSuccessful) {
-                response.body?.string()
+                val responseBody = response.body?.string()
+                Log.d(TAG, "Request successful for URL: $url. Response: $responseBody")
+                responseBody
             } else {
                 Log.e(TAG, "Request failed with code: ${response.code} for URL: $url")
                 null

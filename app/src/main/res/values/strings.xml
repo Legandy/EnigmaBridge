@@ -27,8 +27,11 @@
     <string name="error_channel_not_found">Error: Channel \'%1$s\' not found in synced list.</string>
     <string name="error_ip_not_set">Error: IP Address not set.</string>
     <string name="scheduling_toast">Scheduling \'%1$s\'...</string>
+    <string name="saving_toast">Saving timer for \'%1$s\'...</string>
     <string name="schedule_success">Recording Scheduled!</string>
     <string name="schedule_failed">Failed to Schedule Recording.</string>
+    <string name="save_success">Timer Saved!</string>
+    <string name="save_failed">Failed to Save Timer.</string>
     <string name="bouquets_found_toast">%1$d bouquets found.</string>
     <string name="error_fetch_bouquets">Failed to fetch bouquets.</string>
     <string name="error_no_bouquet_selected">No bouquet selected.</string>
@@ -40,9 +43,10 @@
     <string name="error_fetch_timers">Failed to fetch timer list.</string>
     <string name="no_timers_found">No scheduled timers found.</string>
     <string name="label_scheduled_timers">Scheduled Timers</string>
+    <string name="error_program_data_missing">Error: Program data missing.</string>
+    <string name="error_timer_data_missing">Error: Timer data missing.</string>
     <string name="sync_selected_bouquet">Sync Selected Bouquet</string>
     <string name="view_scheduled_timers">View Scheduled Timers</string>
-    <string name="error_program_data_missing">Error: Program data missing.</string>
 
     <!-- Notifications -->
     <string name="notification_channel_name">EnigmaBridge Notifications</string>
@@ -52,9 +56,10 @@
     <string name="permission_granted">Notification permission granted.</string>
     <string name="permission_denied">Notification permission denied. You will not receive status updates.</string>
 
-    <!-- Timer List Item -->
+    <!-- Timer List Item & Menu -->
     <string name="timer_time_range">%1$s - %2$s</string>
     <string name="menu_description">Menu for timer actions</string>
+    <string name="action_edit">Edit</string>
 
     <!-- Deletion Dialog -->
     <string name="delete_timer_title">Delete Timer</string>
@@ -71,16 +76,24 @@
     <string name="hint_minutes_after">Stop recording minutes later</string>
     <string name="toast_recording_settings_saved">Recording settings saved.</string>
 
-    <!-- Advanced Scheduling -->
+    <!-- Advanced & Edit Scheduling -->
     <string name="title_advanced_schedule">Advanced Scheduling</string>
+    <string name="title_edit_schedule">Edit Timer</string>
     <string name="label_start_time">Start:</string>
     <string name="label_end_time">End:</string>
     <string name="label_repeat">Repeat</string>
+    <string name="label_after_event">After Event</string>
     <string name="label_program_title">Program Title</string>
     <string-array name="repeat_options">
         <item>Once</item>
         <item>Daily</item>
         <item>Weekly</item>
+    </string-array>
+    <string-array name="after_event_options">
+        <item>Do Nothing</item>
+        <item>Go to Standby</item>
+        <item>Go to Deep Standby</item>
+        <item>Auto</item>
     </string-array>
 
 </resources>
