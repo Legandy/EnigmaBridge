@@ -1,11 +1,14 @@
 package io.github.legandy.enigmabridge
 
 import android.app.TimePickerDialog
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.legandy.enigmabridge.databinding.ActivityAdvancedScheduleBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,11 +39,13 @@ class AdvancedScheduleActivity : AppCompatActivity() {
 
         if (program == null || sRef == null) {
             Toast.makeText(this, getString(R.string.error_program_data_missing), Toast.LENGTH_LONG).show()
-            finish(); return
+            finish()
+            return
         }
 
         startCalendar.timeInMillis = program!!.startTimeInUTC
         endCalendar.timeInMillis = program!!.endTimeInUTC
+
         setupUI()
     }
 
@@ -49,26 +54,45 @@ class AdvancedScheduleActivity : AppCompatActivity() {
         binding.textChannelName.text = program!!.channel.channelName
         updateTimeTextViews()
 
-        binding.spinnerRepeat.adapter = ArrayAdapter.createFromResource(this, R.array.repeat_options, android.R.layout.simple_spinner_item).also {
-            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        }
-        binding.spinnerAfterEvent.adapter = ArrayAdapter.createFromResource(this, R.array.after_event_options, android.R.layout.simple_spinner_item).also {
-            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        }
+        val repeatAdapter = ArrayAdapter.createFromResource(
+            this, R.array.repeat_options, android.R.layout.simple_spinner_item
+        )
+        repeatAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.spinnerRepeat.adapter = repeatAdapter
+
+        val afterEventAdapter = ArrayAdapter.createFromResource(
+            this, R.array.after_event_options, android.R.layout.simple_spinner_item
+        )
+        afterEventAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.spinnerAfterEvent.adapter = afterEventAdapter
+
 
         binding.textStartTime.setOnClickListener { showTimePickerDialog(isStart = true) }
         binding.textEndTime.setOnClickListener { showTimePickerDialog(isStart = false) }
-        binding.buttonCancel.setOnClickListener { finish() }
+
+        // When the user cancels, revert the optimistic marking.
+        binding.buttonCancel.setOnClickListener { revertMarkAndFinish() }
         binding.buttonSave.setOnClickListener { scheduleAdvancedTimer() }
     }
 
+    // Also revert the marking if the user presses the physical back button.
+    override fun onBackPressed() {
+        super.onBackPressed()
+        revertMarkAndFinish()
+    }
+
     private fun showTimePickerDialog(isStart: Boolean) {
-        val cal = if (isStart) startCalendar else endCalendar
-        TimePickerDialog(this, { _, hour, minute ->
-            cal.set(Calendar.HOUR_OF_DAY, hour)
-            cal.set(Calendar.MINUTE, minute)
-            updateTimeTextViews()
-        }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
+        val calendar = if (isStart) startCalendar else endCalendar
+        TimePickerDialog(
+            this, { _, hourOfDay, minute ->
+                calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+                calendar.set(Calendar.MINUTE, minute)
+                updateTimeTextViews()
+            },
+            calendar.get(Calendar.HOUR_OF_DAY),
+            calendar.get(Calendar.MINUTE),
+            true
+        ).show()
     }
 
     private fun updateTimeTextViews() {
@@ -78,42 +102,53 @@ class AdvancedScheduleActivity : AppCompatActivity() {
 
     private fun scheduleAdvancedTimer() {
         val editedTitle = binding.editProgramTitle.text.toString()
+        val afterEvent = binding.spinnerAfterEvent.selectedItemPosition
+
+        val repeated = 0
+
         Toast.makeText(this, getString(R.string.scheduling_toast, editedTitle), Toast.LENGTH_SHORT).show()
 
-        val repeatedValue = when (binding.spinnerRepeat.selectedItemPosition) {
-            1 -> 127 // Daily
-            2 -> getWeeklyRepeatedValue()
-            else -> 0 // Once
-        }
-        val afterEventValue = binding.spinnerAfterEvent.selectedItemPosition
-
         lifecycleScope.launch(Dispatchers.IO) {
-            // DEFINITIVE FIX: Pass all required parameters.
-            val success = SchedulingHelper.scheduleTimer(
+            val result = SchedulingHelper.scheduleTimer(
                 context = applicationContext,
                 title = editedTitle,
                 sRef = sRef!!,
                 startTimeMillis = startCalendar.timeInMillis,
                 endTimeMillis = endCalendar.timeInMillis,
-                description = program?.shortDescription ?: editedTitle,
+                description = program?.shortDescription ?: "",
                 justPlay = 0,
-                repeated = repeatedValue,
-                afterEvent = afterEventValue
+                repeated = repeated,
+                afterEvent = afterEvent
             )
-            val message = if (success) getString(R.string.schedule_success) else getString(R.string.schedule_failed)
+
+            val success = result.first
+            val message = result.second
+
             withContext(Dispatchers.Main) {
-                Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
+                Toast.makeText(applicationContext, if (success) getString(R.string.schedule_success) else message, Toast.LENGTH_LONG).show()
                 if (success) {
-                    NotificationHelper.sendSuccessNotification(applicationContext, program!!)
+                    val prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
+                    if (prefs.getBoolean("NOTIFY_SCHEDULED_ENABLED", true)) {
+                        NotificationHelper.sendSuccessNotification(applicationContext, program!!)
+                    }
+                    // The marking was already done, so just finish.
                     finish()
+                } else {
+                    // If scheduling failed, revert the optimistic marking.
+                    revertMarkAndFinish()
                 }
             }
         }
     }
 
-    private fun getWeeklyRepeatedValue(): Int = when (startCalendar.get(Calendar.DAY_OF_WEEK)) {
-        Calendar.MONDAY -> 1; Calendar.TUESDAY -> 2; Calendar.WEDNESDAY -> 4; Calendar.THURSDAY -> 8
-        Calendar.FRIDAY -> 16; Calendar.SATURDAY -> 32; Calendar.SUNDAY -> 64; else -> 0
+    // Sends a broadcast to the RecordService to tell it to un-mark the program.
+    private fun revertMarkAndFinish() {
+        program?.let {
+            val intent = Intent(RecordService.ACTION_REVERT_MARKING)
+            intent.putExtra("PROGRAM_EXTRA", it)
+            LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+        }
+        finish()
     }
 }
 

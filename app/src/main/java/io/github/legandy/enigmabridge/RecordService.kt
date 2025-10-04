@@ -1,8 +1,10 @@
 package io.github.legandy.enigmabridge
 
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.os.IBinder
 import android.util.Log
@@ -15,104 +17,141 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.tvbrowser.devplugin.Channel
 import org.tvbrowser.devplugin.Plugin
 import org.tvbrowser.devplugin.PluginManager
 import org.tvbrowser.devplugin.PluginMenu
 import org.tvbrowser.devplugin.Program
 import org.tvbrowser.devplugin.ReceiveTarget
+import kotlin.math.abs
 
 class RecordService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private lateinit var prefs: SharedPreferences
 
+    private var mPluginManager: PluginManager? = null
+    private var cachedTimers: List<Timer> = emptyList()
+
+    private val markedProgramIds = mutableSetOf<String>()
+
     companion object {
         private const val TAG = "EnigmaBridgeService"
         private const val MENU_ID_SIMPLE_SCHEDULE = 1
         private const val MENU_ID_ADVANCED_SCHEDULE = 2
-        // Action for the broadcast to notify UI of changes.
+        private const val MENU_ID_UNSCHEDULE = 3
         const val ACTION_TIMER_LIST_CHANGED = "io.github.legandy.enigmabridge.TIMER_LIST_CHANGED"
+        const val ACTION_REVERT_MARKING = "io.github.legandy.enigmabridge.ACTION_REVERT_MARKING"
+        private const val PREF_MARKED_IDS = "MARKED_PROGRAM_IDS"
+    }
+
+    // This receiver listens for the "revert" signal from AdvancedScheduleActivity.
+    private val revertMarkReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == ACTION_REVERT_MARKING) {
+                @Suppress("DEPRECATION")
+                val programToUnmark: Program? = intent.getParcelableExtra("PROGRAM_EXTRA")
+                if (programToUnmark != null) {
+                    Log.d(TAG, "Received signal to revert mark for program: ${programToUnmark.title}")
+                    revertMarking(programToUnmark)
+                }
+            }
+        }
     }
 
     override fun onCreate() {
         super.onCreate()
         prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
         NotificationHelper.createNotificationChannel(this)
+        loadMarkedProgramIds()
+        updateTimerCache()
+        LocalBroadcastManager.getInstance(this).registerReceiver(revertMarkReceiver, IntentFilter(ACTION_REVERT_MARKING))
     }
 
-    // AIDL binder implementation for TV Browser plugin communication.
+    override fun onDestroy() {
+        super.onDestroy()
+        serviceScope.cancel()
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(revertMarkReceiver)
+    }
+
     private val binder: Plugin.Stub = object : Plugin.Stub() {
-        // --- Plugin Metadata ---
-        override fun getVersion(): String {
-            return try {
-                packageManager.getPackageInfo(packageName, 0).versionName ?: "1.0"
-            } catch (e: Exception) { "1.0" }
-        }
+        override fun getVersion(): String { return try { packageManager.getPackageInfo(packageName, 0).versionName ?: "1.0" } catch (e: Exception) { "1.0" } }
         override fun getName(): String = getString(R.string.app_name)
         override fun getDescription(): String = getString(R.string.plugin_description)
         override fun getAuthor(): String = getString(R.string.plugin_author)
         override fun getLicense(): String = getString(R.string.plugin_license)
         override fun hasPreferences(): Boolean = true
-
-        // Opens the MainActivity when preferences are selected in TV Browser.
         override fun openPreferences(subscribedChannels: MutableList<Channel>?) {
-            val intent = Intent(applicationContext, MainActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
+            val intent = Intent(applicationContext, MainActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
             startActivity(intent)
         }
+        override fun onActivation(pluginManager: PluginManager?) { mPluginManager = pluginManager; updateTimerCache() }
+        override fun getMarkIcon(): ByteArray? = null
+        override fun onDeactivation() { mPluginManager = null }
+        override fun handleFirstKnownProgramId(programId: Long) {}
+        override fun getAvailableProgramReceiveTargets(): Array<ReceiveTarget>? = null
+        override fun receivePrograms(programs: Array<Program>?, target: ReceiveTarget?) {}
 
-        // Defines the context menu items to show in TV Browser.
+
         override fun getContextMenuActionsForProgram(program: Program?): Array<PluginMenu> {
-            val simpleMenu = PluginMenu(MENU_ID_SIMPLE_SCHEDULE, getString(R.string.context_menu_schedule_simple))
-            val advancedMenu = PluginMenu(MENU_ID_ADVANCED_SCHEDULE, getString(R.string.context_menu_schedule_advanced))
-            return arrayOf(simpleMenu, advancedMenu)
+            if (program != null) {
+                return if (markedProgramIds.contains(program.id.toString())) {
+                    arrayOf(PluginMenu(MENU_ID_UNSCHEDULE, "Un-schedule Recording"))
+                } else {
+                    arrayOf(
+                        PluginMenu(MENU_ID_SIMPLE_SCHEDULE, getString(R.string.context_menu_schedule_simple)),
+                        PluginMenu(MENU_ID_ADVANCED_SCHEDULE, getString(R.string.context_menu_schedule_advanced))
+                    )
+                }
+            }
+            return emptyArray()
         }
 
-        // Handles the user's selection from the context menu.
         override fun onProgramContextMenuSelected(program: Program?, pluginMenu: PluginMenu?): Boolean {
             if (program != null && pluginMenu != null) {
                 when (pluginMenu.id) {
-                    MENU_ID_SIMPLE_SCHEDULE -> scheduleRecording(program, isAdvanced = false)
-                    MENU_ID_ADVANCED_SCHEDULE -> scheduleRecording(program, isAdvanced = true)
+                    MENU_ID_SIMPLE_SCHEDULE, MENU_ID_ADVANCED_SCHEDULE -> {
+                        // Optimistically mark the program for immediate UI feedback.
+                        markedProgramIds.add(program.id.toString())
+                        saveMarkedProgramIds()
+                        scheduleRecording(program, isAdvanced = (pluginMenu.id == MENU_ID_ADVANCED_SCHEDULE))
+                        // Return true to tell TV Browser to apply color-coding now.
+                        return true
+                    }
+                    MENU_ID_UNSCHEDULE -> {
+                        val unmarked = mPluginManager?.unmarkProgram(program) ?: false
+                        if (unmarked) {
+                            markedProgramIds.remove(program.id.toString())
+                            saveMarkedProgramIds()
+                            unscheduleRecording(program)
+                        }
+                    }
                 }
             }
             return false
         }
 
-        // --- Unused Stubs ---
-        override fun getMarkIcon(): ByteArray? = null
-        override fun getMarkedPrograms(): LongArray = longArrayOf()
-        override fun isMarked(programId: Long): Boolean = false
-        override fun onActivation(pluginManager: PluginManager?) {}
-        override fun onDeactivation() {}
-        override fun handleFirstKnownProgramId(programId: Long) {}
-        override fun getAvailableProgramReceiveTargets(): Array<ReceiveTarget>? = null
-        override fun receivePrograms(programs: Array<Program>?, target: ReceiveTarget?) {}
+        override fun isMarked(programId: Long): Boolean = markedProgramIds.contains(programId.toString())
+        override fun getMarkedPrograms(): LongArray = markedProgramIds.mapNotNull { it.toLongOrNull() }.toLongArray()
     }
 
-    // Core logic for scheduling a recording.
     private fun scheduleRecording(program: Program, isAdvanced: Boolean) {
-        val syncedChannelsJson = prefs.getString("SYNCED_CHANNELS", null)
-        if (syncedChannelsJson == null) {
+        val syncedChannels = getSyncedChannels()
+        if (syncedChannels == null) {
             showToast(getString(R.string.error_channel_list_not_synced))
+            revertMarking(program)
             return
         }
 
-        val type = object : TypeToken<Map<String, String>>() {}.type
-        val syncedChannels: Map<String, String> = Gson().fromJson(syncedChannelsJson, type)
-
-        val tvBrowserChannelName = program.channel.channelName
-        val sRef = findSrefForChannel(tvBrowserChannelName, syncedChannels)
-
-        if (sRef.isNullOrEmpty()) {
-            showToast(getString(R.string.error_channel_not_found, tvBrowserChannelName))
+        val sRef = findSrefForChannel(program.channel.channelName, syncedChannels)
+        if (sRef == null) {
+            showToast(getString(R.string.error_channel_not_found, program.channel.channelName))
+            revertMarking(program)
             return
         }
 
         if (isAdvanced) {
-            // Launch the advanced scheduling screen for user edits.
             val intent = Intent(applicationContext, AdvancedScheduleActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 putExtra("PROGRAM_EXTRA", program)
@@ -120,10 +159,9 @@ class RecordService : Service() {
             }
             startActivity(intent)
         } else {
-            // Schedule immediately with default settings.
             showToast(getString(R.string.scheduling_toast, program.title))
             serviceScope.launch {
-                val success = SchedulingHelper.scheduleTimer(
+                val result = SchedulingHelper.scheduleTimer(
                     context = applicationContext,
                     title = program.title,
                     sRef = sRef,
@@ -135,59 +173,107 @@ class RecordService : Service() {
                     afterEvent = 0
                 )
 
-                val message = if (success) getString(R.string.schedule_success) else getString(R.string.schedule_failed)
-                showToast(message)
+                val success = result.first
+                val message = result.second
 
-                if(success) {
-                    // Check user preference before sending a notification.
+                showToast(if (success) getString(R.string.schedule_success) else message)
+
+                if (success) {
                     if (prefs.getBoolean("NOTIFY_SCHEDULED_ENABLED", true)) {
                         NotificationHelper.sendSuccessNotification(applicationContext, program)
                     }
-                    // Notify the UI to refresh.
                     sendRefreshBroadcast()
+                    updateTimerCache()
+                } else {
+                    // If simple scheduling fails, revert the mark.
+                    revertMarking(program)
                 }
             }
         }
     }
 
-    // Sends a local broadcast to signal that the timer list has changed.
+    private fun unscheduleRecording(program: Program) {
+        val timerToZap = findTimerForProgram(program)
+        if (timerToZap == null) { showToast("Could not find matching timer to delete."); return }
+
+        serviceScope.launch {
+            val client = getEnigmaClient() ?: return@launch
+            val result = client.deleteTimer(timerToZap)
+
+            val success = result.first
+            val message = result.second
+
+            showToast(if (success) "Timer unscheduled." else message)
+
+            if (success) {
+                updateTimerCache()
+                sendRefreshBroadcast()
+            } else {
+                // If deletion failed, re-add the ID to our set to keep UI in sync.
+                markedProgramIds.add(program.id.toString())
+                saveMarkedProgramIds()
+            }
+        }
+    }
+
+    // This function handles undoing a mark in TV Browser.
+    private fun revertMarking(program: Program) {
+        markedProgramIds.remove(program.id.toString())
+        saveMarkedProgramIds()
+        mPluginManager?.unmarkProgram(program)
+    }
+
+    private fun loadMarkedProgramIds() {
+        val idString = prefs.getString(PREF_MARKED_IDS, null)
+        if (!idString.isNullOrEmpty()) { markedProgramIds.clear(); markedProgramIds.addAll(idString.split(',')) }
+    }
+
+    private fun saveMarkedProgramIds() {
+        prefs.edit().putString(PREF_MARKED_IDS, markedProgramIds.joinToString(",")).apply()
+    }
+
+    private fun findTimerForProgram(program: Program): Timer? {
+        return cachedTimers.find { timer ->
+            val titleMatch = timer.name.equals(program.title, ignoreCase = true)
+            val timeDifference = abs(program.startTimeInUTC - (timer.beginTimestamp * 1000))
+            val timeMatch = timeDifference < (5 * 60 * 1000)
+            titleMatch && timeMatch
+        }
+    }
+
+    private fun updateTimerCache() {
+        serviceScope.launch(Dispatchers.IO) {
+            val client = getEnigmaClient() ?: return@launch
+            val timers = client.getTimerList()
+            if (timers != null) { cachedTimers = timers; Log.d(TAG, "Timer cache updated with ${cachedTimers.size} timers.") }
+        }
+    }
+
+    private fun getEnigmaClient(): EnigmaClient? {
+        val ip = prefs.getString("IP_ADDRESS", "") ?: ""
+        return if (ip.isNotEmpty()) { EnigmaClient(ip, prefs.getString("USERNAME", "root") ?: "", prefs.getString("PASSWORD", "") ?: "", prefs) } else { null }
+    }
+
+    private fun getSyncedChannels(): Map<String, String>? {
+        val json = prefs.getString("SYNCED_CHANNELS", null)
+        return if (json != null) { Gson().fromJson(json, object : TypeToken<Map<String, String>>() {}.type) } else { null }
+    }
+
+    private fun findSrefForChannel(tvBrowserChannelName: String, syncedChannels: Map<String, String>): String? {
+        syncedChannels.forEach { (syncedName, sRef) -> if (syncedName.equals(tvBrowserChannelName, ignoreCase = true)) return sRef }
+        syncedChannels.forEach { (syncedName, sRef) -> if (syncedName.contains(tvBrowserChannelName, ignoreCase = true)) return sRef }
+        syncedChannels.forEach { (syncedName, sRef) -> if (tvBrowserChannelName.contains(syncedName, ignoreCase = true)) return sRef }
+        return null
+    }
+
+    private fun showToast(message: String) { CoroutineScope(Dispatchers.Main).launch { Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show() } }
+
     private fun sendRefreshBroadcast() {
         val intent = Intent(ACTION_TIMER_LIST_CHANGED)
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
         Log.d(TAG, "Sent timer list changed broadcast.")
     }
 
-    // Matches the TV Browser channel name to a channel in the synced bouquet.
-    private fun findSrefForChannel(tvBrowserChannelName: String, syncedChannels: Map<String, String>): String? {
-        // Exact match (case-insensitive)
-        for ((syncedName, sRef) in syncedChannels) {
-            if (syncedName.equals(tvBrowserChannelName, ignoreCase = true)) return sRef
-        }
-        // Partial match: synced name contains TV Browser name
-        for ((syncedName, sRef) in syncedChannels) {
-            if (syncedName.contains(tvBrowserChannelName, ignoreCase = true)) return sRef
-        }
-        // Partial match: TV Browser name contains synced name
-        for ((syncedName, sRef) in syncedChannels) {
-            if (tvBrowserChannelName.contains(syncedName, ignoreCase = true)) return sRef
-        }
-        return null
-    }
-
-    // Helper to show toasts on the main thread.
-    private fun showToast(message: String) {
-        CoroutineScope(Dispatchers.Main).launch {
-            Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
-        }
-    }
-
-    // Binds the service to TV Browser.
     override fun onBind(intent: Intent): IBinder = binder
-
-    // Cleans up coroutine scope when the service is destroyed.
-    override fun onDestroy() {
-        super.onDestroy()
-        serviceScope.cancel()
-    }
 }
 

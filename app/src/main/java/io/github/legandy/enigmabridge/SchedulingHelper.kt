@@ -7,6 +7,7 @@ object SchedulingHelper {
 
     private const val TAG = "SchedulingHelper"
 
+    // This function now returns a Pair containing the result and a message.
     suspend fun scheduleTimer(
         context: Context,
         title: String,
@@ -17,7 +18,7 @@ object SchedulingHelper {
         justPlay: Int,
         repeated: Int,
         afterEvent: Int
-    ): Boolean {
+    ): Pair<Boolean, String> {
         val prefs = context.getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
 
         val ip = prefs.getString("IP_ADDRESS", "") ?: ""
@@ -25,12 +26,11 @@ object SchedulingHelper {
         val pass = prefs.getString("PASSWORD", "") ?: ""
 
         if (ip.isEmpty()) {
-            return false
+            return Pair(false, "IP Address not configured.")
         }
 
         val (finalStartTimeSeconds, finalEndTimeSeconds) = applyBuffer(prefs, startTimeMillis, endTimeMillis)
 
-        // Pass the prefs object to the client.
         val client = EnigmaClient(ip, user, pass, prefs)
         return client.addTimer(title, sRef, finalStartTimeSeconds, finalEndTimeSeconds, description, justPlay, repeated, afterEvent)
     }
