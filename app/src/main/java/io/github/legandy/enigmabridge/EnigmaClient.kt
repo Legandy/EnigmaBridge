@@ -1,10 +1,10 @@
 package io.github.legandy.enigmabridge
 
-import android.os.Parcel
 import android.os.Parcelable
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
+import kotlinx.parcelize.Parcelize
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -17,63 +17,25 @@ data class ServiceResponse(@SerializedName("services") val services: List<Servic
 data class Service(@SerializedName("servicereference") val sRef: String, @SerializedName("servicename") val sName: String)
 data class TimerListResponse(@SerializedName("timers") val timers: List<Timer>)
 
-// Updated Timer data class to include more details for the edit screen
+data class SimpleResultResponse(
+    @SerializedName("result") val result: Boolean,
+    @SerializedName("message") val message: String
+)
+
+@Parcelize
 data class Timer(
     @SerializedName("servicereference") val sRef: String?,
     @SerializedName("servicename") val sName: String,
     @SerializedName("name") val name: String,
-    @SerializedName("description") val description: String?,
+    @SerializedName("description") val description: String,
     @SerializedName("begin") val beginTimestamp: Long,
     @SerializedName("end") val endTimestamp: Long,
     @SerializedName("state") val state: Int,
-    @SerializedName("eit") val eit: String?,
+    @SerializedName("justplay") val justPlay: Int,
+    @SerializedName("afterevent") val afterEvent: Int,
     @SerializedName("repeated") val repeated: Int,
-    @SerializedName("justplay") val justplay: Int,
-    @SerializedName("afterevent") val afterevent: Int
-) : Parcelable {
-    constructor(parcel: Parcel) : this(
-        parcel.readString(),
-        parcel.readString()!!,
-        parcel.readString()!!,
-        parcel.readString(),
-        parcel.readLong(),
-        parcel.readLong(),
-        parcel.readInt(),
-        parcel.readString(),
-        parcel.readInt(),
-        parcel.readInt(),
-        parcel.readInt()
-    )
-
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeString(sRef)
-        parcel.writeString(sName)
-        parcel.writeString(name)
-        parcel.writeString(description)
-        parcel.writeLong(beginTimestamp)
-        parcel.writeLong(endTimestamp)
-        parcel.writeInt(state)
-        parcel.writeString(eit)
-        parcel.writeInt(repeated)
-        parcel.writeInt(justplay)
-        parcel.writeInt(afterevent)
-    }
-
-    override fun describeContents(): Int {
-        return 0
-    }
-
-    companion object CREATOR : Parcelable.Creator<Timer> {
-        override fun createFromParcel(parcel: Parcel): Timer {
-            return Timer(parcel)
-        }
-
-        override fun newArray(size: Int): Array<Timer?> {
-            return arrayOfNulls(size)
-        }
-    }
-}
-
+    @SerializedName("disabled") val disabled: Int
+) : Parcelable
 
 class EnigmaClient(private val ipAddress: String, private val user: String, private val pass: String) {
 
@@ -91,55 +53,60 @@ class EnigmaClient(private val ipAddress: String, private val user: String, priv
     }
 
     private fun buildUrl(path: String, query: String? = null): String {
-        return if (query.isNullOrEmpty()) {
-            "http://$ipAddress$path"
-        } else {
-            "http://$ipAddress$path?$query"
-        }
+        return "http://$ipAddress$path".let { if (query != null) "$it?$query" else it }
     }
 
     suspend fun checkConnection(): Boolean {
-        val url = buildUrl(API_ABOUT)
-        return executeRequest(url) != null
+        return executeRequest(buildUrl(API_ABOUT)) != null
+    }
+
+    private suspend fun executeAction(url: String): Boolean {
+        val jsonString = executeRequest(url)
+        return if (jsonString != null) {
+            try {
+                val response = gson.fromJson(jsonString, SimpleResultResponse::class.java)
+                if (!response.result) {
+                    Log.e(TAG, "API action failed. Receiver message: ${response.message}")
+                }
+                response.result
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not parse SimpleResultResponse. Assuming success based on HTTP status.", e)
+                true
+            }
+        } else {
+            false
+        }
     }
 
     suspend fun addTimer(
-        title: String,
-        description: String,
-        sRef: String,
-        startTime: Long,
-        endTime: Long,
-        repeated: Int,
-        afterEvent: Int,
-        justPlay: Int
+        title: String, sRef: String, startTime: Long, endTime: Long, description: String,
+        justPlay: Int, repeated: Int, afterEvent: Int
     ): Boolean {
-        val encodedTitle = URLEncoder.encode(title, "UTF-8")
-        val encodedDescription = URLEncoder.encode(description, "UTF-8")
-        val encodedSRef = URLEncoder.encode(sRef, "UTF-8")
-
-        val query = "sRef=$encodedSRef&name=$encodedTitle&begin=$startTime&end=$endTime" +
-                "&description=$encodedDescription&justplay=$justPlay&repeated=$repeated&afterevent=$afterEvent"
-        val url = buildUrl(API_TIMER_ADD, query)
-        return executeRequest(url) != null
+        val query = buildString {
+            append("sRef=${URLEncoder.encode(sRef, "UTF-8")}")
+            append("&name=${URLEncoder.encode(title, "UTF-8")}")
+            append("&description=${URLEncoder.encode(description, "UTF-8")}")
+            append("&begin=$startTime")
+            append("&end=$endTime")
+            append("&justplay=$justPlay")
+            append("&repeated=$repeated")
+            append("&afterevent=$afterEvent")
+        }
+        return executeAction(buildUrl(API_TIMER_ADD, query))
     }
 
+    // --- TEMPORARILY DISABLED ---
+    // The following functions are commented out to prevent their use until the deletion bug is fully resolved.
+    /*
     suspend fun editTimer(
-        originalTimer: Timer,
-        newTitle: String,
-        newDescription: String,
-        newSRef: String,
-        newStartTime: Long,
-        newEndTime: Long,
-        repeated: Int,
-        afterEvent: Int,
-        justPlay: Int
+        originalTimer: Timer, newTitle: String, newSRef: String, newStartTime: Long,
+        newEndTime: Long, newDescription: String, justPlay: Int, repeated: Int, afterEvent: Int
     ): Boolean {
-        val deleteSuccess = deleteTimer(originalTimer)
-        if (!deleteSuccess) {
+        if (!deleteTimer(originalTimer)) {
             Log.e(TAG, "editTimer failed because the original timer could not be deleted.")
             return false
         }
-        return addTimer(newTitle, newDescription, newSRef, newStartTime, newEndTime, repeated, afterEvent, justPlay)
+        return addTimer(newTitle, newSRef, newStartTime, newEndTime, newDescription, justPlay, repeated, afterEvent)
     }
 
     suspend fun deleteTimer(timer: Timer): Boolean {
@@ -147,86 +114,71 @@ class EnigmaClient(private val ipAddress: String, private val user: String, priv
         val endTimestamp = timer.endTimestamp
         val query: String
 
-        if (timer.sRef.isNullOrEmpty()) {
-            Log.w(TAG, "Timer '${timer.name}' is missing sRef. Using fallback delete method (timestamps only).")
+        if (timer.sRef.isNullOrBlank()) {
             query = "begin=$beginTimestamp&end=$endTimestamp"
         } else {
-            Log.d(TAG, "Using standard delete method (sRef + timestamps) for timer '${timer.name}'.")
             val encodedSRef = URLEncoder.encode(timer.sRef, "UTF-8")
             query = "sRef=$encodedSRef&begin=$beginTimestamp&end=$endTimestamp"
         }
 
         val url = buildUrl(API_TIMER_DELETE, query)
-        Log.d(TAG, "Attempting to delete timer with URL: $url")
-        return executeRequest(url) != null
+        return executeAction(url)
     }
+    */
+    // --- END TEMPORARILY DISABLED ---
+
 
     suspend fun getBouquets(): Map<String, String>? {
-        val url = buildUrl(API_BOUQUETS)
-        val jsonString = executeRequest(url)
-        return if (jsonString != null) {
+        val jsonString = executeRequest(buildUrl(API_BOUQUETS))
+        return jsonString?.let {
             try {
-                val response = gson.fromJson(jsonString, BouquetResponse::class.java)
-                response.bouquets.associate { it[1] to it[0] }
+                gson.fromJson(it, BouquetResponse::class.java).bouquets.associate { b -> b[1] to b[0] }
             } catch (e: Exception) {
-                null
+                Log.e(TAG, "Failed to parse bouquets JSON.", e); null
             }
-        } else {
-            null
         }
     }
 
     suspend fun getChannelsInBouquet(bouquetSref: String): Map<String, String>? {
-        val encodedSref = URLEncoder.encode(bouquetSref, "UTF-8")
-        val url = buildUrl(API_GET_SERVICES, "sRef=$encodedSref")
+        val url = buildUrl(API_GET_SERVICES, "sRef=${URLEncoder.encode(bouquetSref, "UTF-8")}")
         val jsonString = executeRequest(url)
-        return if (jsonString != null) {
+        return jsonString?.let {
             try {
-                val response = gson.fromJson(jsonString, ServiceResponse::class.java)
-                response.services.associate { it.sName to it.sRef }
+                gson.fromJson(it, ServiceResponse::class.java).services.associate { s -> s.sName to s.sRef }
             } catch (e: Exception) {
-                null
+                Log.e(TAG, "Failed to parse channels JSON.", e); null
             }
-        } else {
-            null
         }
     }
 
     suspend fun getTimerList(): List<Timer>? {
-        val url = buildUrl(API_TIMER_LIST)
-        val jsonString = executeRequest(url)
-        return if (jsonString != null) {
+        val jsonString = executeRequest(buildUrl(API_TIMER_LIST))
+        return jsonString?.let {
             try {
-                val response = gson.fromJson(jsonString, TimerListResponse::class.java)
-                response.timers
+                gson.fromJson(it, TimerListResponse::class.java).timers
             } catch (e: Exception) {
-                null
+                Log.e(TAG, "Failed to parse timer list JSON.", e); null
             }
-        } else {
-            null
         }
     }
 
     private fun executeRequest(url: String): String? {
-        Log.d(TAG, "Executing request to: $url")
         val requestBuilder = Request.Builder().url(url)
         if (user.isNotEmpty() || pass.isNotEmpty()) {
-            val credential = Credentials.basic(user, pass)
-            requestBuilder.header("Authorization", credential)
+            requestBuilder.header("Authorization", Credentials.basic(user, pass))
         }
         return try {
             val response = client.newCall(requestBuilder.build()).execute()
+            val responseBody = response.body?.string()
             if (response.isSuccessful) {
-                val responseBody = response.body?.string()
-                Log.d(TAG, "Request successful. Response: $responseBody")
+                Log.d(TAG, "Request successful for URL: $url. Response: $responseBody")
                 responseBody
             } else {
-                Log.e(TAG, "Request failed with code: ${response.code}")
+                Log.e(TAG, "Request failed with code: ${response.code} for URL: $url. Response: $responseBody")
                 null
             }
         } catch (e: IOException) {
-            Log.e(TAG, "IOException during request", e)
-            null
+            Log.e(TAG, "IOException during request for URL: $url", e); null
         }
     }
 }

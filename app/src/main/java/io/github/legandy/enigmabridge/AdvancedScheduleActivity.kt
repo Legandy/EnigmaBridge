@@ -36,13 +36,11 @@ class AdvancedScheduleActivity : AppCompatActivity() {
 
         if (program == null || sRef == null) {
             Toast.makeText(this, getString(R.string.error_program_data_missing), Toast.LENGTH_LONG).show()
-            finish()
-            return
+            finish(); return
         }
 
         startCalendar.timeInMillis = program!!.startTimeInUTC
         endCalendar.timeInMillis = program!!.endTimeInUTC
-
         setupUI()
     }
 
@@ -51,34 +49,26 @@ class AdvancedScheduleActivity : AppCompatActivity() {
         binding.textChannelName.text = program!!.channel.channelName
         updateTimeTextViews()
 
-        val repeatOptions = resources.getStringArray(R.array.repeat_options)
-        val repeatAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, repeatOptions)
-        repeatAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spinnerRepeat.adapter = repeatAdapter
+        binding.spinnerRepeat.adapter = ArrayAdapter.createFromResource(this, R.array.repeat_options, android.R.layout.simple_spinner_item).also {
+            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+        binding.spinnerAfterEvent.adapter = ArrayAdapter.createFromResource(this, R.array.after_event_options, android.R.layout.simple_spinner_item).also {
+            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
 
-        val afterEventOptions = resources.getStringArray(R.array.after_event_options)
-        val afterEventAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, afterEventOptions)
-        binding.spinnerAfterEvent.adapter = afterEventAdapter
-
-
-        binding.textStartTime.setOnClickListener { showTimePickerDialog(isStartTime = true) }
-        binding.textEndTime.setOnClickListener { showTimePickerDialog(isStartTime = false) }
+        binding.textStartTime.setOnClickListener { showTimePickerDialog(isStart = true) }
+        binding.textEndTime.setOnClickListener { showTimePickerDialog(isStart = false) }
         binding.buttonCancel.setOnClickListener { finish() }
         binding.buttonSave.setOnClickListener { scheduleAdvancedTimer() }
     }
 
-    private fun showTimePickerDialog(isStartTime: Boolean) {
-        val calendar = if (isStartTime) startCalendar else endCalendar
-        TimePickerDialog(
-            this, { _, hourOfDay, minute ->
-                calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
-                calendar.set(Calendar.MINUTE, minute)
-                updateTimeTextViews()
-            },
-            calendar.get(Calendar.HOUR_OF_DAY),
-            calendar.get(Calendar.MINUTE),
-            true
-        ).show()
+    private fun showTimePickerDialog(isStart: Boolean) {
+        val cal = if (isStart) startCalendar else endCalendar
+        TimePickerDialog(this, { _, hour, minute ->
+            cal.set(Calendar.HOUR_OF_DAY, hour)
+            cal.set(Calendar.MINUTE, minute)
+            updateTimeTextViews()
+        }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
     }
 
     private fun updateTimeTextViews() {
@@ -88,27 +78,29 @@ class AdvancedScheduleActivity : AppCompatActivity() {
 
     private fun scheduleAdvancedTimer() {
         val editedTitle = binding.editProgramTitle.text.toString()
-        val afterEvent = binding.spinnerAfterEvent.selectedItemPosition
-        val repeated = when (binding.spinnerRepeat.selectedItemPosition) {
-            1 -> 127 // Daily
-            2 -> 128 // Weekly
-            else -> 0 // Once
-        }
-
-
         Toast.makeText(this, getString(R.string.scheduling_toast, editedTitle), Toast.LENGTH_SHORT).show()
 
+        val repeatedValue = when (binding.spinnerRepeat.selectedItemPosition) {
+            1 -> 127 // Daily
+            2 -> getWeeklyRepeatedValue()
+            else -> 0 // Once
+        }
+        val afterEventValue = binding.spinnerAfterEvent.selectedItemPosition
+
         lifecycleScope.launch(Dispatchers.IO) {
+            // DEFINITIVE FIX: Pass all required parameters.
             val success = SchedulingHelper.scheduleTimer(
                 context = applicationContext,
                 title = editedTitle,
                 sRef = sRef!!,
                 startTimeMillis = startCalendar.timeInMillis,
                 endTimeMillis = endCalendar.timeInMillis,
+                description = program?.shortDescription ?: editedTitle,
+                justPlay = 0,
+                repeated = repeatedValue,
+                afterEvent = afterEventValue
             )
-
             val message = if (success) getString(R.string.schedule_success) else getString(R.string.schedule_failed)
-
             withContext(Dispatchers.Main) {
                 Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
                 if (success) {
@@ -117,6 +109,11 @@ class AdvancedScheduleActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun getWeeklyRepeatedValue(): Int = when (startCalendar.get(Calendar.DAY_OF_WEEK)) {
+        Calendar.MONDAY -> 1; Calendar.TUESDAY -> 2; Calendar.WEDNESDAY -> 4; Calendar.THURSDAY -> 8
+        Calendar.FRIDAY -> 16; Calendar.SATURDAY -> 32; Calendar.SUNDAY -> 64; else -> 0
     }
 }
 

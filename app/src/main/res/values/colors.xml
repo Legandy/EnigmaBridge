@@ -3,6 +3,11 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
+    <!-- Material Blue Accent Colors -->
+    <color name="material_blue_500">#2196F3</color> <!-- Standard Blue for Light Theme -->
+    <color name="material_blue_700">#1976D2</color> <!-- Darker Variant -->
+    <color name="material_blue_200">#90CAF9</color> <!-- Lighter Blue for Dark Theme -->
+
     <!-- Timer Status Colors -->
     <color name="status_scheduled">#FFC107</color> <!-- Amber -->
     <color name="status_preparing">#FF9800</color> <!-- Orange -->
@@ -11,3 +16,4 @@
     <color name="status_error">#F44336</color>     <!-- Red -->
     <color name="status_unknown">#9E9E9E</color>   <!-- Grey -->
 </resources>
+

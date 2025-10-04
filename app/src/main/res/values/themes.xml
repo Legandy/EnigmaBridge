@@ -1,10 +1,17 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme for ALL API levels. -->
-    <style name="Theme.EnigmaBridge" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- You can customize base colors here if needed for older devices -->
+    <!-- Base application theme. -->
+    <style name="Base.Theme.EnigmaBridge" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/material_blue_500</item>
+        <item name="colorPrimaryVariant">@color/material_blue_700</item>
     </style>
 
-    <!-- A specific theme for dialog-like activities -->
-    <style name="Theme.EnigmaBridge.Dialog" parent="Theme.Material3.DayNight.Dialog.Alert" />
+    <style name="Theme.EnigmaBridge" parent="Base.Theme.EnigmaBridge" />
+
+    <!-- Custom Dialog Theme for the Advanced Scheduling Activity -->
+    <style name="Theme.EnigmaBridge.Dialog" parent="Theme.Material3.DayNight.Dialog">
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowMinWidthMajor">90%</item>
+        <item name="android:windowMinWidthMinor">90%</item>
+    </style>
 </resources>
 

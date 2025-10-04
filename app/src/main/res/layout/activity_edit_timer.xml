@@ -1,236 +1,254 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
     tools:context=".EditTimerActivity">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:layout_height="wrap_content">
 
-        <!-- Title -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/title_layout"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="0dp"
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:title="@string/title_edit_schedule" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/label_program_title"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            android:padding="16dp">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Description -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/description_layout"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="@string/label_description"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/title_layout">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_description"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="top"
-                android:lines="3" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Start Date/Time -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/start_date_layout"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="8dp"
-            android:hint="@string/label_start_date"
-            app:layout_constraintEnd_toStartOf="@id/start_time_layout"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/description_layout">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_start_date"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:focusable="false" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/start_time_layout"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:hint="@string/label_start_time"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/start_date_layout"
-            app:layout_constraintTop_toTopOf="@id/start_date_layout">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_start_time"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:focusable="false" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-
-        <!-- End Date/Time -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/end_date_layout"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="8dp"
-            android:hint="@string/label_end_date"
-            app:layout_constraintEnd_toStartOf="@id/end_time_layout"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/start_date_layout">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_end_date"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:focusable="false" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/end_time_layout"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:hint="@string/label_end_time"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/end_date_layout"
-            app:layout_constraintTop_toTopOf="@id/end_date_layout">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_end_time"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:focusable="false" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- After Event -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/after_event_layout"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="@string/label_after_event"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/end_date_layout">
-
-            <AutoCompleteTextView
-                android:id="@+id/spinner_after_event"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="none" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/switch_just_play"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/label_just_play"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/after_event_layout" />
-
-        <!-- Day Toggles -->
-        <TextView
-            android:id="@+id/repeats_on_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="@string/label_repeats_on"
-            android:textAppearance="?attr/textAppearanceBody1"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/switch_just_play" />
-
-        <HorizontalScrollView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/repeats_on_label">
-
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/day_toggle_group"
+            <TextView
+                android:id="@+id/labelService"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:singleSelection="false">
+                android:text="@string/label_service"
+                android:textAppearance="?attr/textAppearanceLabelMedium"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/toggle_monday"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+            <Spinner
+                android:id="@+id/spinnerService"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:minHeight="48dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/labelService" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/titleLayout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:hint="@string/label_program_title"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/spinnerService">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editProgramTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/descriptionLayout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/label_description"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/titleLayout">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:id="@+id/textBeginDate"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:padding="12dp"
+                android:text="@string/label_begin_date"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
+                app:layout_constraintEnd_toStartOf="@id/textBeginTime"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/descriptionLayout" />
+
+            <TextView
+                android:id="@+id/textBeginTime"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:padding="12dp"
+                android:text="@string/label_begin_time"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/textBeginDate"
+                app:layout_constraintTop_toTopOf="@id/textBeginDate" />
+
+            <TextView
+                android:id="@+id/textEndDate"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:padding="12dp"
+                android:text="@string/label_end_date"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
+                app:layout_constraintEnd_toStartOf="@id/textEndTime"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/textBeginDate" />
+
+            <TextView
+                android:id="@+id/textEndTime"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:padding="12dp"
+                android:text="@string/label_end_time"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/textEndDate"
+                app:layout_constraintTop_toTopOf="@id/textEndDate" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/toggleEnabled"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:checked="true"
+                android:text="@string/label_enabled"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/textEndDate" />
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/timerTypeGroup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/toggleEnabled"
+                app:selectionRequired="true"
+                app:singleSelection="true">
+
+                <Button
+                    android:id="@+id/toggleRecord"
+                    style="?attr/materialButtonOutlinedStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/day_mo" />
+                    android:text="@string/label_record" />
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/toggle_tuesday"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                <Button
+                    android:id="@+id/toggleJustPlay"
+                    style="?attr/materialButtonOutlinedStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/day_tu" />
+                    android:text="@string/label_justplay" />
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/toggle_wednesday"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                <Button
+                    android:id="@+id/toggleSwitch"
+                    style="?attr/materialButtonOutlinedStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/day_we" />
+                    android:text="@string/label_switch" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/toggle_thursday"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/repeatsOnGroup"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/timerTypeGroup"
+                app:selectionRequired="true">
+
+                <Button
+                    android:id="@+id/toggleMonday"
+                    style="?attr/materialButtonOutlinedStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/day_th" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/toggle_friday"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:text="@string/day_mon" />
+                <Button
+                    android:id="@+id/toggleTuesday"
+                    style="?attr/materialButtonOutlinedStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/day_fr" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/toggle_saturday"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:text="@string/day_tue" />
+                <Button
+                    android:id="@+id/toggleWednesday"
+                    style="?attr/materialButtonOutlinedStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/day_sa" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/toggle_sunday"
-                    style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:text="@string/day_wed" />
+                <Button
+                    android:id="@+id/toggleThursday"
+                    style="?attr/materialButtonOutlinedStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/day_su" />
+                    android:text="@string/day_thu" />
+                <Button
+                    android:id="@+id/toggleFriday"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/day_fri" />
+                <Button
+                    android:id="@+id/toggleSaturday"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/day_sat" />
+                <Button
+                    android:id="@+id/toggleSunday"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/day_sun" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
 
-            </com.google.android.material.chip.ChipGroup>
-        </HorizontalScrollView>
+            <Button
+                android:id="@+id/buttonSave"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/button_save"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/repeatsOnGroup" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
-</ScrollView>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
 

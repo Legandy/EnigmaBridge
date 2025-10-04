@@ -5,6 +5,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="org.tvbrowser.permission.BIND_PLUGIN" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
 
     <application
         android:allowBackup="true"
@@ -16,6 +18,7 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
 
+        <!-- Activities -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -30,14 +33,9 @@
             android:label="@string/label_scheduled_timers" />
 
         <activity
-            android:name=".RecordingSettingsActivity"
-            android:label="@string/title_recording_settings"
+            android:name=".SettingsActivity"
+            android:label="@string/title_settings"
             android:parentActivityName=".MainActivity"/>
-
-        <activity
-            android:name=".EditTimerActivity"
-            android:label="@string/title_edit_schedule"
-            android:parentActivityName=".TimerListActivity" />
 
         <activity
             android:name=".AdvancedScheduleActivity"
@@ -46,6 +44,7 @@
             android:taskAffinity=""
             android:excludeFromRecents="true"/>
 
+        <!-- Services -->
         <service
             android:name=".RecordService"
             android:exported="true"
@@ -56,6 +55,29 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".TimerCheckService"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <!-- Broadcast Receivers -->
+        <receiver
+            android:name=".TimerCheckReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- New receiver for external sync triggers -->
+        <receiver
+            android:name=".SyncTriggerReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="io.github.legandy.enigmabridge.ACTION_TRIGGER_SYNC" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
     <queries>
@@ -63,3 +85,4 @@
     </queries>
 
 </manifest>
+

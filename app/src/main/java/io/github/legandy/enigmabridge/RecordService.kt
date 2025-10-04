@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
@@ -30,6 +31,8 @@ class RecordService : Service() {
         private const val TAG = "EnigmaBridgeService"
         private const val MENU_ID_SIMPLE_SCHEDULE = 1
         private const val MENU_ID_ADVANCED_SCHEDULE = 2
+        // Action for the broadcast to notify UI of changes.
+        const val ACTION_TIMER_LIST_CHANGED = "io.github.legandy.enigmabridge.TIMER_LIST_CHANGED"
     }
 
     override fun onCreate() {
@@ -38,8 +41,9 @@ class RecordService : Service() {
         NotificationHelper.createNotificationChannel(this)
     }
 
+    // AIDL binder implementation for TV Browser plugin communication.
     private val binder: Plugin.Stub = object : Plugin.Stub() {
-        // All metadata methods (getName, getVersion, etc.) remain the same
+        // --- Plugin Metadata ---
         override fun getVersion(): String {
             return try {
                 packageManager.getPackageInfo(packageName, 0).versionName ?: "1.0"
@@ -50,18 +54,23 @@ class RecordService : Service() {
         override fun getAuthor(): String = getString(R.string.plugin_author)
         override fun getLicense(): String = getString(R.string.plugin_license)
         override fun hasPreferences(): Boolean = true
+
+        // Opens the MainActivity when preferences are selected in TV Browser.
         override fun openPreferences(subscribedChannels: MutableList<Channel>?) {
             val intent = Intent(applicationContext, MainActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             startActivity(intent)
         }
+
+        // Defines the context menu items to show in TV Browser.
         override fun getContextMenuActionsForProgram(program: Program?): Array<PluginMenu> {
             val simpleMenu = PluginMenu(MENU_ID_SIMPLE_SCHEDULE, getString(R.string.context_menu_schedule_simple))
             val advancedMenu = PluginMenu(MENU_ID_ADVANCED_SCHEDULE, getString(R.string.context_menu_schedule_advanced))
             return arrayOf(simpleMenu, advancedMenu)
         }
 
+        // Handles the user's selection from the context menu.
         override fun onProgramContextMenuSelected(program: Program?, pluginMenu: PluginMenu?): Boolean {
             if (program != null && pluginMenu != null) {
                 when (pluginMenu.id) {
@@ -72,7 +81,7 @@ class RecordService : Service() {
             return false
         }
 
-        // Unused stubs
+        // --- Unused Stubs ---
         override fun getMarkIcon(): ByteArray? = null
         override fun getMarkedPrograms(): LongArray = longArrayOf()
         override fun isMarked(programId: Long): Boolean = false
@@ -83,6 +92,7 @@ class RecordService : Service() {
         override fun receivePrograms(programs: Array<Program>?, target: ReceiveTarget?) {}
     }
 
+    // Core logic for scheduling a recording.
     private fun scheduleRecording(program: Program, isAdvanced: Boolean) {
         val syncedChannelsJson = prefs.getString("SYNCED_CHANNELS", null)
         if (syncedChannelsJson == null) {
@@ -102,6 +112,7 @@ class RecordService : Service() {
         }
 
         if (isAdvanced) {
+            // Launch the advanced scheduling screen for user edits.
             val intent = Intent(applicationContext, AdvancedScheduleActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 putExtra("PROGRAM_EXTRA", program)
@@ -109,6 +120,7 @@ class RecordService : Service() {
             }
             startActivity(intent)
         } else {
+            // Schedule immediately with default settings.
             showToast(getString(R.string.scheduling_toast, program.title))
             serviceScope.launch {
                 val success = SchedulingHelper.scheduleTimer(
@@ -117,39 +129,62 @@ class RecordService : Service() {
                     sRef = sRef,
                     startTimeMillis = program.startTimeInUTC,
                     endTimeMillis = program.endTimeInUTC,
+                    description = program.shortDescription ?: "",
+                    justPlay = 0,
+                    repeated = 0,
+                    afterEvent = 0
                 )
 
                 val message = if (success) getString(R.string.schedule_success) else getString(R.string.schedule_failed)
                 showToast(message)
 
                 if(success) {
-                    NotificationHelper.sendSuccessNotification(applicationContext, program)
+                    // Check user preference before sending a notification.
+                    if (prefs.getBoolean("NOTIFY_SCHEDULED_ENABLED", true)) {
+                        NotificationHelper.sendSuccessNotification(applicationContext, program)
+                    }
+                    // Notify the UI to refresh.
+                    sendRefreshBroadcast()
                 }
             }
         }
     }
 
+    // Sends a local broadcast to signal that the timer list has changed.
+    private fun sendRefreshBroadcast() {
+        val intent = Intent(ACTION_TIMER_LIST_CHANGED)
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+        Log.d(TAG, "Sent timer list changed broadcast.")
+    }
+
+    // Matches the TV Browser channel name to a channel in the synced bouquet.
     private fun findSrefForChannel(tvBrowserChannelName: String, syncedChannels: Map<String, String>): String? {
+        // Exact match (case-insensitive)
         for ((syncedName, sRef) in syncedChannels) {
             if (syncedName.equals(tvBrowserChannelName, ignoreCase = true)) return sRef
         }
+        // Partial match: synced name contains TV Browser name
         for ((syncedName, sRef) in syncedChannels) {
             if (syncedName.contains(tvBrowserChannelName, ignoreCase = true)) return sRef
         }
+        // Partial match: TV Browser name contains synced name
         for ((syncedName, sRef) in syncedChannels) {
             if (tvBrowserChannelName.contains(syncedName, ignoreCase = true)) return sRef
         }
         return null
     }
 
+    // Helper to show toasts on the main thread.
     private fun showToast(message: String) {
         CoroutineScope(Dispatchers.Main).launch {
             Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
         }
     }
 
+    // Binds the service to TV Browser.
     override fun onBind(intent: Intent): IBinder = binder
 
+    // Cleans up coroutine scope when the service is destroyed.
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()

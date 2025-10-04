@@ -27,6 +27,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: SharedPreferences
     private var bouquetsMap: Map<String, String> = emptyMap()
 
+    // Handles the result of the notification permission request.
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
@@ -43,11 +44,16 @@ class MainActivity : AppCompatActivity() {
         prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
 
         setupUI()
-        loadSettings()
-        runChecks()
         requestNotificationPermission()
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Refresh checks every time the user returns to ensure status is up-to-date.
+        runChecks()
+    }
+
+    // Requests notification permission on Android 13+ if not already granted.
     private fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -56,9 +62,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Sets up initial UI state and click listeners.
     private fun setupUI() {
+        binding.editIpAddress.setText(prefs.getString("IP_ADDRESS", ""))
+        binding.editUsername.setText(prefs.getString("USERNAME", "root"))
+        binding.editPassword.setText(prefs.getString("PASSWORD", ""))
+
         binding.buttonSave.setOnClickListener {
-            saveSettings()
+            prefs.edit().apply {
+                putString("IP_ADDRESS", binding.editIpAddress.text.toString().trim())
+                putString("USERNAME", binding.editUsername.text.toString().trim())
+                putString("PASSWORD", binding.editPassword.text.toString())
+                apply()
+            }
             runChecks()
         }
 
@@ -70,28 +86,12 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, TimerListActivity::class.java))
         }
 
-        binding.buttonRecordingSettings.setOnClickListener {
-            startActivity(Intent(this, RecordingSettingsActivity::class.java))
+        binding.buttonSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
         }
     }
 
-    private fun loadSettings() {
-        binding.editIpAddress.setText(prefs.getString("IP_ADDRESS", ""))
-        binding.editUsername.setText(prefs.getString("USERNAME", "root"))
-        binding.editPassword.setText(prefs.getString("PASSWORD", ""))
-    }
-
-    private fun saveSettings() {
-        prefs.edit().apply {
-            putString("IP_ADDRESS", binding.editIpAddress.text.toString().trim())
-            putString("USERNAME", binding.editUsername.text.toString().trim())
-            putString("PASSWORD", binding.editPassword.text.toString())
-            apply()
-        }
-        Toast.makeText(this, "Settings Saved", Toast.LENGTH_SHORT).show()
-    }
-
-
+    // Fetches the list of channel bouquets from the receiver.
     private fun fetchBouquets() {
         showLoading(true)
         val ip = binding.editIpAddress.text.toString().trim()
@@ -115,7 +115,6 @@ class MainActivity : AppCompatActivity() {
                     val adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_item, bouquetNames)
                     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                     binding.bouquetsSpinner.adapter = adapter
-                    Toast.makeText(applicationContext, getString(R.string.bouquets_found_toast, bouquetNames.size), Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(applicationContext, getString(R.string.error_fetch_bouquets), Toast.LENGTH_LONG).show()
                 }
@@ -123,6 +122,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Downloads and saves the channels from the selected bouquet.
     private fun syncSelectedBouquet() {
         val selectedBouquetName = binding.bouquetsSpinner.selectedItem as? String
         if (selectedBouquetName == null) {
@@ -151,7 +151,13 @@ class MainActivity : AppCompatActivity() {
                     val gson = Gson()
                     val jsonChannels = gson.toJson(channels)
                     prefs.edit().putString("SYNCED_CHANNELS", jsonChannels).apply()
+
                     Toast.makeText(applicationContext, getString(R.string.sync_success_toast, channels.size), Toast.LENGTH_LONG).show()
+                    // Check user preference before sending sync notification.
+                    if (prefs.getBoolean("NOTIFY_SYNC_SUCCESS_ENABLED", true)) {
+                        NotificationHelper.sendSyncSuccessNotification(applicationContext, channels.size)
+                    }
+
                 } else {
                     Toast.makeText(applicationContext, getString(R.string.error_sync_channels), Toast.LENGTH_LONG).show()
                 }
@@ -159,7 +165,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
+    // Checks if the TV Browser application is installed on the device.
     private fun isTvBrowserInstalled(): Boolean {
         return try {
             val pm = packageManager
@@ -175,20 +181,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Runs all status checks and updates the UI accordingly.
     private fun runChecks() {
-        // TV Browser Check
+        // Check for TV Browser installation.
         if (isTvBrowserInstalled()) {
             binding.statusTvBrowserIcon.setImageResource(R.drawable.ic_check_circle)
-            binding.statusTvBrowserIcon.setColorFilter(ContextCompat.getColor(this, R.color.status_finished)) // Green
+            binding.statusTvBrowserIcon.setColorFilter(ContextCompat.getColor(this, android.R.color.holo_green_dark))
             binding.statusTvBrowserText.text = getString(R.string.status_tvbrowser_found)
         } else {
             binding.statusTvBrowserIcon.setImageResource(R.drawable.ic_error)
-            binding.statusTvBrowserIcon.setColorFilter(ContextCompat.getColor(this, R.color.status_error)) // Red
+            binding.statusTvBrowserIcon.setColorFilter(Color.RED)
             binding.statusTvBrowserText.text = getString(R.string.status_tvbrowser_not_found)
         }
 
-        // Enigma Receiver Check
+        // Check the status of the periodic sync setting.
+        updatePeriodicSyncStatusIndicator()
+
+        // Check the connection to the Enigma receiver.
         val ip = binding.editIpAddress.text.toString().trim()
+        val user = binding.editUsername.text.toString().trim()
+        val pass = binding.editPassword.text.toString()
+
         if (ip.isEmpty()) {
             binding.statusEnigmaIcon.setImageResource(R.drawable.ic_error)
             binding.statusEnigmaIcon.setColorFilter(Color.RED)
@@ -197,8 +210,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         showLoading(true)
-        val user = binding.editUsername.text.toString().trim()
-        val pass = binding.editPassword.text.toString()
         lifecycleScope.launch(Dispatchers.IO) {
             val client = EnigmaClient(ip, user, pass)
             val isConnected = client.checkConnection()
@@ -207,18 +218,33 @@ class MainActivity : AppCompatActivity() {
                 showLoading(false)
                 if (isConnected) {
                     binding.statusEnigmaIcon.setImageResource(R.drawable.ic_check_circle)
-                    binding.statusEnigmaIcon.setColorFilter(ContextCompat.getColor(applicationContext, R.color.status_finished)) // Green
+                    binding.statusEnigmaIcon.setColorFilter(ContextCompat.getColor(applicationContext, android.R.color.holo_green_dark))
                     binding.statusEnigmaText.text = getString(R.string.status_enigma_success)
                     fetchBouquets()
                 } else {
                     binding.statusEnigmaIcon.setImageResource(R.drawable.ic_error)
-                    binding.statusEnigmaIcon.setColorFilter(ContextCompat.getColor(applicationContext, R.color.status_error)) // Red
+                    binding.statusEnigmaIcon.setColorFilter(Color.RED)
                     binding.statusEnigmaText.text = getString(R.string.status_enigma_failed)
                 }
             }
         }
     }
 
+    // Updates the sync status indicator based on the saved user preference.
+    private fun updatePeriodicSyncStatusIndicator() {
+        val intervalHours = prefs.getInt("SYNC_INTERVAL_HOURS", 0)
+        if (intervalHours > 0) {
+            binding.statusTimerSyncIcon.setImageResource(R.drawable.ic_check_circle)
+            binding.statusTimerSyncIcon.setColorFilter(ContextCompat.getColor(this, android.R.color.holo_green_dark))
+            binding.statusTimerSyncText.text = getString(R.string.status_periodic_sync_enabled)
+        } else {
+            binding.statusTimerSyncIcon.setImageResource(R.drawable.ic_error)
+            binding.statusTimerSyncIcon.setColorFilter(Color.RED)
+            binding.statusTimerSyncText.text = getString(R.string.status_periodic_sync_disabled)
+        }
+    }
+
+    // Shows or hides the progress bar.
     private fun showLoading(isLoading: Boolean) {
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
     }

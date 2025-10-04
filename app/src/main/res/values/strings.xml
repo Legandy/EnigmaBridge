@@ -14,6 +14,8 @@
     <string name="status_tvbrowser_unchecked">TV-Browser: Not Checked</string>
     <string name="status_tvbrowser_found">TV-Browser: Found</string>
     <string name="status_tvbrowser_not_found">TV-Browser: Not Installed</string>
+    <string name="status_periodic_sync_enabled">Periodic Sync: Enabled</string>
+    <string name="status_periodic_sync_disabled">Periodic Sync: Disabled</string>
 
     <!-- Plugin Metadata -->
     <string name="plugin_description">Schedules recordings on an Enigma2 receiver.</string>
@@ -27,11 +29,8 @@
     <string name="error_channel_not_found">Error: Channel \'%1$s\' not found in synced list.</string>
     <string name="error_ip_not_set">Error: IP Address not set.</string>
     <string name="scheduling_toast">Scheduling \'%1$s\'...</string>
-    <string name="saving_toast">Saving timer for \'%1$s\'...</string>
     <string name="schedule_success">Recording Scheduled!</string>
     <string name="schedule_failed">Failed to Schedule Recording.</string>
-    <string name="save_success">Timer Saved!</string>
-    <string name="save_failed">Failed to Save Timer.</string>
     <string name="bouquets_found_toast">%1$d bouquets found.</string>
     <string name="error_fetch_bouquets">Failed to fetch bouquets.</string>
     <string name="error_no_bouquet_selected">No bouquet selected.</string>
@@ -43,10 +42,10 @@
     <string name="error_fetch_timers">Failed to fetch timer list.</string>
     <string name="no_timers_found">No scheduled timers found.</string>
     <string name="label_scheduled_timers">Scheduled Timers</string>
-    <string name="error_program_data_missing">Error: Program data missing.</string>
-    <string name="error_timer_data_missing">Error: Timer data missing.</string>
     <string name="sync_selected_bouquet">Sync Selected Bouquet</string>
     <string name="view_scheduled_timers">View Scheduled Timers</string>
+    <string name="error_program_data_missing">Error: Program data missing.</string>
+    <string name="toast_sync_triggered_externally">Timer sync triggered externally.</string>
 
     <!-- Notifications -->
     <string name="notification_channel_name">EnigmaBridge Notifications</string>
@@ -55,14 +54,14 @@
     <string name="notification_content">\'%1$s\' on %2$s at %3$s</string>
     <string name="permission_granted">Notification permission granted.</string>
     <string name="permission_denied">Notification permission denied. You will not receive status updates.</string>
+    <string name="notification_title_recording_started">Recording Started</string>
+    <string name="notification_content_recording_started">\'%1$s\' has started recording on %2$s.</string>
+    <string name="notification_title_sync_success">Sync Successful</string>
+    <string name="notification_content_sync_success">Successfully synced %1$d channels.</string>
 
-    <!-- Timer List Item & Menu -->
-    <string name="timer_time_range_single_day">%1$s - %2$s</string>
-    <string name="timer_time_range_multi_day">%1$s, %2$s - %3$s, %4$s</string>
+    <!-- Timer List Item -->
+    <string name="timer_time_range_detailed">%1$s - %2$s</string>
     <string name="menu_description">Menu for timer actions</string>
-    <string name="action_edit">Edit</string>
-    <string name="timer_type_record">Record</string>
-    <string name="timer_type_zap">Switch Channel</string>
 
     <!-- Deletion Dialog -->
     <string name="delete_timer_title">Delete Timer</string>
@@ -72,33 +71,52 @@
     <string name="delete_timer_success">Timer deleted successfully.</string>
     <string name="delete_timer_failed">Failed to delete timer.</string>
 
-    <!-- Recording Settings -->
-    <string name="title_recording_settings">Recording Settings</string>
-    <string name="button_recording_settings">Recording Settings</string>
+    <!-- Settings Page -->
+    <string name="title_settings">Settings</string>
+    <string name="button_settings">Settings</string>
     <string name="hint_minutes_before">Start recording minutes earlier</string>
     <string name="hint_minutes_after">Stop recording minutes later</string>
-    <string name="toast_recording_settings_saved">Recording settings saved.</string>
+    <string name="toast_recording_settings_saved">Settings saved.</string>
+    <string name="label_periodic_sync_interval">Periodic Sync Interval (Hours)</string>
+    <string name="hint_sync_interval">Enter 0-24 (0 = Disabled)</string>
+    <string name="label_notifications">Notifications</string>
+    <string name="label_notify_on_schedule">Notify on Timer Schedule</string>
+    <string name="label_notify_on_record_start">Notify on Recording Start</string>
+    <string name="label_notify_on_sync">Notify on Successful Sync</string>
 
-    <!-- Advanced & Edit Scheduling -->
+    <!-- Advanced Scheduling and Edit -->
     <string name="title_advanced_schedule">Advanced Scheduling</string>
     <string name="title_edit_schedule">Edit Timer</string>
-    <string name="label_start_time">Start Time</string>
-    <string name="label_end_time">End Time</string>
-    <string name="label_start_date">Start Date</string>
-    <string name="label_end_date">End Date</string>
-    <string name="label_repeat">Repeat</string>
-    <string name="label_after_event">After Event</string>
-    <string name="label_program_title">Title</string>
+    <string name="label_program_title">Program Title</string>
     <string name="label_description">Description</string>
+    <string name="label_service">Service</string>
+    <string name="label_begin_date">Begin date</string>
+    <string name="label_begin_time">Begin time</string>
+    <string name="label_end_date">End date</string>
+    <string name="label_end_time">End time</string>
+    <string name="label_enabled">Enabled</string>
+    <string name="label_record">Record</string>
+    <string name="label_justplay">JustPlay</string>
+    <string name="label_switch">Switch</string>
+    <string name="label_after_event">After event</string>
     <string name="label_repeats_on">Repeats on:</string>
-    <string name="label_just_play">Switch (Zap)</string>
-    <string name="day_mo">Mo</string>
-    <string name="day_tu">Tu</string>
-    <string name="day_we">We</string>
-    <string name="day_th">Th</string>
-    <string name="day_fr">Fr</string>
-    <string name="day_sa">Sa</string>
-    <string name="day_su">Su</string>
+    <string name="day_mon">Monday</string>
+    <string name="day_tue">Tuesday</string>
+    <string name="day_wed">Wednesday</string>
+    <string name="day_thu">Thursday</string>
+    <string name="day_fri">Friday</string>
+    <string name="day_sat">Saturday</string>
+    <string name="day_sun">Sunday</string>
+    <string name="toast_timer_saved">Timer saved successfully.</string>
+    <string name="toast_timer_save_failed">Failed to save timer.</string>
+    <string name="fab_refresh">Refresh Timers</string>
+    <string name="fab_add_timer">Add Timer</string>
+    <string name="label_start_time">Start:</string>
+    <string name="label_repeat">Repeat</string>
+    <string name="action_edit">Edit</string>
+    <string name="status_timer_sync_enabled">Event-Driven Sync: Enabled</string>
+    <string name="status_timer_sync_disabled">Event-Driven Sync: Disabled</string>
+
     <string-array name="repeat_options">
         <item>Once</item>
         <item>Daily</item>
@@ -110,10 +128,6 @@
         <item>Go to Deep Standby</item>
         <item>Auto</item>
     </string-array>
-
-    <!-- Main Activity Tabs -->
-    <string name="tab_title_settings">Settings</string>
-    <string name="tab_title_actions">Actions</string>
 
 </resources>
 

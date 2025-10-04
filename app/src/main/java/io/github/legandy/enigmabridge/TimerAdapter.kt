@@ -3,7 +3,6 @@ package io.github.legandy.enigmabridge
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import io.github.legandy.enigmabridge.databinding.ListItemTimerBinding
@@ -15,14 +14,6 @@ class TimerAdapter(
     private var timers: MutableList<Timer>
 ) : RecyclerView.Adapter<TimerAdapter.TimerViewHolder>() {
 
-    interface OnTimerInteractionListener {
-        fun onTimerDeleteClicked(timer: Timer)
-        fun onTimerEditClicked(timer: Timer)
-    }
-
-    var listener: OnTimerInteractionListener? = null
-
-
     inner class TimerViewHolder(val binding: ListItemTimerBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TimerViewHolder {
@@ -33,51 +24,61 @@ class TimerAdapter(
     override fun onBindViewHolder(holder: TimerViewHolder, position: Int) {
         val timer = timers[position]
         val context = holder.itemView.context
-        val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+        val dateTimeFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
         val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
-        val beginDate = Date(timer.beginTimestamp * 1000)
-        val endDate = Date(timer.endTimestamp * 1000)
+        val startDate = dateTimeFormat.format(Date(timer.beginTimestamp * 1000))
+        val endTime = timeFormat.format(Date(timer.endTimestamp * 1000))
 
-        holder.binding.textTimerChannel.text = timer.sName
         holder.binding.textTimerTitle.text = timer.name
-        holder.binding.textTimerTime.text = if (dateFormat.format(beginDate) == dateFormat.format(endDate)) {
-            context.getString(R.string.timer_time_range_single_day, timeFormat.format(beginDate), timeFormat.format(endDate))
-        } else {
-            context.getString(R.string.timer_time_range_multi_day, dateFormat.format(beginDate), timeFormat.format(beginDate), dateFormat.format(endDate), timeFormat.format(endDate))
-        }
+        holder.binding.textTimerChannel.text = timer.sName
 
-        // Set status icon and background color
-        val (iconRes, colorRes) = when (timer.state) {
-            0 -> Pair(R.drawable.ic_timer, R.color.status_scheduled)  // Scheduled
-            1 -> Pair(R.drawable.ic_recording, R.color.status_recording) // Preparing
-            2 -> Pair(R.drawable.ic_recording, R.color.status_recording) // Recording
-            3 -> Pair(R.drawable.ic_check_circle, R.color.status_finished)   // Finished
-            4 -> Pair(R.drawable.ic_error, R.color.status_error)       // Error
-            else -> Pair(R.drawable.ic_help, R.color.status_unknown)   // Unknown
+
+        holder.binding.textTimerTime.text = context.getString(R.string.timer_time_range_detailed, startDate, endTime)
+
+
+        // Set status icon based on timer state
+        val iconRes: Int
+        val colorRes: Int
+        when (timer.state) {
+            0, 1 -> { // Scheduled or Preparing
+                iconRes = R.drawable.ic_timer
+                colorRes = R.color.status_scheduled
+            }
+            2 -> { // Recording
+                iconRes = R.drawable.ic_recording
+                colorRes = R.color.status_recording
+            }
+            3 -> { // Finished
+                iconRes = R.drawable.ic_check_circle
+                colorRes = R.color.status_finished
+            }
+            else -> { // Error or Unknown
+                iconRes = R.drawable.ic_help
+                colorRes = R.color.status_error
+            }
         }
         holder.binding.statusIcon.setImageResource(iconRes)
-        holder.binding.statusIcon.background.setTint(ContextCompat.getColor(context, colorRes))
+        holder.binding.statusIcon.setColorFilter(ContextCompat.getColor(context, colorRes))
 
-        // Set Timer Type
-        if (timer.justplay == 1) {
-            holder.binding.statusIcon.setImageResource(R.drawable.ic_zap)
-            holder.binding.textTimerType.text = context.getString(R.string.timer_type_zap)
+        // Handle timer type (Zap/Switch)
+        if (timer.justPlay == 2) { // 2 corresponds to "Zap" or "Switch"
+            holder.binding.textTimerType.text = context.getString(R.string.label_switch)
+            holder.binding.textTimerType.visibility = View.VISIBLE
         } else {
-            holder.binding.textTimerType.text = context.getString(R.string.timer_type_record)
+            holder.binding.textTimerType.visibility = View.GONE
         }
 
-        // Handle 3-dot menu clicks
-        holder.binding.buttonMenu.setOnClickListener { view ->
-            showPopupMenu(view, timer)
-        }
+        // Hide the menu button to disable edit/delete UI
+        holder.binding.buttonMenu.visibility = View.GONE
     }
 
     override fun getItemCount(): Int = timers.size
 
     fun updateTimers(newTimers: List<Timer>) {
         this.timers.clear()
-        this.timers.addAll(newTimers)
+        // Sort timers by their begin time, newest first
+        this.timers.addAll(newTimers.sortedByDescending { it.beginTimestamp })
         notifyDataSetChanged()
     }
 
@@ -87,25 +88,6 @@ class TimerAdapter(
             timers.removeAt(position)
             notifyItemRemoved(position)
         }
-    }
-
-    private fun showPopupMenu(view: View, timer: Timer) {
-        val popup = PopupMenu(view.context, view)
-        popup.menuInflater.inflate(R.menu.timer_item_menu, popup.menu)
-        popup.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.action_delete_timer -> {
-                    listener?.onTimerDeleteClicked(timer)
-                    true
-                }
-                R.id.action_edit_timer -> {
-                    listener?.onTimerEditClicked(timer)
-                    true
-                }
-                else -> false
-            }
-        }
-        popup.show()
     }
 }
 

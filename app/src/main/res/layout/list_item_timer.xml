@@ -13,60 +13,62 @@
         android:padding="16dp">
 
         <ImageView
-            android:id="@+id/statusIcon"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/indicator_background"
-            android:padding="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:id="@+id/status_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@android:color/white"
-            tools:src="@drawable/ic_timer" />
+            app:layout_constraintTop_toTopOf="@+id/text_timer_title"
+            app:layout_constraintBottom_toBottomOf="@+id/text_timer_title"
+            tools:src="@drawable/ic_timer"
+            tools:tint="@color/status_scheduled"
+            android:contentDescription="@null"/>
 
         <TextView
-            android:id="@+id/textTimerChannel"
+            android:id="@+id/text_timer_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:textAppearance="?attr/textAppearanceBody2"
-            android:textColor="?android:attr/textColorSecondary"
+            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
             app:layout_constraintEnd_toStartOf="@+id/button_menu"
-            app:layout_constraintStart_toEndOf="@id/statusIcon"
+            app:layout_constraintStart_toEndOf="@id/status_icon"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="Warner TV Film HD" />
+            tools:text="Tatort" />
 
         <TextView
-            android:id="@+id/textTimerTitle"
+            android:id="@+id/text_timer_channel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textAppearance="?attr/textAppearanceHeadline6"
-            app:layout_constraintEnd_toEndOf="@+id/textTimerChannel"
-            app:layout_constraintStart_toStartOf="@+id/textTimerChannel"
-            app:layout_constraintTop_toBottomOf="@id/textTimerChannel"
-            tools:text="The Shining" />
+            android:layout_marginTop="2dp"
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            app:layout_constraintStart_toStartOf="@+id/text_timer_title"
+            app:layout_constraintEnd_toEndOf="@id/text_timer_title"
+            app:layout_constraintTop_toBottomOf="@+id/text_timer_title"
+            tools:text="Das Erste HD" />
 
         <TextView
-            android:id="@+id/textTimerTime"
+            android:id="@+id/text_timer_time"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textAppearance="?attr/textAppearanceCaption"
-            app:layout_constraintEnd_toEndOf="@+id/textTimerTitle"
-            app:layout_constraintStart_toStartOf="@+id/textTimerTitle"
-            app:layout_constraintTop_toBottomOf="@id/textTimerTitle"
-            tools:text="28.09.2025 00:33 - 28.09.2025 02:40" />
+            android:layout_marginTop="8dp"
+            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+            app:layout_constraintStart_toStartOf="@+id/text_timer_title"
+            app:layout_constraintTop_toBottomOf="@+id/text_timer_channel"
+            tools:text="26.09.2025 20:15 - 21:45" />
 
         <TextView
-            android:id="@+id/textTimerType"
+            android:id="@+id/text_timer_type"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textAppearance="?attr/textAppearanceCaption"
+            android:layout_marginStart="8dp"
+            android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+            android:textColor="?attr/colorPrimary"
             android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="@+id/textTimerTime"
-            app:layout_constraintTop_toBottomOf="@id/textTimerTime"
-            tools:text="Recording" />
+            app:layout_constraintBaseline_toBaselineOf="@+id/text_timer_time"
+            app:layout_constraintStart_toEndOf="@+id/text_timer_time"
+            tools:text="ZAP"
+            android:visibility="gone"/>
+
 
         <ImageView
             android:id="@+id/button_menu"
@@ -74,14 +76,15 @@
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
-            android:contentDescription="@string/menu_description"
             android:focusable="true"
             android:padding="8dp"
             android:src="@drawable/ic_more_vert"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:tint="?attr/colorOnSurface" />
+            app:tint="?attr/colorOnSurfaceVariant"
+            android:contentDescription="@string/menu_description" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </com.google.android.material.card.MaterialCardView>
 
