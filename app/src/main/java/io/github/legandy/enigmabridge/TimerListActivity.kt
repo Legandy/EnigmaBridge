@@ -103,7 +103,7 @@ class TimerListActivity : AppCompatActivity() {
 
         // Perform network call on IO dispatcher.
         lifecycleScope.launch(Dispatchers.IO) {
-            val client = EnigmaClient(ip, user, pass)
+            val client = EnigmaClient(ip, user, pass, prefs)
             val timers = client.getTimerList()
 
             // Switch to Main dispatcher to update UI.

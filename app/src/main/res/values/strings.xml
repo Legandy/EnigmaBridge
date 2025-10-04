@@ -2,7 +2,8 @@
     <string name="app_name">Enigma Bridge</string>
     <string name="receiver_settings">Receiver Settings</string>
     <string name="hint_ip_address">IP Address or Hostname</string>
-    <string name="hint_username">Username (e.g., root)</string>
+    <string name="hint_username">Username</string>
+    <string name="username_default">root</string>
     <string name="hint_password">Password</string>
     <string name="button_save_and_test">Save &amp; Test Connection</string>
     <string name="button_save">Save</string>
@@ -16,6 +17,9 @@
     <string name="status_tvbrowser_not_found">TV-Browser: Not Installed</string>
     <string name="status_periodic_sync_enabled">Periodic Sync: Enabled</string>
     <string name="status_periodic_sync_disabled">Periodic Sync: Disabled</string>
+    <string name="status_timer_sync_enabled">Event-Driven Sync: Enabled</string>
+    <string name="status_timer_sync_disabled">Event-Driven Sync: Disabled</string>
+    <string name="label_use_https">Use HTTPS (SSL)</string>
 
     <!-- Plugin Metadata -->
     <string name="plugin_description">Schedules recordings on an Enigma2 receiver.</string>
@@ -114,8 +118,6 @@
     <string name="label_start_time">Start:</string>
     <string name="label_repeat">Repeat</string>
     <string name="action_edit">Edit</string>
-    <string name="status_timer_sync_enabled">Event-Driven Sync: Enabled</string>
-    <string name="status_timer_sync_disabled">Event-Driven Sync: Disabled</string>
 
     <string-array name="repeat_options">
         <item>Once</item>
@@ -128,6 +130,5 @@
         <item>Go to Deep Standby</item>
         <item>Auto</item>
     </string-array>
-
 </resources>
 

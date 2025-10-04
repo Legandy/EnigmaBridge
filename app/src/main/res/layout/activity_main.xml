@@ -20,7 +20,18 @@
             android:text="@string/receiver_settings"
             android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/switch_use_https"
+            app:layout_constraintBottom_toBottomOf="@+id/switch_use_https"/>
+
+        <!-- HTTPS Switch moved into the header -->
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_use_https"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/label_use_https"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
 
         <!-- IP Address -->
         <com.google.android.material.textfield.TextInputLayout
@@ -49,13 +60,13 @@
             android:hint="@string/hint_username"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/ipAddressLayout">
+            app:layout_constraintTop_toBottomOf="@id/ipAddressLayout" >
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editUsername"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="root" />
+                android:text="@string/username_default" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Password -->
@@ -156,12 +167,12 @@
             android:id="@+id/divider"
             android:layout_width="0dp"
             android:layout_height="1dp"
-            android:layout_marginTop="56dp"
+            android:layout_marginTop="32dp"
             android:background="?attr/colorOutlineVariant"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/statusTvBrowserText" />
+            app:layout_constraintTop_toBottomOf="@id/statusTimerSyncText" />
 
         <Spinner
             android:id="@+id/bouquets_spinner"
@@ -233,8 +244,8 @@
             app:layout_constraintBottom_toTopOf="@+id/divider"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/header_title"
-            app:layout_constraintVertical_bias="0.8"/>
+            app:layout_constraintTop_toBottomOf="@+id/passwordLayout"
+            app:layout_constraintVertical_bias="0.5"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

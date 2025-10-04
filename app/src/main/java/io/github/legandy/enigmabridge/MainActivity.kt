@@ -64,13 +64,16 @@ class MainActivity : AppCompatActivity() {
 
     // Sets up initial UI state and click listeners.
     private fun setupUI() {
+        // Load saved state for all fields.
         binding.editIpAddress.setText(prefs.getString("IP_ADDRESS", ""))
+        binding.switchUseHttps.isChecked = prefs.getBoolean("USE_HTTPS", false)
         binding.editUsername.setText(prefs.getString("USERNAME", "root"))
         binding.editPassword.setText(prefs.getString("PASSWORD", ""))
 
         binding.buttonSave.setOnClickListener {
             prefs.edit().apply {
                 putString("IP_ADDRESS", binding.editIpAddress.text.toString().trim())
+                putBoolean("USE_HTTPS", binding.switchUseHttps.isChecked)
                 putString("USERNAME", binding.editUsername.text.toString().trim())
                 putString("PASSWORD", binding.editPassword.text.toString())
                 apply()
@@ -104,7 +107,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch(Dispatchers.IO) {
-            val client = EnigmaClient(ip, user, pass)
+            // Pass prefs to the client so it knows about the HTTPS setting.
+            val client = EnigmaClient(ip, user, pass, prefs)
             val fetchedBouquets = client.getBouquets()
 
             withContext(Dispatchers.Main) {
@@ -142,7 +146,7 @@ class MainActivity : AppCompatActivity() {
         val pass = binding.editPassword.text.toString()
 
         lifecycleScope.launch(Dispatchers.IO) {
-            val client = EnigmaClient(ip, user, pass)
+            val client = EnigmaClient(ip, user, pass, prefs)
             val channels = client.getChannelsInBouquet(bouquetSref)
 
             withContext(Dispatchers.Main) {
@@ -153,7 +157,6 @@ class MainActivity : AppCompatActivity() {
                     prefs.edit().putString("SYNCED_CHANNELS", jsonChannels).apply()
 
                     Toast.makeText(applicationContext, getString(R.string.sync_success_toast, channels.size), Toast.LENGTH_LONG).show()
-                    // Check user preference before sending sync notification.
                     if (prefs.getBoolean("NOTIFY_SYNC_SUCCESS_ENABLED", true)) {
                         NotificationHelper.sendSyncSuccessNotification(applicationContext, channels.size)
                     }
@@ -211,7 +214,7 @@ class MainActivity : AppCompatActivity() {
 
         showLoading(true)
         lifecycleScope.launch(Dispatchers.IO) {
-            val client = EnigmaClient(ip, user, pass)
+            val client = EnigmaClient(ip, user, pass, prefs)
             val isConnected = client.checkConnection()
 
             withContext(Dispatchers.Main) {

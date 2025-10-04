@@ -1,5 +1,6 @@
 package io.github.legandy.enigmabridge
 
+import android.content.SharedPreferences
 import android.os.Parcelable
 import android.util.Log
 import com.google.gson.Gson
@@ -16,7 +17,6 @@ data class BouquetResponse(@SerializedName("bouquets") val bouquets: List<List<S
 data class ServiceResponse(@SerializedName("services") val services: List<Service>)
 data class Service(@SerializedName("servicereference") val sRef: String, @SerializedName("servicename") val sName: String)
 data class TimerListResponse(@SerializedName("timers") val timers: List<Timer>)
-
 data class SimpleResultResponse(
     @SerializedName("result") val result: Boolean,
     @SerializedName("message") val message: String
@@ -37,7 +37,13 @@ data class Timer(
     @SerializedName("disabled") val disabled: Int
 ) : Parcelable
 
-class EnigmaClient(private val ipAddress: String, private val user: String, private val pass: String) {
+// The constructor now takes SharedPreferences to read the HTTPS setting.
+class EnigmaClient(
+    private val ipAddress: String,
+    private val user: String,
+    private val pass: String,
+    private val prefs: SharedPreferences
+) {
 
     private val client = OkHttpClient()
     private val gson = Gson()
@@ -52,8 +58,11 @@ class EnigmaClient(private val ipAddress: String, private val user: String, priv
         private const val API_TIMER_LIST = "/api/timerlist"
     }
 
+    // This function now checks the preference and uses http or https.
     private fun buildUrl(path: String, query: String? = null): String {
-        return "http://$ipAddress$path".let { if (query != null) "$it?$query" else it }
+        val useHttps = prefs.getBoolean("USE_HTTPS", false)
+        val scheme = if (useHttps) "https" else "http"
+        return "$scheme://$ipAddress$path".let { if (query != null) "$it?$query" else it }
     }
 
     suspend fun checkConnection(): Boolean {
@@ -95,8 +104,6 @@ class EnigmaClient(private val ipAddress: String, private val user: String, priv
         return executeAction(buildUrl(API_TIMER_ADD, query))
     }
 
-    // --- TEMPORARILY DISABLED ---
-    // The following functions are commented out to prevent their use until the deletion bug is fully resolved.
     /*
     suspend fun editTimer(
         originalTimer: Timer, newTitle: String, newSRef: String, newStartTime: Long,
@@ -115,6 +122,7 @@ class EnigmaClient(private val ipAddress: String, private val user: String, priv
         val query: String
 
         if (timer.sRef.isNullOrBlank()) {
+            Log.w(TAG, "Timer '${timer.name}' is missing sRef. Attempting delete with timestamps only.")
             query = "begin=$beginTimestamp&end=$endTimestamp"
         } else {
             val encodedSRef = URLEncoder.encode(timer.sRef, "UTF-8")
@@ -122,11 +130,10 @@ class EnigmaClient(private val ipAddress: String, private val user: String, priv
         }
 
         val url = buildUrl(API_TIMER_DELETE, query)
+        Log.d(TAG, "Final delete attempt with URL: $url")
         return executeAction(url)
     }
     */
-    // --- END TEMPORARILY DISABLED ---
-
 
     suspend fun getBouquets(): Map<String, String>? {
         val jsonString = executeRequest(buildUrl(API_BOUQUETS))
