@@ -26,8 +26,9 @@
     <string name="plugin_author">Legandy</string>
     <string name="plugin_license">Apache License, Version 2.0</string>
     <string name="context_menu_schedule_simple">Schedule Recording</string>
-    <!-- The "Advanced Scheduling" string is now restored -->
-    <string name="context_menu_schedule_advanced">Advanced Scheduling...</string>
+    <string name="context_menu_schedule_advanced">Advanced Scheduling</string>
+    <string name="context_menu_unschedule">Un-schedule Recording</string>
+    <string name="context_menu_manual_unmark">Unmark</string>
 
     <!-- Toasts and Messages -->
     <string name="error_channel_list_not_synced">Error: Channel list not synced. Please open the app and sync.</string>
