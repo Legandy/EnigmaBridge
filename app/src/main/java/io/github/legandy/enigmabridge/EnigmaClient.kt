@@ -1,40 +1,54 @@
+@file:OptIn(ExperimentalSerializationApi::class, InternalSerializationApi::class)
+
 package io.github.legandy.enigmabridge
 
 import android.content.SharedPreferences
 import android.os.Parcelable
 import android.util.Log
-import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 import java.net.URLEncoder
 
-// --- Data classes for JSON parsing ---
-data class BouquetResponse(@SerializedName("bouquets") val bouquets: List<List<String>>)
-data class ServiceResponse(@SerializedName("services") val services: List<Service>)
-data class Service(@SerializedName("servicereference") val sRef: String, @SerializedName("servicename") val sName: String)
-data class TimerListResponse(@SerializedName("timers") val timers: List<Timer>)
+// --- Data classes updated for Kotlinx Serialization ---
+@Serializable
+data class BouquetResponse(@SerialName("bouquets") val bouquets: List<List<String>>)
+@Serializable
+data class ServiceResponse(@SerialName("services") val services: List<Service>)
+@Serializable
+data class Service(@SerialName("servicereference") val sRef: String, @SerialName("servicename") val sName: String)
+@Serializable
+data class TimerListResponse(@SerialName("timers") val timers: List<Timer>)
+@Serializable
 data class SimpleResultResponse(
-    @SerializedName("result") val result: Boolean,
-    @SerializedName("message") val message: String
+    @SerialName("result") val result: Boolean,
+    @SerialName("message") val message: String
 )
 
 @Parcelize
+@Serializable
 data class Timer(
-    @SerializedName("servicereference") val sRef: String?,
-    @SerializedName("servicename") val sName: String,
-    @SerializedName("name") val name: String,
-    @SerializedName("description") val description: String,
-    @SerializedName("begin") val beginTimestamp: Long,
-    @SerializedName("end") val endTimestamp: Long,
-    @SerializedName("state") val state: Int,
-    @SerializedName("justplay") val justPlay: Int,
-    @SerializedName("afterevent") val afterEvent: Int,
-    @SerializedName("repeated") val repeated: Int,
-    @SerializedName("disabled") val disabled: Int
+    // ** THE DEFINITIVE AND FINAL FIX: Match the JSON key from the receiver **
+    @SerialName("serviceref") val sRef: String? = null,
+    @SerialName("servicename") val sName: String,
+    @SerialName("name") val name: String,
+    @SerialName("description") val description: String,
+    @SerialName("begin") val beginTimestamp: Long,
+    @SerialName("end") val endTimestamp: Long,
+    @SerialName("state") val state: Int,
+    @SerialName("justplay") val justPlay: Int,
+    @SerialName("afterevent") val afterEvent: Int,
+    @SerialName("repeated") val repeated: Int,
+    @SerialName("disabled") val disabled: Int,
+    @SerialName("dirname") val directoryName: String?,
+    @SerialName("tags") val tags: String?
 ) : Parcelable
 
 class EnigmaClient(
@@ -45,13 +59,18 @@ class EnigmaClient(
 ) {
 
     private val client = OkHttpClient()
-    private val gson = Gson()
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+        isLenient = true
+    }
 
     companion object {
-        private const val TAG = "EnigmaClient"
+        private const val TAG = "EnigmaClient" // Changed back from diagnostic tag
         private const val API_ABOUT = "/api/about"
         private const val API_TIMER_ADD = "/api/timeradd"
         private const val API_TIMER_DELETE = "/api/timerdelete"
+        private const val API_TIMER_CHANGE = "/api/timerchange"
         private const val API_BOUQUETS = "/api/bouquets"
         private const val API_GET_SERVICES = "/api/getservices"
         private const val API_TIMER_LIST = "/api/timerlist"
@@ -65,13 +84,11 @@ class EnigmaClient(
 
     private fun encode(text: String): String = URLEncoder.encode(text, "UTF-8")
 
-    suspend fun checkConnection(): Boolean = executeRequest(buildUrl(API_ABOUT)) != null
-
     private suspend fun executeAction(url: String): Pair<Boolean, String> {
         val jsonString = executeRequest(url)
         return if (jsonString != null) {
             try {
-                val response = gson.fromJson(jsonString, SimpleResultResponse::class.java)
+                val response = json.decodeFromString<SimpleResultResponse>(jsonString)
                 if (!response.result) {
                     Log.e(TAG, "API action failed. Receiver message: ${response.message}")
                 }
@@ -102,44 +119,81 @@ class EnigmaClient(
             append("&always_zap=0")
         }
         val url = buildUrl(API_TIMER_ADD, query)
-        Log.d(TAG, "Attempting to add timer with URL: $url")
         return executeAction(url)
     }
 
     suspend fun deleteTimer(timer: Timer): Pair<Boolean, String> {
-        val sRefToDelete = timer.sRef ?: ""
-
-        val query = buildString {
-            append("sRef=$sRefToDelete")
-            append("&begin=${timer.beginTimestamp}")
-            append("&end=${timer.endTimestamp}")
-        }
-
+        val query = "sRef=${timer.sRef}&begin=${timer.beginTimestamp}&end=${timer.endTimestamp}"
         val url = buildUrl(API_TIMER_DELETE, query)
         Log.d(TAG, "Attempting timer deletion with URL: $url")
         return executeAction(url)
     }
 
+    suspend fun editTimer(
+        originalTimer: Timer,
+        newTitle: String,
+        newDescription: String,
+        newStartTime: Long,
+        newEndTime: Long,
+        justPlay: Int,
+        repeated: Int,
+        afterEvent: Int,
+        disabled: Int
+    ): Pair<Boolean, String> {
+        val identificationParams = "channelOld=${originalTimer.sRef}&beginOld=${originalTimer.beginTimestamp}&endOld=${originalTimer.endTimestamp}"
+
+        val query = buildString {
+            append("sRef=${originalTimer.sRef}")
+            append("&name=${encode(newTitle)}")
+            append("&description=${encode(newDescription)}")
+            append("&begin=$newStartTime")
+            append("&end=$newEndTime")
+            append("&disabled=$disabled")
+            append("&justplay=$justPlay")
+            append("&afterevent=$afterEvent")
+            append("&repeated=$repeated")
+            append("&dirname=${originalTimer.directoryName ?: ""}")
+            append("&tags=${originalTimer.tags ?: ""}")
+            append("&always_zap=0")
+            append("&$identificationParams")
+        }
+        val url = buildUrl(API_TIMER_CHANGE, query)
+        Log.d(TAG, "Attempting timer edit with URL: $url")
+        return executeAction(url)
+    }
+
+    suspend fun checkConnection(): Boolean = executeRequest(buildUrl(API_ABOUT)) != null
+
     suspend fun getBouquets(): Map<String, String>? {
         val url = buildUrl(API_BOUQUETS, "stype=1")
         val jsonString = executeRequest(url)
         return jsonString?.let {
-            try { gson.fromJson(it, BouquetResponse::class.java).bouquets.associate { b -> b[1] to b[0] } }
+            try { json.decodeFromString<BouquetResponse>(it).bouquets.associate { b -> b[1] to b[0] } }
             catch (e: Exception) { Log.e(TAG, "Failed to parse bouquets JSON.", e); null }
         }
     }
+
     suspend fun getChannelsInBouquet(bouquetSref: String): Map<String, String>? {
-        val url = buildUrl(API_GET_SERVICES, "sRef=$bouquetSref")
+        val cleanedSref = bouquetSref.replace("\\\"", "\"")
+        val useHttps = prefs.getBoolean("USE_HTTPS", false)
+        val scheme = if (useHttps) "https" else "http"
+        val url = "$scheme://$ipAddress$API_GET_SERVICES?sRef=$cleanedSref"
+
         val jsonString = executeRequest(url)
         return jsonString?.let {
-            try { gson.fromJson(it, ServiceResponse::class.java).services.associate { s -> s.sName to s.sRef } }
+            try { json.decodeFromString<ServiceResponse>(it).services.associate { s -> s.sName to s.sRef } }
             catch (e: Exception) { Log.e(TAG, "Failed to parse channels JSON.", e); null }
         }
     }
+
     suspend fun getTimerList(): List<Timer>? {
         val jsonString = executeRequest(buildUrl(API_TIMER_LIST))
+
+        // This logging is no longer needed but can be kept for future debugging
+        // Log.d("ENIGMA_JSON_DEBUG", "Raw Timer List JSON: $jsonString")
+
         return jsonString?.let {
-            try { gson.fromJson(it, TimerListResponse::class.java).timers }
+            try { json.decodeFromString<TimerListResponse>(it).timers }
             catch (e: Exception) { Log.e(TAG, "Failed to parse timer list JSON.", e); null }
         }
     }
@@ -152,8 +206,10 @@ class EnigmaClient(
         return try {
             val response = client.newCall(requestBuilder.build()).execute()
             val responseBody = response.body?.string()
-            Log.d(TAG, "Full response for URL '$url': Code=${response.code}, Body=$responseBody")
-            if (response.isSuccessful) { responseBody } else { null }
+            if (response.isSuccessful) { responseBody } else {
+                Log.e(TAG, "Request failed for URL '$url': Code=${response.code}, Message=${response.message}, Body=$responseBody")
+                null
+            }
         } catch (e: IOException) {
             Log.e(TAG, "IOException during request for URL: $url", e); null
         }

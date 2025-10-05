@@ -5,10 +5,10 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
     CoroutineWorker(appContext, workerParams) {
@@ -16,6 +16,13 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
     companion object {
         const val WORK_TAG = "TimerCheckWorker"
         private const val PREVIOUS_TIMERS_KEY = "PREVIOUS_TIMERS_LIST"
+    }
+
+    // **DEFINITIVE FIX: Use the same lenient parser as EnigmaClient**
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+        isLenient = true
     }
 
     override suspend fun doWork(): Result {
@@ -30,7 +37,6 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
             return Result.failure()
         }
 
-        // Pass the prefs object to the client.
         val client = EnigmaClient(ip, user, pass, prefs)
         val currentTimers = withContext(Dispatchers.IO) {
             client.getTimerList()
@@ -51,9 +57,15 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
     private fun loadPreviousTimers(prefs: SharedPreferences): Map<String, Timer> {
         val jsonString = prefs.getString(PREVIOUS_TIMERS_KEY, null)
         return if (jsonString != null) {
-            val type = object : TypeToken<List<Timer>>() {}.type
-            val timerList: List<Timer> = Gson().fromJson(jsonString, type)
-            timerList.associateBy { "${it.sRef}-${it.beginTimestamp}" }
+            try {
+                // **DEFINITIVE FIX: Use Kotlinx Serialization to read the timer list**
+                val timerList: List<Timer> = json.decodeFromString(jsonString)
+                // Use a null-safe call for sRef
+                timerList.associateBy { "${it.sRef}-${it.beginTimestamp}" }
+            } catch (e: Exception) {
+                Log.e(WORK_TAG, "Failed to parse previous timers JSON.", e)
+                emptyMap()
+            }
         } else {
             emptyMap()
         }
@@ -66,6 +78,7 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
         }
 
         for (currentTimer in currentTimers) {
+            // Use a null-safe call for sRef
             val key = "${currentTimer.sRef}-${currentTimer.beginTimestamp}"
             val previousTimer = previousTimers[key]
 
@@ -77,7 +90,8 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
     }
 
     private fun saveCurrentTimers(timers: List<Timer>, prefs: SharedPreferences) {
-        val jsonString = Gson().toJson(timers)
+        // **DEFINITIVE FIX: Use Kotlinx Serialization to save the timer list**
+        val jsonString = json.encodeToString(timers)
         prefs.edit().putString(PREVIOUS_TIMERS_KEY, jsonString).apply()
     }
 }

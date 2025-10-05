@@ -10,14 +10,12 @@ import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import org.tvbrowser.devplugin.Channel
 import org.tvbrowser.devplugin.Plugin
 import org.tvbrowser.devplugin.PluginManager
@@ -37,7 +35,8 @@ class RecordService : Service() {
     private val markedProgramIds = mutableSetOf<String>()
 
     companion object {
-        private const val TAG = "EnigmaBridgeService"
+        // **DIAGNOSTIC TAG**
+        private const val TAG = "ENIGMA_DIAGNOSTIC" // Changed for easy filtering
         private const val MENU_ID_SIMPLE_SCHEDULE = 1
         private const val MENU_ID_ADVANCED_SCHEDULE = 2
         private const val MENU_ID_UNSCHEDULE = 3
@@ -46,14 +45,12 @@ class RecordService : Service() {
         private const val PREF_MARKED_IDS = "MARKED_PROGRAM_IDS"
     }
 
-    // This receiver listens for the "revert" signal from AdvancedScheduleActivity.
     private val revertMarkReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == ACTION_REVERT_MARKING) {
                 @Suppress("DEPRECATION")
                 val programToUnmark: Program? = intent.getParcelableExtra("PROGRAM_EXTRA")
                 if (programToUnmark != null) {
-                    Log.d(TAG, "Received signal to revert mark for program: ${programToUnmark.title}")
                     revertMarking(programToUnmark)
                 }
             }
@@ -112,20 +109,14 @@ class RecordService : Service() {
             if (program != null && pluginMenu != null) {
                 when (pluginMenu.id) {
                     MENU_ID_SIMPLE_SCHEDULE, MENU_ID_ADVANCED_SCHEDULE -> {
-                        // Optimistically mark the program for immediate UI feedback.
                         markedProgramIds.add(program.id.toString())
                         saveMarkedProgramIds()
                         scheduleRecording(program, isAdvanced = (pluginMenu.id == MENU_ID_ADVANCED_SCHEDULE))
-                        // Return true to tell TV Browser to apply color-coding now.
                         return true
                     }
                     MENU_ID_UNSCHEDULE -> {
-                        val unmarked = mPluginManager?.unmarkProgram(program) ?: false
-                        if (unmarked) {
-                            markedProgramIds.remove(program.id.toString())
-                            saveMarkedProgramIds()
-                            unscheduleRecording(program)
-                        }
+                        unscheduleRecording(program)
+                        return true
                     }
                 }
             }
@@ -137,19 +128,39 @@ class RecordService : Service() {
     }
 
     private fun scheduleRecording(program: Program, isAdvanced: Boolean) {
+        // **DIAGNOSTIC LOGGING START**
+        Log.d(TAG, "------------------- SCHEDULE RECORDING START -------------------")
+        Log.d(TAG, "Attempting to schedule program: '${program.title}'")
+        val tvBrowserChannelName = program.channel.channelName
+        Log.d(TAG, "Looking for TV-Browser channel name: '$tvBrowserChannelName'")
+
         val syncedChannels = getSyncedChannels()
         if (syncedChannels == null) {
+            Log.e(TAG, "CRITICAL FAILURE: Synced channel list is NULL. Cannot proceed.")
             showToast(getString(R.string.error_channel_list_not_synced))
             revertMarking(program)
             return
         }
 
-        val sRef = findSrefForChannel(program.channel.channelName, syncedChannels)
+        Log.d(TAG, "Loaded ${syncedChannels.size} synced channels from storage.")
+        // Log the entire map for detailed analysis
+        syncedChannels.forEach { (name, sRef) ->
+            Log.d(TAG, "  -> Synced Channel: NAME='$name', SREF='$sRef'")
+        }
+        // **DIAGNOSTIC LOGGING END**
+
+        val sRef = findSrefForChannel(tvBrowserChannelName, syncedChannels)
         if (sRef == null) {
-            showToast(getString(R.string.error_channel_not_found, program.channel.channelName))
+            Log.e(TAG, "CRITICAL FAILURE: sRef lookup failed for channel '$tvBrowserChannelName'.")
+            showToast(getString(R.string.error_channel_not_found, tvBrowserChannelName))
             revertMarking(program)
+            Log.d(TAG, "------------------- SCHEDULE RECORDING END ---------------------")
             return
         }
+
+        Log.d(TAG, "SUCCESS: Found matching sRef: '$sRef'")
+        Log.d(TAG, "------------------- SCHEDULE RECORDING END ---------------------")
+
 
         if (isAdvanced) {
             val intent = Intent(applicationContext, AdvancedScheduleActivity::class.java).apply {
@@ -172,51 +183,40 @@ class RecordService : Service() {
                     repeated = 0,
                     afterEvent = 0
                 )
-
-                val success = result.first
-                val message = result.second
-
-                showToast(if (success) getString(R.string.schedule_success) else message)
-
-                if (success) {
+                if (result.first) {
                     if (prefs.getBoolean("NOTIFY_SCHEDULED_ENABLED", true)) {
                         NotificationHelper.sendSuccessNotification(applicationContext, program)
                     }
                     sendRefreshBroadcast()
                     updateTimerCache()
                 } else {
-                    // If simple scheduling fails, revert the mark.
                     revertMarking(program)
                 }
+                showToast(result.second)
             }
         }
     }
 
     private fun unscheduleRecording(program: Program) {
-        val timerToZap = findTimerForProgram(program)
-        if (timerToZap == null) { showToast("Could not find matching timer to delete."); return }
+        val timerToDelete = findTimerForProgram(program)
+        if (timerToDelete == null) {
+            showToast("Could not find matching timer to delete.")
+            revertMarking(program)
+            return
+        }
 
         serviceScope.launch {
             val client = getEnigmaClient() ?: return@launch
-            val result = client.deleteTimer(timerToZap)
-
-            val success = result.first
-            val message = result.second
-
-            showToast(if (success) "Timer unscheduled." else message)
-
-            if (success) {
+            val result = client.deleteTimer(timerToDelete)
+            if (result.first) {
+                revertMarking(program)
                 updateTimerCache()
                 sendRefreshBroadcast()
-            } else {
-                // If deletion failed, re-add the ID to our set to keep UI in sync.
-                markedProgramIds.add(program.id.toString())
-                saveMarkedProgramIds()
             }
+            showToast(result.second)
         }
     }
 
-    // This function handles undoing a mark in TV Browser.
     private fun revertMarking(program: Program) {
         markedProgramIds.remove(program.id.toString())
         saveMarkedProgramIds()
@@ -227,10 +227,7 @@ class RecordService : Service() {
         val idString = prefs.getString(PREF_MARKED_IDS, null)
         if (!idString.isNullOrEmpty()) { markedProgramIds.clear(); markedProgramIds.addAll(idString.split(',')) }
     }
-
-    private fun saveMarkedProgramIds() {
-        prefs.edit().putString(PREF_MARKED_IDS, markedProgramIds.joinToString(",")).apply()
-    }
+    private fun saveMarkedProgramIds() { prefs.edit().putString(PREF_MARKED_IDS, markedProgramIds.joinToString(",")).apply() }
 
     private fun findTimerForProgram(program: Program): Timer? {
         return cachedTimers.find { timer ->
@@ -245,7 +242,7 @@ class RecordService : Service() {
         serviceScope.launch(Dispatchers.IO) {
             val client = getEnigmaClient() ?: return@launch
             val timers = client.getTimerList()
-            if (timers != null) { cachedTimers = timers; Log.d(TAG, "Timer cache updated with ${cachedTimers.size} timers.") }
+            if (timers != null) { cachedTimers = timers }
         }
     }
 
@@ -255,23 +252,57 @@ class RecordService : Service() {
     }
 
     private fun getSyncedChannels(): Map<String, String>? {
-        val json = prefs.getString("SYNCED_CHANNELS", null)
-        return if (json != null) { Gson().fromJson(json, object : TypeToken<Map<String, String>>() {}.type) } else { null }
+        val jsonString = prefs.getString("SYNCED_CHANNELS", null)
+        return if (jsonString != null) {
+            try {
+                Json.decodeFromString<Map<String, String>>(jsonString)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to parse synced channels JSON.", e)
+                null
+            }
+        } else {
+            null
+        }
     }
 
     private fun findSrefForChannel(tvBrowserChannelName: String, syncedChannels: Map<String, String>): String? {
-        syncedChannels.forEach { (syncedName, sRef) -> if (syncedName.equals(tvBrowserChannelName, ignoreCase = true)) return sRef }
-        syncedChannels.forEach { (syncedName, sRef) -> if (syncedName.contains(tvBrowserChannelName, ignoreCase = true)) return sRef }
-        syncedChannels.forEach { (syncedName, sRef) -> if (tvBrowserChannelName.contains(syncedName, ignoreCase = true)) return sRef }
+        // **DIAGNOSTIC LOGGING**
+        Log.d(TAG, "Starting sRef search for: '$tvBrowserChannelName'")
+
+        // Exact match (case-insensitive)
+        syncedChannels.forEach { (syncedName, sRef) ->
+            if (syncedName.equals(tvBrowserChannelName, ignoreCase = true)) {
+                Log.d(TAG, "Found exact match: '$syncedName' -> '$sRef'")
+                return sRef
+            }
+        }
+
+        // Synced name contains TV Browser name
+        syncedChannels.forEach { (syncedName, sRef) ->
+            if (syncedName.contains(tvBrowserChannelName, ignoreCase = true)) {
+                Log.d(TAG, "Found partial match (synced contains tvb): '$syncedName' -> '$sRef'")
+                return sRef
+            }
+        }
+
+        // TV Browser name contains synced name
+        syncedChannels.forEach { (syncedName, sRef) ->
+            if (tvBrowserChannelName.contains(syncedName, ignoreCase = true)) {
+                Log.d(TAG, "Found partial match (tvb contains synced): '$syncedName' -> '$sRef'")
+                return sRef
+            }
+        }
+
+        Log.w(TAG, "No match found after all checks.")
         return null
     }
+
 
     private fun showToast(message: String) { CoroutineScope(Dispatchers.Main).launch { Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show() } }
 
     private fun sendRefreshBroadcast() {
         val intent = Intent(ACTION_TIMER_LIST_CHANGED)
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
-        Log.d(TAG, "Sent timer list changed broadcast.")
     }
 
     override fun onBind(intent: Intent): IBinder = binder

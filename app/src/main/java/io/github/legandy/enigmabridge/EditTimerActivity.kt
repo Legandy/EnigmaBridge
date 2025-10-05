@@ -3,12 +3,13 @@ package io.github.legandy.enigmabridge
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.button.MaterialButton
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.legandy.enigmabridge.databinding.ActivityEditTimerBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -56,12 +57,13 @@ class EditTimerActivity : AppCompatActivity() {
         binding.editDescription.setText(originalTimer!!.description)
         updateDateTimeTextViews()
 
-        // Setup channel spinner - for now, it's read-only
+        // Setup channel spinner - it's read-only for now
         val items = listOf(originalTimer!!.sName)
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, items)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.spinnerService.adapter = adapter
         binding.spinnerService.setSelection(0)
+        binding.spinnerService.isEnabled = false // Disable changing the channel
 
         binding.toggleEnabled.isChecked = originalTimer!!.disabled == 0
 
@@ -79,7 +81,7 @@ class EditTimerActivity : AppCompatActivity() {
             64 to binding.toggleSunday
         )
 
-        var repeats = originalTimer!!.repeated
+        val repeats = originalTimer!!.repeated
         if (repeats > 0) {
             dayButtonMap.forEach { (dayValue, button) ->
                 if ((repeats and dayValue) != 0) {
@@ -100,8 +102,6 @@ class EditTimerActivity : AppCompatActivity() {
     private fun saveTimer() {
         val newTitle = binding.editProgramTitle.text.toString()
         val newDescription = binding.editDescription.text.toString()
-        // sRef cannot be changed in this UI, so we use the original.
-        val newSref = originalTimer?.sRef ?: ""
 
         val justPlay = when (binding.timerTypeGroup.checkedButtonId) {
             binding.toggleJustPlay.id -> 1
@@ -119,6 +119,7 @@ class EditTimerActivity : AppCompatActivity() {
             repeated = repeated or (dayValueMap[buttonId] ?: 0)
         }
 
+        // 'afterEvent' is not editable in this UI, so we use the original value.
         val afterEvent = originalTimer!!.afterEvent
         val disabled = if (binding.toggleEnabled.isChecked) 0 else 1
 
@@ -127,34 +128,33 @@ class EditTimerActivity : AppCompatActivity() {
         val user = prefs.getString("USERNAME", "root") ?: ""
         val pass = prefs.getString("PASSWORD", "") ?: ""
 
-        // The editTimer function is currently commented out. This will do nothing.
-        // To re-enable, you must uncomment the function in EnigmaClient.kt
-        /*
+        // This block is now fully functional.
         lifecycleScope.launch(Dispatchers.IO) {
-            val client = EnigmaClient(ip, user, pass)
-            val success = client.editTimer(
+            val client = EnigmaClient(ip, user, pass, prefs)
+            val result = client.editTimer(
                 originalTimer = originalTimer!!,
                 newTitle = newTitle,
-                newSRef = newSref,
+                newDescription = newDescription,
                 newStartTime = startCalendar.timeInMillis / 1000,
                 newEndTime = endCalendar.timeInMillis / 1000,
-                newDescription = newDescription,
                 justPlay = justPlay,
                 repeated = repeated,
-                afterEvent = afterEvent
+                afterEvent = afterEvent,
+                disabled = disabled
             )
 
             withContext(Dispatchers.Main) {
-                if (success) {
+                if (result.first) {
                     Toast.makeText(applicationContext, getString(R.string.toast_timer_saved), Toast.LENGTH_SHORT).show()
+                    // Broadcast that the list changed so TimerListActivity can refresh itself.
+                    val intent = Intent(RecordService.ACTION_TIMER_LIST_CHANGED)
+                    LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
                     finish()
                 } else {
-                    Toast.makeText(applicationContext, getString(R.string.toast_timer_save_failed), Toast.LENGTH_LONG).show()
+                    Toast.makeText(applicationContext, result.second, Toast.LENGTH_LONG).show()
                 }
             }
         }
-        */
-        Toast.makeText(this, "Save functionality is temporarily disabled.", Toast.LENGTH_SHORT).show()
     }
 
 
@@ -183,7 +183,7 @@ class EditTimerActivity : AppCompatActivity() {
             },
             calendar.get(Calendar.HOUR_OF_DAY),
             calendar.get(Calendar.MINUTE),
-            true
+            true // 24-hour view
         ).show()
     }
 
@@ -199,4 +199,3 @@ class EditTimerActivity : AppCompatActivity() {
         return true
     }
 }
-

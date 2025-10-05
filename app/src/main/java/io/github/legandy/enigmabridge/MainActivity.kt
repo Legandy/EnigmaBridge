@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
@@ -15,11 +16,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import com.google.gson.Gson
 import io.github.legandy.enigmabridge.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class MainActivity : AppCompatActivity() {
 
@@ -27,7 +29,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: SharedPreferences
     private var bouquetsMap: Map<String, String> = emptyMap()
 
-    // Handles the result of the notification permission request.
+    // **DIAGNOSTIC TAG**
+    private val TAG = "ENIGMA_DIAGNOSTIC"
+
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
@@ -49,11 +53,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Refresh checks every time the user returns to ensure status is up-to-date.
         runChecks()
     }
 
-    // Requests notification permission on Android 13+ if not already granted.
     private fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -62,9 +64,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Sets up initial UI state and click listeners.
     private fun setupUI() {
-        // Load saved state for all fields.
         binding.editIpAddress.setText(prefs.getString("IP_ADDRESS", ""))
         binding.switchUseHttps.isChecked = prefs.getBoolean("USE_HTTPS", false)
         binding.editUsername.setText(prefs.getString("USERNAME", "root"))
@@ -94,7 +94,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Fetches the list of channel bouquets from the receiver.
     private fun fetchBouquets() {
         showLoading(true)
         val ip = binding.editIpAddress.text.toString().trim()
@@ -107,7 +106,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch(Dispatchers.IO) {
-            // Pass prefs to the client so it knows about the HTTPS setting.
             val client = EnigmaClient(ip, user, pass, prefs)
             val fetchedBouquets = client.getBouquets()
 
@@ -126,7 +124,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Downloads and saves the channels from the selected bouquet.
     private fun syncSelectedBouquet() {
         val selectedBouquetName = binding.bouquetsSpinner.selectedItem as? String
         if (selectedBouquetName == null) {
@@ -140,6 +137,11 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        // **DIAGNOSTIC LOGGING START**
+        Log.d(TAG, "------------------- CHANNEL SYNC START -------------------")
+        Log.d(TAG, "Selected bouquet to sync: NAME='$selectedBouquetName', SREF='$bouquetSref'")
+        // **DIAGNOSTIC LOGGING END**
+
         showLoading(true)
         val ip = binding.editIpAddress.text.toString().trim()
         val user = binding.editUsername.text.toString().trim()
@@ -152,9 +154,18 @@ class MainActivity : AppCompatActivity() {
             withContext(Dispatchers.Main) {
                 showLoading(false)
                 if (channels != null) {
-                    val gson = Gson()
-                    val jsonChannels = gson.toJson(channels)
+                    // **DIAGNOSTIC LOGGING START**
+                    Log.d(TAG, "SUCCESS: Fetched ${channels.size} channels from receiver.")
+                    channels.forEach { (name, sRef) ->
+                        Log.d(TAG, "  -> Fetched Channel: NAME='$name', SREF='$sRef'")
+                    }
+                    // **DIAGNOSTIC LOGGING END**
+
+                    val jsonChannels = Json.encodeToString(channels)
                     prefs.edit().putString("SYNCED_CHANNELS", jsonChannels).apply()
+                    Log.d(TAG, "Saved channel list to SharedPreferences.")
+                    Log.d(TAG, "------------------- CHANNEL SYNC END ---------------------")
+
 
                     Toast.makeText(applicationContext, getString(R.string.sync_success_toast, channels.size), Toast.LENGTH_LONG).show()
                     if (prefs.getBoolean("NOTIFY_SYNC_SUCCESS_ENABLED", true)) {
@@ -162,13 +173,14 @@ class MainActivity : AppCompatActivity() {
                     }
 
                 } else {
+                    Log.e(TAG, "CRITICAL FAILURE: getChannelsInBouquet returned NULL.")
+                    Log.d(TAG, "------------------- CHANNEL SYNC END ---------------------")
                     Toast.makeText(applicationContext, getString(R.string.error_sync_channels), Toast.LENGTH_LONG).show()
                 }
             }
         }
     }
 
-    // Checks if the TV Browser application is installed on the device.
     private fun isTvBrowserInstalled(): Boolean {
         return try {
             val pm = packageManager
@@ -184,9 +196,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Runs all status checks and updates the UI accordingly.
     private fun runChecks() {
-        // Check for TV Browser installation.
         if (isTvBrowserInstalled()) {
             binding.statusTvBrowserIcon.setImageResource(R.drawable.ic_check_circle)
             binding.statusTvBrowserIcon.setColorFilter(ContextCompat.getColor(this, android.R.color.holo_green_dark))
@@ -197,10 +207,8 @@ class MainActivity : AppCompatActivity() {
             binding.statusTvBrowserText.text = getString(R.string.status_tvbrowser_not_found)
         }
 
-        // Check the status of the periodic sync setting.
         updatePeriodicSyncStatusIndicator()
 
-        // Check the connection to the Enigma receiver.
         val ip = binding.editIpAddress.text.toString().trim()
         val user = binding.editUsername.text.toString().trim()
         val pass = binding.editPassword.text.toString()
@@ -233,7 +241,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Updates the sync status indicator based on the saved user preference.
     private fun updatePeriodicSyncStatusIndicator() {
         val intervalHours = prefs.getInt("SYNC_INTERVAL_HOURS", 0)
         if (intervalHours > 0) {
@@ -247,7 +254,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Shows or hides the progress bar.
     private fun showLoading(isLoading: Boolean) {
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
     }

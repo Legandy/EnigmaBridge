@@ -3,6 +3,7 @@ package io.github.legandy.enigmabridge
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import io.github.legandy.enigmabridge.databinding.ListItemTimerBinding
@@ -11,8 +12,17 @@ import java.util.Date
 import java.util.Locale
 
 class TimerAdapter(
-    private var timers: MutableList<Timer>
+    private var timers: MutableList<Timer>,
+    private val listener: OnTimerActionsListener // Listener for communicating clicks
 ) : RecyclerView.Adapter<TimerAdapter.TimerViewHolder>() {
+
+    /**
+     * An interface for the Activity to listen to item actions.
+     */
+    interface OnTimerActionsListener {
+        fun onEditClicked(timer: Timer)
+        fun onDeleteClicked(timer: Timer)
+    }
 
     inner class TimerViewHolder(val binding: ListItemTimerBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -32,12 +42,9 @@ class TimerAdapter(
 
         holder.binding.textTimerTitle.text = timer.name
         holder.binding.textTimerChannel.text = timer.sName
-
-
         holder.binding.textTimerTime.text = context.getString(R.string.timer_time_range_detailed, startDate, endTime)
 
-
-        // Set status icon based on timer state
+        // Set status icon and color based on timer state
         val iconRes: Int
         val colorRes: Int
         when (timer.state) {
@@ -62,15 +69,35 @@ class TimerAdapter(
         holder.binding.statusIcon.setColorFilter(ContextCompat.getColor(context, colorRes))
 
         // Handle timer type (Zap/Switch)
-        if (timer.justPlay == 2) { // 2 corresponds to "Zap" or "Switch"
+        if (timer.justPlay == 2) {
             holder.binding.textTimerType.text = context.getString(R.string.label_switch)
             holder.binding.textTimerType.visibility = View.VISIBLE
         } else {
             holder.binding.textTimerType.visibility = View.GONE
         }
 
-        // Hide the menu button to disable edit/delete UI
-        holder.binding.buttonMenu.visibility = View.GONE
+        // The line hiding the menu is removed, so it is now visible.
+        // holder.binding.buttonMenu.visibility = View.GONE
+
+        // Set up the click listener for the 3-dot menu
+        holder.binding.buttonMenu.setOnClickListener { view ->
+            val popup = PopupMenu(context, view)
+            popup.inflate(R.menu.timer_item_menu) // Use the menu resource you provided
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.action_edit_timer -> {
+                        listener.onEditClicked(timer)
+                        true
+                    }
+                    R.id.action_delete_timer -> {
+                        listener.onDeleteClicked(timer)
+                        true
+                    }
+                    else -> false
+                }
+            }
+            popup.show()
+        }
     }
 
     override fun getItemCount(): Int = timers.size
@@ -81,13 +108,4 @@ class TimerAdapter(
         this.timers.addAll(newTimers.sortedByDescending { it.beginTimestamp })
         notifyDataSetChanged()
     }
-
-    fun removeItem(timer: Timer) {
-        val position = timers.indexOf(timer)
-        if (position > -1) {
-            timers.removeAt(position)
-            notifyItemRemoved(position)
-        }
-    }
 }
-

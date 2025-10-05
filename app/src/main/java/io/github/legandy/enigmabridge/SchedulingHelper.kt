@@ -7,7 +7,7 @@ object SchedulingHelper {
 
     private const val TAG = "SchedulingHelper"
 
-    // This function now returns a Pair containing the result and a message.
+    // This function now correctly returns a Pair containing the result and a message.
     suspend fun scheduleTimer(
         context: Context,
         title: String,

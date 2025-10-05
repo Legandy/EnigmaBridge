@@ -70,12 +70,10 @@ class AdvancedScheduleActivity : AppCompatActivity() {
         binding.textStartTime.setOnClickListener { showTimePickerDialog(isStart = true) }
         binding.textEndTime.setOnClickListener { showTimePickerDialog(isStart = false) }
 
-        // When the user cancels, revert the optimistic marking.
         binding.buttonCancel.setOnClickListener { revertMarkAndFinish() }
         binding.buttonSave.setOnClickListener { scheduleAdvancedTimer() }
     }
 
-    // Also revert the marking if the user presses the physical back button.
     override fun onBackPressed() {
         super.onBackPressed()
         revertMarkAndFinish()
@@ -125,23 +123,22 @@ class AdvancedScheduleActivity : AppCompatActivity() {
             val message = result.second
 
             withContext(Dispatchers.Main) {
-                Toast.makeText(applicationContext, if (success) getString(R.string.schedule_success) else message, Toast.LENGTH_LONG).show()
+                // Display the specific message from the receiver.
+                Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
+
                 if (success) {
                     val prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
                     if (prefs.getBoolean("NOTIFY_SCHEDULED_ENABLED", true)) {
                         NotificationHelper.sendSuccessNotification(applicationContext, program!!)
                     }
-                    // The marking was already done, so just finish.
                     finish()
                 } else {
-                    // If scheduling failed, revert the optimistic marking.
                     revertMarkAndFinish()
                 }
             }
         }
     }
 
-    // Sends a broadcast to the RecordService to tell it to un-mark the program.
     private fun revertMarkAndFinish() {
         program?.let {
             val intent = Intent(RecordService.ACTION_REVERT_MARKING)
