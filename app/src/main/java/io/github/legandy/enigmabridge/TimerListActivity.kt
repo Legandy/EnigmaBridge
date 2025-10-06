@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -12,6 +13,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import io.github.legandy.enigmabridge.databinding.ActivityTimerListBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -21,17 +24,20 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
 
     private lateinit var binding: ActivityTimerListBinding
     private lateinit var timerAdapter: TimerAdapter
-    private lateinit var enigmaClient: EnigmaClient // Re-usable client instance
+    private lateinit var enigmaClient: EnigmaClient
 
     companion object {
         const val EXTRA_TIMER = "TIMER_EXTRA"
+        private const val TAG = "TimerListActivity"
     }
 
-    // Receives broadcasts from RecordService to trigger a list refresh.
     private val refreshReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == RecordService.ACTION_TIMER_LIST_CHANGED) {
-                fetchTimerList()
+            when (intent?.action) {
+                RecordService.ACTION_TIMER_LIST_CHANGED, MainActivity.ACTION_TIMER_SYNC_COMPLETED -> {
+                    Log.d(TAG, "Received broadcast (${intent.action}), fetching timer list.")
+                    fetchTimerList()
+                }
             }
         }
     }
@@ -44,7 +50,6 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        // Initialize the client once with saved settings.
         val prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
         val ip = prefs.getString("IP_ADDRESS", "") ?: ""
         val user = prefs.getString("USERNAME", "root") ?: ""
@@ -54,11 +59,11 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
         setupRecyclerView()
         setupPullToRefresh()
 
-        // Register receiver to listen for timer changes.
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-            refreshReceiver,
-            IntentFilter(RecordService.ACTION_TIMER_LIST_CHANGED)
-        )
+        val intentFilter = IntentFilter().apply {
+            addAction(RecordService.ACTION_TIMER_LIST_CHANGED)
+            addAction(MainActivity.ACTION_TIMER_SYNC_COMPLETED)
+        }
+        LocalBroadcastManager.getInstance(this).registerReceiver(refreshReceiver, intentFilter)
     }
 
     override fun onResume() {
@@ -72,7 +77,6 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
     }
 
     private fun setupRecyclerView() {
-        // Pass 'this' as the listener to the adapter.
         timerAdapter = TimerAdapter(mutableListOf(), this)
         binding.timersRecyclerView.apply {
             adapter = timerAdapter
@@ -80,18 +84,24 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
         }
     }
 
+    // ** THE FIX 2: Upgrade pull-to-refresh to trigger a full background sync **
     private fun setupPullToRefresh() {
         binding.swipeRefreshLayout.setOnRefreshListener {
-            fetchTimerList()
+            Log.d(TAG, "Pull-to-refresh triggered. Enqueuing TimerCheckWorker.")
+            binding.swipeRefreshLayout.isRefreshing = true
+            val syncWorkRequest = OneTimeWorkRequestBuilder<TimerCheckWorker>().build()
+            WorkManager.getInstance(this).enqueue(syncWorkRequest)
         }
     }
 
     private fun fetchTimerList() {
-        binding.swipeRefreshLayout.isRefreshing = true
+        // This is now just for display. The loading indicator is handled by the pull-to-refresh listener
+        // and the broadcast receiver.
         binding.emptyView.visibility = View.GONE
 
-        val ip = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE).getString("IP_ADDRESS", "")
-        if (ip.isNullOrEmpty()) {
+        val prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
+        val ip = prefs.getString("IP_ADDRESS", "") ?: ""
+        if (ip.isEmpty()) {
             Toast.makeText(this, getString(R.string.error_ip_not_configured), Toast.LENGTH_LONG).show()
             binding.swipeRefreshLayout.isRefreshing = false
             return
@@ -100,7 +110,7 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
         lifecycleScope.launch(Dispatchers.IO) {
             val timers = enigmaClient.getTimerList()
             withContext(Dispatchers.Main) {
-                binding.swipeRefreshLayout.isRefreshing = false
+                binding.swipeRefreshLayout.isRefreshing = false // Always hide indicator after fetch
                 if (timers != null) {
                     if (timers.isEmpty()) {
                         binding.emptyView.visibility = View.VISIBLE
@@ -123,46 +133,34 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
         return true
     }
 
-    /**
-     * Handles the 'Edit' click from the adapter.
-     */
     override fun onEditClicked(timer: Timer) {
         val intent = Intent(this, EditTimerActivity::class.java)
         intent.putExtra(EXTRA_TIMER, timer)
         startActivity(intent)
     }
 
-    /**
-     * Handles the 'Delete' click from the adapter.
-     */
     override fun onDeleteClicked(timer: Timer) {
         showDeleteConfirmationDialog(timer)
     }
 
-    /**
-     * Displays an AlertDialog to confirm the deletion.
-     */
     private fun showDeleteConfirmationDialog(timer: Timer) {
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.delete_timer_title))
             .setMessage(getString(R.string.delete_timer_message, timer.name))
             .setPositiveButton(getString(R.string.action_delete)) { _, _ ->
-                deleteTimer(timer) // User confirmed, proceed with deletion
+                deleteTimer(timer)
             }
             .setNegativeButton(getString(R.string.action_cancel), null)
             .show()
     }
 
-    /**
-     * Calls the EnigmaClient to delete the timer and refreshes the list on success.
-     */
     private fun deleteTimer(timer: Timer) {
         lifecycleScope.launch(Dispatchers.IO) {
             val result = enigmaClient.deleteTimer(timer)
             withContext(Dispatchers.Main) {
                 if (result.first) {
                     Toast.makeText(applicationContext, getString(R.string.delete_timer_success), Toast.LENGTH_SHORT).show()
-                    fetchTimerList() // Refresh the list after successful deletion
+                    fetchTimerList()
                 } else {
                     Toast.makeText(applicationContext, result.second, Toast.LENGTH_LONG).show()
                 }
@@ -170,3 +168,4 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
         }
     }
 }
+

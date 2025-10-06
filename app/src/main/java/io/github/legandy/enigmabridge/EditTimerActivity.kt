@@ -57,13 +57,12 @@ class EditTimerActivity : AppCompatActivity() {
         binding.editDescription.setText(originalTimer!!.description)
         updateDateTimeTextViews()
 
-        // Setup channel spinner - it's read-only for now
         val items = listOf(originalTimer!!.sName)
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, items)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.spinnerService.adapter = adapter
         binding.spinnerService.setSelection(0)
-        binding.spinnerService.isEnabled = false // Disable changing the channel
+        binding.spinnerService.isEnabled = false // User cannot change the service
 
         binding.toggleEnabled.isChecked = originalTimer!!.disabled == 0
 
@@ -99,6 +98,7 @@ class EditTimerActivity : AppCompatActivity() {
         binding.buttonSave.setOnClickListener { saveTimer() }
     }
 
+    // **DEFINITIVE FIX: Correctly call the updated EnigmaClient function**
     private fun saveTimer() {
         val newTitle = binding.editProgramTitle.text.toString()
         val newDescription = binding.editDescription.text.toString()
@@ -119,8 +119,7 @@ class EditTimerActivity : AppCompatActivity() {
             repeated = repeated or (dayValueMap[buttonId] ?: 0)
         }
 
-        // 'afterEvent' is not editable in this UI, so we use the original value.
-        val afterEvent = originalTimer!!.afterEvent
+        val afterEvent = originalTimer!!.afterEvent // This is not editable in the UI, so we keep the original value
         val disabled = if (binding.toggleEnabled.isChecked) 0 else 1
 
         val prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
@@ -128,7 +127,6 @@ class EditTimerActivity : AppCompatActivity() {
         val user = prefs.getString("USERNAME", "root") ?: ""
         val pass = prefs.getString("PASSWORD", "") ?: ""
 
-        // This block is now fully functional.
         lifecycleScope.launch(Dispatchers.IO) {
             val client = EnigmaClient(ip, user, pass, prefs)
             val result = client.editTimer(
@@ -146,7 +144,6 @@ class EditTimerActivity : AppCompatActivity() {
             withContext(Dispatchers.Main) {
                 if (result.first) {
                     Toast.makeText(applicationContext, getString(R.string.toast_timer_saved), Toast.LENGTH_SHORT).show()
-                    // Broadcast that the list changed so TimerListActivity can refresh itself.
                     val intent = Intent(RecordService.ACTION_TIMER_LIST_CHANGED)
                     LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
                     finish()
@@ -156,7 +153,6 @@ class EditTimerActivity : AppCompatActivity() {
             }
         }
     }
-
 
     private fun showDatePickerDialog(isStart: Boolean) {
         val calendar = if (isStart) startCalendar else endCalendar
@@ -183,7 +179,7 @@ class EditTimerActivity : AppCompatActivity() {
             },
             calendar.get(Calendar.HOUR_OF_DAY),
             calendar.get(Calendar.MINUTE),
-            true // 24-hour view
+            true
         ).show()
     }
 
@@ -199,3 +195,4 @@ class EditTimerActivity : AppCompatActivity() {
         return true
     }
 }
+

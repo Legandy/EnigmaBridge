@@ -1,8 +1,10 @@
 package io.github.legandy.enigmabridge
 
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -16,12 +18,18 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.work.Configuration
+import androidx.work.WorkManager
 import io.github.legandy.enigmabridge.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,8 +37,26 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: SharedPreferences
     private var bouquetsMap: Map<String, String> = emptyMap()
 
-    // **DIAGNOSTIC TAG**
-    private val TAG = "ENIGMA_DIAGNOSTIC"
+    companion object {
+        const val ACTION_TIMER_SYNC_COMPLETED = "io.github.legandy.enigmabridge.TIMER_SYNC_COMPLETED"
+        private const val TAG = "MainActivity"
+    }
+
+    private val timerSyncCompletedReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            Log.d(TAG, "--- BroadcastReceiver onReceive() TRIGGERED ---")
+            if (intent?.action == ACTION_TIMER_SYNC_COMPLETED) {
+                Log.d(TAG, "Broadcast action matches. Calling UI update.")
+                updateLastSyncStatus()
+            }
+        }
+    }
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+        isLenient = true
+    }
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -39,10 +65,25 @@ class MainActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this, getString(R.string.permission_denied), Toast.LENGTH_SHORT).show()
             }
+            updateNotificationStatusIndicator()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // ** THE FIX 1: Manually initialize WorkManager to bypass the manifest issue **
+        try {
+            WorkManager.initialize(
+                this,
+                Configuration.Builder()
+                    .setMinimumLoggingLevel(android.util.Log.DEBUG)
+                    .build()
+            )
+            Log.d(TAG, "WorkManager manually initialized.")
+        } catch (e: Exception) {
+            Log.w(TAG, "WorkManager already initialized in this process.")
+        }
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
@@ -54,6 +95,15 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         runChecks()
+        updateLastSyncStatus()
+        Log.d(TAG, "Registering timerSyncCompletedReceiver in onResume.")
+        LocalBroadcastManager.getInstance(this).registerReceiver(timerSyncCompletedReceiver, IntentFilter(ACTION_TIMER_SYNC_COMPLETED))
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d(TAG, "Unregistering timerSyncCompletedReceiver in onPause.")
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(timerSyncCompletedReceiver)
     }
 
     private fun requestNotificationPermission() {
@@ -137,44 +187,26 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // **DIAGNOSTIC LOGGING START**
-        Log.d(TAG, "------------------- CHANNEL SYNC START -------------------")
-        Log.d(TAG, "Selected bouquet to sync: NAME='$selectedBouquetName', SREF='$bouquetSref'")
-        // **DIAGNOSTIC LOGGING END**
-
         showLoading(true)
-        val ip = binding.editIpAddress.text.toString().trim()
-        val user = binding.editUsername.text.toString().trim()
-        val pass = binding.editPassword.text.toString()
 
         lifecycleScope.launch(Dispatchers.IO) {
+            val ip = prefs.getString("IP_ADDRESS", "") ?: ""
+            val user = prefs.getString("USERNAME", "root") ?: ""
+            val pass = prefs.getString("PASSWORD", "") ?: ""
             val client = EnigmaClient(ip, user, pass, prefs)
             val channels = client.getChannelsInBouquet(bouquetSref)
 
             withContext(Dispatchers.Main) {
                 showLoading(false)
                 if (channels != null) {
-                    // **DIAGNOSTIC LOGGING START**
-                    Log.d(TAG, "SUCCESS: Fetched ${channels.size} channels from receiver.")
-                    channels.forEach { (name, sRef) ->
-                        Log.d(TAG, "  -> Fetched Channel: NAME='$name', SREF='$sRef'")
-                    }
-                    // **DIAGNOSTIC LOGGING END**
-
-                    val jsonChannels = Json.encodeToString(channels)
+                    val jsonChannels = json.encodeToString(channels)
                     prefs.edit().putString("SYNCED_CHANNELS", jsonChannels).apply()
-                    Log.d(TAG, "Saved channel list to SharedPreferences.")
-                    Log.d(TAG, "------------------- CHANNEL SYNC END ---------------------")
-
-
                     Toast.makeText(applicationContext, getString(R.string.sync_success_toast, channels.size), Toast.LENGTH_LONG).show()
-                    if (prefs.getBoolean("NOTIFY_SYNC_SUCCESS_ENABLED", true)) {
-                        NotificationHelper.sendSyncSuccessNotification(applicationContext, channels.size)
-                    }
 
+                    if (prefs.getBoolean("NOTIFY_SYNC_SUCCESS_ENABLED", true)) {
+                        NotificationHelper.sendChannelSyncSuccessNotification(applicationContext, channels.size)
+                    }
                 } else {
-                    Log.e(TAG, "CRITICAL FAILURE: getChannelsInBouquet returned NULL.")
-                    Log.d(TAG, "------------------- CHANNEL SYNC END ---------------------")
                     Toast.makeText(applicationContext, getString(R.string.error_sync_channels), Toast.LENGTH_LONG).show()
                 }
             }
@@ -208,6 +240,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         updatePeriodicSyncStatusIndicator()
+        updateNotificationStatusIndicator()
 
         val ip = binding.editIpAddress.text.toString().trim()
         val user = binding.editUsername.text.toString().trim()
@@ -251,6 +284,37 @@ class MainActivity : AppCompatActivity() {
             binding.statusTimerSyncIcon.setImageResource(R.drawable.ic_error)
             binding.statusTimerSyncIcon.setColorFilter(Color.RED)
             binding.statusTimerSyncText.text = getString(R.string.status_periodic_sync_disabled)
+        }
+    }
+
+    private fun updateNotificationStatusIndicator() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+            if (hasPermission) {
+                binding.statusNotificationIcon.setImageResource(R.drawable.ic_check_circle)
+                binding.statusNotificationIcon.setColorFilter(ContextCompat.getColor(this, android.R.color.holo_green_dark))
+                binding.statusNotificationText.text = getString(R.string.status_notifications_enabled)
+            } else {
+                binding.statusNotificationIcon.setImageResource(R.drawable.ic_error)
+                binding.statusNotificationIcon.setColorFilter(Color.RED)
+                binding.statusNotificationText.text = getString(R.string.status_notifications_disabled)
+            }
+        } else {
+            binding.statusNotificationIcon.setImageResource(R.drawable.ic_check_circle)
+            binding.statusNotificationIcon.setColorFilter(ContextCompat.getColor(this, android.R.color.holo_green_dark))
+            binding.statusNotificationText.text = getString(R.string.status_notifications_enabled)
+        }
+    }
+
+    private fun updateLastSyncStatus() {
+        Log.d(TAG, "updateLastSyncStatus() called.")
+        val lastSyncTimestamp = prefs.getLong("LAST_TIMER_SYNC_TIMESTAMP", 0)
+        if (lastSyncTimestamp > 0) {
+            val sdf = SimpleDateFormat("dd.MM.yyyy 'at' HH:mm", Locale.getDefault())
+            val dateString = sdf.format(Date(lastSyncTimestamp))
+            binding.statusLastSyncText.text = getString(R.string.status_last_sync_value, dateString)
+        } else {
+            binding.statusLastSyncText.text = getString(R.string.status_last_sync_never)
         }
     }
 

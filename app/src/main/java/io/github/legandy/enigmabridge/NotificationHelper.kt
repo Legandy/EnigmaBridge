@@ -20,7 +20,6 @@ object NotificationHelper {
     private const val NOTIFICATION_CHANNEL_ID = "ENIGMA_BRIDGE_CHANNEL"
     private const val TAG = "NotificationHelper"
 
-    // Creates the notification channel required on Android 8.0+.
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = context.getString(R.string.notification_channel_name)
@@ -35,7 +34,6 @@ object NotificationHelper {
         }
     }
 
-    // Sends a notification for a successfully scheduled timer.
     fun sendSuccessNotification(context: Context, program: Program) {
         val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         val startTime = timeFormat.format(Date(program.startTimeInUTC))
@@ -54,7 +52,6 @@ object NotificationHelper {
         sendNotification(context, builder)
     }
 
-    // Sends a notification when a recording has started.
     fun sendRecordingStartedNotification(context: Context, timer: Timer) {
         val notificationContent = context.getString(R.string.notification_content_recording_started, timer.name, timer.sName)
 
@@ -68,12 +65,11 @@ object NotificationHelper {
         sendNotification(context, builder)
     }
 
-    // Sends a notification for a successful channel sync.
-    fun sendSyncSuccessNotification(context: Context, channelCount: Int) {
-        val notificationContent = context.getString(R.string.notification_content_sync_success, channelCount)
+    fun sendChannelSyncSuccessNotification(context: Context, channelCount: Int) {
+        val notificationContent = context.getString(R.string.notification_content_channel_sync_success, channelCount)
         val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_check_circle)
-            .setContentTitle(context.getString(R.string.notification_title_sync_success))
+            .setContentTitle(context.getString(R.string.notification_title_channel_sync_success))
             .setContentText(notificationContent)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
@@ -81,7 +77,31 @@ object NotificationHelper {
         sendNotification(context, builder)
     }
 
-    // Generic function to display a notification.
+    fun sendTimerSyncSuccessNotification(context: Context, timerCount: Int) {
+        val notificationContent = context.getString(R.string.notification_content_timer_sync_success, timerCount)
+        val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_update)
+            .setContentTitle(context.getString(R.string.notification_title_timer_sync_success))
+            .setContentText(notificationContent)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+
+        sendNotification(context, builder)
+    }
+
+    // **DEFINITIVE FIX: Add a function for failure notifications**
+    fun sendTimerSyncFailedNotification(context: Context) {
+        val notificationContent = context.getString(R.string.notification_content_timer_sync_failed)
+        val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_error) // Use an error icon
+            .setContentTitle(context.getString(R.string.notification_title_timer_sync_failed))
+            .setContentText(notificationContent)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+
+        sendNotification(context, builder)
+    }
+
     private fun sendNotification(context: Context, builder: NotificationCompat.Builder) {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             NotificationManagerCompat.from(context).notify(System.currentTimeMillis().toInt(), builder.build())

@@ -17,7 +17,6 @@ import okhttp3.Request
 import java.io.IOException
 import java.net.URLEncoder
 
-// --- Data classes updated for Kotlinx Serialization ---
 @Serializable
 data class BouquetResponse(@SerialName("bouquets") val bouquets: List<List<String>>)
 @Serializable
@@ -35,7 +34,6 @@ data class SimpleResultResponse(
 @Parcelize
 @Serializable
 data class Timer(
-    // ** THE DEFINITIVE AND FINAL FIX: Match the JSON key from the receiver **
     @SerialName("serviceref") val sRef: String? = null,
     @SerialName("servicename") val sName: String,
     @SerialName("name") val name: String,
@@ -47,8 +45,9 @@ data class Timer(
     @SerialName("afterevent") val afterEvent: Int,
     @SerialName("repeated") val repeated: Int,
     @SerialName("disabled") val disabled: Int,
-    @SerialName("dirname") val directoryName: String?,
-    @SerialName("tags") val tags: String?
+    // **THE FIX: Make these fields nullable with default values to prevent parsing crash**
+    @SerialName("dirname") val directoryName: String? = null,
+    @SerialName("tags") val tags: String? = null
 ) : Parcelable
 
 class EnigmaClient(
@@ -66,7 +65,7 @@ class EnigmaClient(
     }
 
     companion object {
-        private const val TAG = "EnigmaClient" // Changed back from diagnostic tag
+        private const val TAG = "EnigmaClient"
         private const val API_ABOUT = "/api/about"
         private const val API_TIMER_ADD = "/api/timeradd"
         private const val API_TIMER_DELETE = "/api/timerdelete"
@@ -125,7 +124,6 @@ class EnigmaClient(
     suspend fun deleteTimer(timer: Timer): Pair<Boolean, String> {
         val query = "sRef=${timer.sRef}&begin=${timer.beginTimestamp}&end=${timer.endTimestamp}"
         val url = buildUrl(API_TIMER_DELETE, query)
-        Log.d(TAG, "Attempting timer deletion with URL: $url")
         return executeAction(url)
     }
 
@@ -158,7 +156,6 @@ class EnigmaClient(
             append("&$identificationParams")
         }
         val url = buildUrl(API_TIMER_CHANGE, query)
-        Log.d(TAG, "Attempting timer edit with URL: $url")
         return executeAction(url)
     }
 
@@ -188,10 +185,6 @@ class EnigmaClient(
 
     suspend fun getTimerList(): List<Timer>? {
         val jsonString = executeRequest(buildUrl(API_TIMER_LIST))
-
-        // This logging is no longer needed but can be kept for future debugging
-        // Log.d("ENIGMA_JSON_DEBUG", "Raw Timer List JSON: $jsonString")
-
         return jsonString?.let {
             try { json.decodeFromString<TimerListResponse>(it).timers }
             catch (e: Exception) { Log.e(TAG, "Failed to parse timer list JSON.", e); null }

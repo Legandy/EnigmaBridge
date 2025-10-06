@@ -14,16 +14,13 @@ class SyncTriggerReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        // Only act if the intent action matches what we expect.
         if (intent.action == ACTION_TRIGGER_SYNC) {
-            // Create a one-time work request for our TimerCheckWorker.
+            // ** THE FIX 3: Add a toast for immediate feedback **
+            Toast.makeText(context, R.string.toast_sync_triggered_externally, Toast.LENGTH_SHORT).show()
+
             val syncWorkRequest = OneTimeWorkRequestBuilder<TimerCheckWorker>()
                 .build()
-            // Enqueue the work.
             WorkManager.getInstance(context).enqueue(syncWorkRequest)
-
-            // Show a toast to confirm the action was triggered.
-            Toast.makeText(context, R.string.toast_sync_triggered_externally, Toast.LENGTH_SHORT).show()
         }
     }
 }

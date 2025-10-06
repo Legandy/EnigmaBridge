@@ -23,7 +23,6 @@
             app:layout_constraintTop_toTopOf="@+id/switch_use_https"
             app:layout_constraintBottom_toBottomOf="@+id/switch_use_https"/>
 
-        <!-- HTTPS Switch moved into the header -->
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/switch_use_https"
             android:layout_width="wrap_content"
@@ -32,8 +31,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-
-        <!-- IP Address -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/ipAddressLayout"
             android:layout_width="0dp"
@@ -51,7 +48,6 @@
                 android:inputType="textUri" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Username -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/usernameLayout"
             android:layout_width="0dp"
@@ -69,7 +65,6 @@
                 android:text="@string/username_default" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Password -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/passwordLayout"
             android:layout_width="0dp"
@@ -135,7 +130,6 @@
             app:layout_constraintStart_toEndOf="@+id/statusTvBrowserIcon"
             app:layout_constraintTop_toTopOf="@+id/statusTvBrowserIcon" />
 
-        <!-- New Timer Sync Status Indicator -->
         <ImageView
             android:id="@+id/statusTimerSyncIcon"
             android:layout_width="24dp"
@@ -152,16 +146,60 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="@string/status_timer_sync_disabled"
+            android:text="@string/status_periodic_sync_disabled"
             android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
             app:layout_constraintBottom_toBottomOf="@+id/statusTimerSyncIcon"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/statusTimerSyncIcon"
             app:layout_constraintTop_toTopOf="@+id/statusTimerSyncIcon" />
 
-        <!-- Actions Section -->
+        <!-- **THE FIX: Add Notification Status indicator** -->
+        <ImageView
+            android:id="@+id/statusNotificationIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginTop="16dp"
+            android:src="@drawable/ic_error"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/statusTimerSyncIcon"
+            app:tint="?attr/colorOnSurface"
+            android:contentDescription="@null" />
 
-        <!-- Bouquet Spinner -->
+        <TextView
+            android:id="@+id/statusNotificationText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="@string/status_notifications_disabled"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+            app:layout_constraintBottom_toBottomOf="@+id/statusNotificationIcon"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/statusNotificationIcon"
+            app:layout_constraintTop_toTopOf="@+id/statusNotificationIcon" />
+
+        <!-- **THE FIX: Add Last Sync timestamp indicator** -->
+        <ImageView
+            android:id="@+id/statusLastSyncIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginTop="16dp"
+            android:src="@drawable/ic_update"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/statusNotificationIcon"
+            app:tint="?attr/colorOnSurface"
+            android:contentDescription="@null" />
+
+        <TextView
+            android:id="@+id/statusLastSyncText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="@string/status_last_sync_never"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+            app:layout_constraintBottom_toBottomOf="@+id/statusLastSyncIcon"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/statusLastSyncIcon"
+            app:layout_constraintTop_toTopOf="@+id/statusLastSyncIcon" />
 
         <View
             android:id="@+id/divider"
@@ -172,7 +210,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/statusTimerSyncText" />
+            app:layout_constraintTop_toBottomOf="@id/statusLastSyncText" />
 
         <Spinner
             android:id="@+id/bouquets_spinner"
@@ -184,7 +222,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/divider" />
 
-        <!-- Sync Button -->
         <Button
             android:id="@+id/button_sync_channels"
             android:layout_width="0dp"
@@ -195,7 +232,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/bouquets_spinner" />
 
-        <!-- View Timers Button -->
         <Button
             android:id="@+id/button_view_timers"
             style="?attr/materialButtonOutlinedStyle"
@@ -207,7 +243,6 @@
             app:layout_constraintStart_toStartOf="@+id/button_sync_channels"
             app:layout_constraintTop_toBottomOf="@+id/button_sync_channels" />
 
-        <!-- Recording Settings Button -->
         <Button
             android:id="@+id/button_settings"
             style="?attr/materialButtonOutlinedStyle"
@@ -219,7 +254,6 @@
             app:layout_constraintStart_toStartOf="@+id/button_view_timers"
             app:layout_constraintTop_toBottomOf="@+id/button_view_timers" />
 
-        <!-- Save Button (at the bottom) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonSave"
             android:layout_width="0dp"
@@ -234,7 +268,6 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintVertical_bias="1.0"/>
 
-        <!-- Progress Bar (centered) -->
         <ProgressBar
             android:id="@+id/progress_bar"
             style="?android:attr/progressBarStyle"

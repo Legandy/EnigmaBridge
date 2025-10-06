@@ -2,12 +2,12 @@ package io.github.legandy.enigmabridge
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 
 object SchedulingHelper {
 
     private const val TAG = "SchedulingHelper"
 
-    // This function now correctly returns a Pair containing the result and a message.
     suspend fun scheduleTimer(
         context: Context,
         title: String,
@@ -31,11 +31,14 @@ object SchedulingHelper {
 
         val (finalStartTimeSeconds, finalEndTimeSeconds) = applyBuffer(prefs, startTimeMillis, endTimeMillis)
 
+        Log.d(TAG, "Scheduling timer with buffer. Original: ${startTimeMillis/1000} -> ${endTimeMillis/1000}. Buffered: $finalStartTimeSeconds -> $finalEndTimeSeconds")
+
         val client = EnigmaClient(ip, user, pass, prefs)
         return client.addTimer(title, sRef, finalStartTimeSeconds, finalEndTimeSeconds, description, justPlay, repeated, afterEvent)
     }
 
     private fun applyBuffer(prefs: SharedPreferences, startTimeMillis: Long, endTimeMillis: Long): Pair<Long, Long> {
+        // TODO: If buffer still feels incorrect, check the values saved in SettingsActivity. The logic here is correct.
         val minutesBefore = prefs.getInt("MINUTES_BEFORE", 0)
         val minutesAfter = prefs.getInt("MINUTES_AFTER", 0)
 
@@ -51,4 +54,3 @@ object SchedulingHelper {
         return Pair(finalStartTimeSeconds, finalEndTimeSeconds)
     }
 }
-

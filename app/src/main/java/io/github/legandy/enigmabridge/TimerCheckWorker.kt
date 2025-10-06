@@ -1,8 +1,10 @@
 package io.github.legandy.enigmabridge
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +20,6 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
         private const val PREVIOUS_TIMERS_KEY = "PREVIOUS_TIMERS_LIST"
     }
 
-    // **DEFINITIVE FIX: Use the same lenient parser as EnigmaClient**
     private val json = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
@@ -26,31 +27,54 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
     }
 
     override suspend fun doWork(): Result {
-        Log.d(WORK_TAG, "Periodic check running.")
+        Log.d(WORK_TAG, "--- TimerCheckWorker doWork() STARTED ---")
+
+        // ** THE FIX 2: Ensure the notification channel exists before sending a notification **
+        NotificationHelper.createNotificationChannel(applicationContext)
+
         val prefs = applicationContext.getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
         val ip = prefs.getString("IP_ADDRESS", "") ?: ""
         val user = prefs.getString("USERNAME", "root") ?: ""
         val pass = prefs.getString("PASSWORD", "") ?: ""
 
         if (ip.isEmpty()) {
-            Log.w(WORK_TAG, "Aborting: IP Address not configured.")
+            Log.w(WORK_TAG, "Aborting timer sync: IP Address not configured.")
+            NotificationHelper.sendTimerSyncFailedNotification(applicationContext)
             return Result.failure()
         }
 
+        Log.d(WORK_TAG, "Attempting to connect to receiver at IP: $ip")
         val client = EnigmaClient(ip, user, pass, prefs)
         val currentTimers = withContext(Dispatchers.IO) {
             client.getTimerList()
         }
 
         if (currentTimers == null) {
-            Log.e(WORK_TAG, "Failed to fetch current timer list.")
-            return Result.retry()
+            Log.e(WORK_TAG, "CRITICAL FAILURE: client.getTimerList() returned NULL. Aborting.")
+            NotificationHelper.sendTimerSyncFailedNotification(applicationContext)
+            return Result.failure()
         }
 
+        Log.d(WORK_TAG, "Successfully fetched ${currentTimers.size} timers from the receiver.")
         val previousTimers = loadPreviousTimers(prefs)
         findAndNotifyNewRecordings(previousTimers, currentTimers, prefs)
         saveCurrentTimers(currentTimers, prefs)
 
+        Log.d(WORK_TAG, "Updating LAST_TIMER_SYNC_TIMESTAMP preference.")
+        prefs.edit().putLong("LAST_TIMER_SYNC_TIMESTAMP", System.currentTimeMillis()).apply()
+
+        val notifyEnabled = prefs.getBoolean("NOTIFY_SYNC_SUCCESS_ENABLED", true)
+        Log.d(WORK_TAG, "Notification on success enabled: $notifyEnabled")
+        if (notifyEnabled) {
+            Log.d(WORK_TAG, "Calling sendTimerSyncSuccessNotification...")
+            NotificationHelper.sendTimerSyncSuccessNotification(applicationContext, currentTimers.size)
+        }
+
+        Log.d(WORK_TAG, "Sending ACTION_TIMER_SYNC_COMPLETED broadcast.")
+        val intent = Intent(MainActivity.ACTION_TIMER_SYNC_COMPLETED)
+        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
+
+        Log.d(WORK_TAG, "--- TimerCheckWorker doWork() FINISHED SUCCESSFULLY ---")
         return Result.success()
     }
 
@@ -58,9 +82,7 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
         val jsonString = prefs.getString(PREVIOUS_TIMERS_KEY, null)
         return if (jsonString != null) {
             try {
-                // **DEFINITIVE FIX: Use Kotlinx Serialization to read the timer list**
-                val timerList: List<Timer> = json.decodeFromString(jsonString)
-                // Use a null-safe call for sRef
+                val timerList: List<Timer> = json.decodeFromString<List<Timer>>(jsonString)
                 timerList.associateBy { "${it.sRef}-${it.beginTimestamp}" }
             } catch (e: Exception) {
                 Log.e(WORK_TAG, "Failed to parse previous timers JSON.", e)
@@ -73,12 +95,10 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
 
     private fun findAndNotifyNewRecordings(previousTimers: Map<String, Timer>, currentTimers: List<Timer>, prefs: SharedPreferences) {
         if (!prefs.getBoolean("NOTIFY_RECORDING_STARTED_ENABLED", true)) {
-            Log.d(WORK_TAG, "Recording start notifications disabled. Skipping check.")
             return
         }
 
         for (currentTimer in currentTimers) {
-            // Use a null-safe call for sRef
             val key = "${currentTimer.sRef}-${currentTimer.beginTimestamp}"
             val previousTimer = previousTimers[key]
 
@@ -90,8 +110,7 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
     }
 
     private fun saveCurrentTimers(timers: List<Timer>, prefs: SharedPreferences) {
-        // **DEFINITIVE FIX: Use Kotlinx Serialization to save the timer list**
-        val jsonString = json.encodeToString(timers)
+        val jsonString = json.encodeToString<List<Timer>>(timers)
         prefs.edit().putString(PREVIOUS_TIMERS_KEY, jsonString).apply()
     }
 }

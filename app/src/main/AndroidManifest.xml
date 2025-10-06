@@ -7,9 +7,13 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <permission
+        android:name="io.github.legandy.enigmabridge.permission.TRIGGER_SYNC"
+        android:protectionLevel="normal" />
 
+    <!-- ** THE FIX: Remove the android:name attribute as it's being ignored by the build system ** -->
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -38,6 +42,11 @@
             android:parentActivityName=".MainActivity"/>
 
         <activity
+            android:name=".EditTimerActivity"
+            android:label="@string/title_edit_schedule"
+            android:parentActivityName=".TimerListActivity" />
+
+        <activity
             android:name=".AdvancedScheduleActivity"
             android:theme="@style/Theme.EnigmaBridge.Dialog"
             android:label="@string/title_advanced_schedule"
@@ -55,10 +64,6 @@
             </intent-filter>
         </service>
 
-        <service
-            android:name=".TimerCheckService"
-            android:permission="android.permission.BIND_JOB_SERVICE" />
-
         <!-- Broadcast Receivers -->
         <receiver
             android:name=".TimerCheckReceiver"
@@ -69,10 +74,10 @@
             </intent-filter>
         </receiver>
 
-        <!-- New receiver for external sync triggers -->
         <receiver
             android:name=".SyncTriggerReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:permission="io.github.legandy.enigmabridge.permission.TRIGGER_SYNC">
             <intent-filter>
                 <action android:name="io.github.legandy.enigmabridge.ACTION_TRIGGER_SYNC" />
             </intent-filter>

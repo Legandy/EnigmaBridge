@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Enigma Bridge</string>
     <string name="receiver_settings">Receiver Settings</string>
@@ -15,20 +16,21 @@
     <string name="status_tvbrowser_unchecked">TV-Browser: Not Checked</string>
     <string name="status_tvbrowser_found">TV-Browser: Found</string>
     <string name="status_tvbrowser_not_found">TV-Browser: Not Installed</string>
-    <string name="status_periodic_sync_enabled">Periodic Sync: Enabled</string>
-    <string name="status_periodic_sync_disabled">Periodic Sync: Disabled</string>
-    <string name="status_timer_sync_enabled">Event-Driven Sync: Enabled</string>
-    <string name="status_timer_sync_disabled">Event-Driven Sync: Disabled</string>
-    <string name="label_use_https">Use HTTPS (SSL)</string>
+    <string name="status_periodic_sync_enabled">Periodic Timer Sync: Enabled</string>
+    <string name="status_periodic_sync_disabled">Periodic Timer Sync: Disabled</string>
+    <string name="status_last_sync_value">Last Timer Sync: %1$s</string>
+    <string name="status_last_sync_never">Last Timer Sync: Never</string>
+    <string name="status_notifications_enabled">Notifications: Enabled</string>
+    <string name="status_notifications_disabled">Notifications: Disabled (Permission Needed)</string>
 
     <!-- Plugin Metadata -->
     <string name="plugin_description">Schedules recordings on an Enigma2 receiver.</string>
     <string name="plugin_author">Legandy</string>
     <string name="plugin_license">Apache License, Version 2.0</string>
     <string name="context_menu_schedule_simple">Schedule Recording</string>
-    <string name="context_menu_schedule_advanced">Advanced Scheduling</string>
+    <string name="context_menu_schedule_advanced">Advanced Scheduling...</string>
     <string name="context_menu_unschedule">Un-schedule Recording</string>
-    <string name="context_menu_manual_unmark">Unmark</string>
+    <string name="context_menu_manual_unmark">Manual Unmark</string>
 
     <!-- Toasts and Messages -->
     <string name="error_channel_list_not_synced">Error: Channel list not synced. Please open the app and sync.</string>
@@ -48,22 +50,28 @@
     <string name="error_fetch_timers">Failed to fetch timer list.</string>
     <string name="no_timers_found">No scheduled timers found.</string>
     <string name="label_scheduled_timers">Scheduled Timers</string>
-    <string name="sync_selected_bouquet">Sync Selected Bouquet</string>
+    <string name="sync_selected_bouquet">Sync Channel List</string>
     <string name="view_scheduled_timers">View Scheduled Timers</string>
     <string name="error_program_data_missing">Error: Program data missing.</string>
     <string name="toast_sync_triggered_externally">Timer sync triggered externally.</string>
+    <string name="toast_timers_refreshed">Timer list refreshed.</string>
+    <string name="label_use_https">Use HTTPS</string>
 
     <!-- Notifications -->
     <string name="notification_channel_name">EnigmaBridge Notifications</string>
-    <string name="notification_channel_description">Notifications for scheduled recordings</string>
+    <string name="notification_channel_description">Notifications for scheduled recordings and sync status</string>
     <string name="notification_title">Recording Scheduled</string>
     <string name="notification_content">\'%1$s\' on %2$s at %3$s</string>
     <string name="permission_granted">Notification permission granted.</string>
     <string name="permission_denied">Notification permission denied. You will not receive status updates.</string>
     <string name="notification_title_recording_started">Recording Started</string>
     <string name="notification_content_recording_started">\'%1$s\' has started recording on %2$s.</string>
-    <string name="notification_title_sync_success">Sync Successful</string>
-    <string name="notification_content_sync_success">Successfully synced %1$d channels.</string>
+    <string name="notification_title_channel_sync_success">Channel Sync Successful</string>
+    <string name="notification_content_channel_sync_success">Successfully synced %1$d channels.</string>
+    <string name="notification_title_timer_sync_success">Timer Sync Successful</string>
+    <string name="notification_content_timer_sync_success">Successfully synced %1$d timers.</string>
+    <string name="notification_title_timer_sync_failed">Timer Sync Failed</string>
+    <string name="notification_content_timer_sync_failed">Could not connect to receiver to sync timers.</string>
 
     <!-- Timer List Item -->
     <string name="timer_time_range_detailed">%1$s - %2$s</string>
