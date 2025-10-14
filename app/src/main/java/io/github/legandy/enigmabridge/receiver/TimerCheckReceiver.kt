@@ -1,9 +1,10 @@
-package io.github.legandy.enigmabridge
+package io.github.legandy.enigmabridge.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import io.github.legandy.enigmabridge.ui.SettingsActivity
 
 class TimerCheckReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {

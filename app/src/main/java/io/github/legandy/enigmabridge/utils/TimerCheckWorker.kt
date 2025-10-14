@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge
+package io.github.legandy.enigmabridge.utils
 
 import android.content.Context
 import android.content.Intent
@@ -7,6 +7,9 @@ import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import io.github.legandy.enigmabridge.receiver.EnigmaClient
+import io.github.legandy.enigmabridge.receiver.Timer
+import io.github.legandy.enigmabridge.ui.MainActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString

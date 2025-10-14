@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="24dp"
-    tools:context=".SettingsActivity">
+    tools:context=".ui.SettingsActivity">
 
     <!-- Recording Buffer Settings -->
     <com.google.android.material.textfield.TextInputLayout

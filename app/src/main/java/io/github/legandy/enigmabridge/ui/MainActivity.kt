@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge
+package io.github.legandy.enigmabridge.ui
 
 import android.Manifest
 import android.content.BroadcastReceiver
@@ -19,8 +19,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.work.Configuration
-import androidx.work.WorkManager
+import io.github.legandy.enigmabridge.receiver.EnigmaClient
+import io.github.legandy.enigmabridge.utils.NotificationHelper
+import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -71,22 +72,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ** THE FIX 1: Manually initialize WorkManager to bypass the manifest issue **
-        try {
-            WorkManager.initialize(
-                this,
-                Configuration.Builder()
-                    .setMinimumLoggingLevel(android.util.Log.DEBUG)
-                    .build()
-            )
-            Log.d(TAG, "WorkManager manually initialized.")
-        } catch (e: Exception) {
-            Log.w(TAG, "WorkManager already initialized in this process.")
-        }
+        // ** THE FIX: Remove the manual initialization from here. It is now handled by the Application class. **
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
+        prefs = getSharedPreferences("EnigmaSettings", MODE_PRIVATE)
 
         setupUI()
         requestNotificationPermission()
@@ -97,7 +87,9 @@ class MainActivity : AppCompatActivity() {
         runChecks()
         updateLastSyncStatus()
         Log.d(TAG, "Registering timerSyncCompletedReceiver in onResume.")
-        LocalBroadcastManager.getInstance(this).registerReceiver(timerSyncCompletedReceiver, IntentFilter(ACTION_TIMER_SYNC_COMPLETED))
+        LocalBroadcastManager.getInstance(this).registerReceiver(timerSyncCompletedReceiver,
+            IntentFilter(ACTION_TIMER_SYNC_COMPLETED)
+        )
     }
 
     override fun onPause() {
@@ -164,11 +156,19 @@ class MainActivity : AppCompatActivity() {
                 if (fetchedBouquets != null) {
                     bouquetsMap = fetchedBouquets
                     val bouquetNames = bouquetsMap.keys.toList()
-                    val adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_item, bouquetNames)
+                    val adapter = ArrayAdapter(
+                        this@MainActivity,
+                        android.R.layout.simple_spinner_item,
+                        bouquetNames
+                    )
                     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                     binding.bouquetsSpinner.adapter = adapter
                 } else {
-                    Toast.makeText(applicationContext, getString(R.string.error_fetch_bouquets), Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        applicationContext,
+                        getString(R.string.error_fetch_bouquets),
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         }
@@ -201,13 +201,24 @@ class MainActivity : AppCompatActivity() {
                 if (channels != null) {
                     val jsonChannels = json.encodeToString(channels)
                     prefs.edit().putString("SYNCED_CHANNELS", jsonChannels).apply()
-                    Toast.makeText(applicationContext, getString(R.string.sync_success_toast, channels.size), Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        applicationContext,
+                        getString(R.string.sync_success_toast, channels.size),
+                        Toast.LENGTH_LONG
+                    ).show()
 
                     if (prefs.getBoolean("NOTIFY_SYNC_SUCCESS_ENABLED", true)) {
-                        NotificationHelper.sendChannelSyncSuccessNotification(applicationContext, channels.size)
+                        NotificationHelper.sendChannelSyncSuccessNotification(
+                            applicationContext,
+                            channels.size
+                        )
                     }
                 } else {
-                    Toast.makeText(applicationContext, getString(R.string.error_sync_channels), Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        applicationContext,
+                        getString(R.string.error_sync_channels),
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         }
@@ -262,7 +273,12 @@ class MainActivity : AppCompatActivity() {
                 showLoading(false)
                 if (isConnected) {
                     binding.statusEnigmaIcon.setImageResource(R.drawable.ic_check_circle)
-                    binding.statusEnigmaIcon.setColorFilter(ContextCompat.getColor(applicationContext, android.R.color.holo_green_dark))
+                    binding.statusEnigmaIcon.setColorFilter(
+                        ContextCompat.getColor(
+                            applicationContext,
+                            android.R.color.holo_green_dark
+                        )
+                    )
                     binding.statusEnigmaText.text = getString(R.string.status_enigma_success)
                     fetchBouquets()
                 } else {
@@ -322,4 +338,3 @@ class MainActivity : AppCompatActivity() {
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
     }
 }
-

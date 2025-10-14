@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge
+package io.github.legandy.enigmabridge.ui
 
 import android.content.Context
 import android.os.Bundle
@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.utils.TimerCheckWorker
 import io.github.legandy.enigmabridge.databinding.ActivitySettingsBinding
 import java.util.concurrent.TimeUnit
 
@@ -21,13 +23,16 @@ class SettingsActivity : AppCompatActivity() {
 
             if (hours <= 0) {
                 // Cancel the work if the interval is 0.
-                workManager.cancelUniqueWork(TimerCheckWorker.WORK_TAG)
+                workManager.cancelUniqueWork(TimerCheckWorker.Companion.WORK_TAG)
             } else {
                 // Schedule the periodic work.
-                val periodicRequest = PeriodicWorkRequestBuilder<TimerCheckWorker>(hours.toLong(), TimeUnit.HOURS)
+                val periodicRequest = PeriodicWorkRequestBuilder<TimerCheckWorker>(
+                    hours.toLong(),
+                    TimeUnit.HOURS
+                )
                     .build()
                 workManager.enqueueUniquePeriodicWork(
-                    TimerCheckWorker.WORK_TAG, ExistingPeriodicWorkPolicy.REPLACE, periodicRequest
+                    TimerCheckWorker.Companion.WORK_TAG, ExistingPeriodicWorkPolicy.REPLACE, periodicRequest
                 )
             }
         }
@@ -41,7 +46,7 @@ class SettingsActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         title = getString(R.string.title_settings)
 
-        val prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences("EnigmaSettings", MODE_PRIVATE)
 
         // Load existing settings.
         binding.editMinutesBefore.setText(prefs.getInt("MINUTES_BEFORE", 2).toString())
@@ -90,4 +95,3 @@ class SettingsActivity : AppCompatActivity() {
         return true
     }
 }
-

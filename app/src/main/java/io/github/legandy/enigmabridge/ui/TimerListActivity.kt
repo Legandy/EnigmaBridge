@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge
+package io.github.legandy.enigmabridge.ui
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -15,6 +15,12 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import io.github.legandy.enigmabridge.receiver.EnigmaClient
+import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.service.RecordService
+import io.github.legandy.enigmabridge.receiver.Timer
+import io.github.legandy.enigmabridge.utils.TimerAdapter
+import io.github.legandy.enigmabridge.utils.TimerCheckWorker
 import io.github.legandy.enigmabridge.databinding.ActivityTimerListBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,7 +40,7 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
     private val refreshReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
-                RecordService.ACTION_TIMER_LIST_CHANGED, MainActivity.ACTION_TIMER_SYNC_COMPLETED -> {
+                RecordService.Companion.ACTION_TIMER_LIST_CHANGED, MainActivity.ACTION_TIMER_SYNC_COMPLETED -> {
                     Log.d(TAG, "Received broadcast (${intent.action}), fetching timer list.")
                     fetchTimerList()
                 }
@@ -50,7 +56,7 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences("EnigmaSettings", MODE_PRIVATE)
         val ip = prefs.getString("IP_ADDRESS", "") ?: ""
         val user = prefs.getString("USERNAME", "root") ?: ""
         val pass = prefs.getString("PASSWORD", "") ?: ""
@@ -60,7 +66,7 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
         setupPullToRefresh()
 
         val intentFilter = IntentFilter().apply {
-            addAction(RecordService.ACTION_TIMER_LIST_CHANGED)
+            addAction(RecordService.Companion.ACTION_TIMER_LIST_CHANGED)
             addAction(MainActivity.ACTION_TIMER_SYNC_COMPLETED)
         }
         LocalBroadcastManager.getInstance(this).registerReceiver(refreshReceiver, intentFilter)
@@ -99,7 +105,7 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
         // and the broadcast receiver.
         binding.emptyView.visibility = View.GONE
 
-        val prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences("EnigmaSettings", MODE_PRIVATE)
         val ip = prefs.getString("IP_ADDRESS", "") ?: ""
         if (ip.isEmpty()) {
             Toast.makeText(this, getString(R.string.error_ip_not_configured), Toast.LENGTH_LONG).show()
@@ -121,7 +127,11 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
                         timerAdapter.updateTimers(timers)
                     }
                 } else {
-                    Toast.makeText(this@TimerListActivity, getString(R.string.error_fetch_timers), Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this@TimerListActivity,
+                        getString(R.string.error_fetch_timers),
+                        Toast.LENGTH_LONG
+                    ).show()
                     binding.emptyView.visibility = View.VISIBLE
                 }
             }
@@ -159,7 +169,11 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
             val result = enigmaClient.deleteTimer(timer)
             withContext(Dispatchers.Main) {
                 if (result.first) {
-                    Toast.makeText(applicationContext, getString(R.string.delete_timer_success), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        applicationContext,
+                        getString(R.string.delete_timer_success),
+                        Toast.LENGTH_SHORT
+                    ).show()
                     fetchTimerList()
                 } else {
                     Toast.makeText(applicationContext, result.second, Toast.LENGTH_LONG).show()
@@ -168,4 +182,3 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
         }
     }
 }
-

@@ -1,8 +1,7 @@
-package io.github.legandy.enigmabridge
+package io.github.legandy.enigmabridge.ui
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.ArrayAdapter
@@ -10,7 +9,11 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.databinding.ActivityEditTimerBinding
+import io.github.legandy.enigmabridge.receiver.EnigmaClient
+import io.github.legandy.enigmabridge.receiver.Timer
+import io.github.legandy.enigmabridge.service.RecordService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -122,7 +125,7 @@ class EditTimerActivity : AppCompatActivity() {
         val afterEvent = originalTimer!!.afterEvent // This is not editable in the UI, so we keep the original value
         val disabled = if (binding.toggleEnabled.isChecked) 0 else 1
 
-        val prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences("EnigmaSettings", MODE_PRIVATE)
         val ip = prefs.getString("IP_ADDRESS", "") ?: ""
         val user = prefs.getString("USERNAME", "root") ?: ""
         val pass = prefs.getString("PASSWORD", "") ?: ""

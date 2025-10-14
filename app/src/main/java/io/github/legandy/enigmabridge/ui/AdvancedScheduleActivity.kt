@@ -1,7 +1,6 @@
-package io.github.legandy.enigmabridge
+package io.github.legandy.enigmabridge.ui
 
 import android.app.TimePickerDialog
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.ArrayAdapter
@@ -9,7 +8,11 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.databinding.ActivityAdvancedScheduleBinding
+import io.github.legandy.enigmabridge.service.RecordService
+import io.github.legandy.enigmabridge.utils.NotificationHelper
+import io.github.legandy.enigmabridge.utils.SchedulingHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -127,7 +130,7 @@ class AdvancedScheduleActivity : AppCompatActivity() {
                 Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
 
                 if (success) {
-                    val prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
+                    val prefs = getSharedPreferences("EnigmaSettings", MODE_PRIVATE)
                     if (prefs.getBoolean("NOTIFY_SCHEDULED_ENABLED", true)) {
                         NotificationHelper.sendSuccessNotification(applicationContext, program!!)
                     }

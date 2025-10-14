@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge
+package io.github.legandy.enigmabridge.service
 
 import android.app.Service
 import android.content.BroadcastReceiver
@@ -10,6 +10,13 @@ import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import io.github.legandy.enigmabridge.ui.AdvancedScheduleActivity
+import io.github.legandy.enigmabridge.receiver.EnigmaClient
+import io.github.legandy.enigmabridge.utils.NotificationHelper
+import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.utils.SchedulingHelper
+import io.github.legandy.enigmabridge.receiver.Timer
+import io.github.legandy.enigmabridge.ui.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -66,7 +73,7 @@ class RecordService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        prefs = getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
+        prefs = getSharedPreferences("EnigmaSettings", MODE_PRIVATE)
         NotificationHelper.createNotificationChannel(this)
         loadMarkedProgramIds()
         updateTimerCache()
@@ -244,7 +251,14 @@ class RecordService : Service() {
     }
     private fun getEnigmaClient(): EnigmaClient? {
         val ip = prefs.getString("IP_ADDRESS", "") ?: ""
-        return if (ip.isNotEmpty()) { EnigmaClient(ip, prefs.getString("USERNAME", "root") ?: "", prefs.getString("PASSWORD", "") ?: "", prefs) } else { null }
+        return if (ip.isNotEmpty()) {
+            EnigmaClient(
+                ip,
+                prefs.getString("USERNAME", "root") ?: "",
+                prefs.getString("PASSWORD", "") ?: "",
+                prefs
+            )
+        } else { null }
     }
 
     private fun getSyncedChannels(): Map<String, String>? {

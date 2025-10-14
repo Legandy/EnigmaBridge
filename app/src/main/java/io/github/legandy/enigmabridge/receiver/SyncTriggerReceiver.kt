@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge
+package io.github.legandy.enigmabridge.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -6,6 +6,8 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.utils.TimerCheckWorker
 
 class SyncTriggerReceiver : BroadcastReceiver() {
 

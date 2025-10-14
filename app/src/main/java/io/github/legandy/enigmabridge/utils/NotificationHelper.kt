@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge
+package io.github.legandy.enigmabridge.utils
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -10,6 +10,8 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.receiver.Timer
 import org.tvbrowser.devplugin.Program
 import java.text.SimpleDateFormat
 import java.util.Date

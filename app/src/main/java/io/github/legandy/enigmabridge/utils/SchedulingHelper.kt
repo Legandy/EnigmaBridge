@@ -1,8 +1,9 @@
-package io.github.legandy.enigmabridge
+package io.github.legandy.enigmabridge.utils
 
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import io.github.legandy.enigmabridge.receiver.EnigmaClient
 
 object SchedulingHelper {
 
