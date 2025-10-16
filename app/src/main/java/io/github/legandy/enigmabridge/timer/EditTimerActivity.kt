@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.ui
+package io.github.legandy.enigmabridge.timer
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -11,8 +11,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.databinding.ActivityEditTimerBinding
-import io.github.legandy.enigmabridge.receiver.EnigmaClient
-import io.github.legandy.enigmabridge.receiver.Timer
+import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
+import io.github.legandy.enigmabridge.receiversettings.Timer
 import io.github.legandy.enigmabridge.service.RecordService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

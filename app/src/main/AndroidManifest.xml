@@ -13,7 +13,6 @@
 
     <application
         android:name=".EnigmaBridgeApplication"
-        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -24,7 +23,7 @@
 
         <!-- Activities -->
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".main.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -33,21 +32,26 @@
         </activity>
 
         <activity
-            android:name=".ui.TimerListActivity"
+            android:name=".timer.TimerListActivity"
             android:label="@string/label_scheduled_timers" />
 
         <activity
-            android:name=".ui.SettingsActivity"
+            android:name=".receiversettings.ReceiverSettingsActivity"
+            android:label="ReceiverSettings"
+            android:parentActivityName=".main.MainActivity"/>
+
+        <activity
+            android:name=".settings.SettingsActivity"
             android:label="@string/title_settings"
-            android:parentActivityName=".ui.MainActivity"/>
+            android:parentActivityName=".main.MainActivity"/>
 
         <activity
-            android:name=".ui.EditTimerActivity"
+            android:name=".timer.EditTimerActivity"
             android:label="@string/title_edit_schedule"
-            android:parentActivityName=".ui.TimerListActivity" />
+            android:parentActivityName=".timer.TimerListActivity" />
 
         <activity
-            android:name=".ui.AdvancedScheduleActivity"
+            android:name=".timer.AdvancedScheduleActivity"
             android:theme="@style/Theme.EnigmaBridge.Dialog"
             android:label="@string/title_advanced_schedule"
             android:taskAffinity=""

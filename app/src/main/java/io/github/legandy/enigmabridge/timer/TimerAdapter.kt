@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.utils
+package io.github.legandy.enigmabridge.timer
 
 import android.view.LayoutInflater
 import android.view.View
@@ -7,8 +7,8 @@ import android.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import io.github.legandy.enigmabridge.R
-import io.github.legandy.enigmabridge.receiver.Timer
 import io.github.legandy.enigmabridge.databinding.ListItemTimerBinding
+import io.github.legandy.enigmabridge.receiversettings.Timer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -77,9 +77,6 @@ class TimerAdapter(
         } else {
             holder.binding.textTimerType.visibility = View.GONE
         }
-
-        // The line hiding the menu is removed, so it is now visible.
-        // holder.binding.buttonMenu.visibility = View.GONE
 
         // Set up the click listener for the 3-dot menu
         holder.binding.buttonMenu.setOnClickListener { view ->

@@ -1,6 +1,7 @@
 package io.github.legandy.enigmabridge
 
 import android.app.Application
+import android.util.Log
 import androidx.work.Configuration
 
 /**
@@ -11,7 +12,6 @@ class EnigmaBridgeApplication : Application(), Configuration.Provider {
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
-            .setMinimumLoggingLevel(android.util.Log.DEBUG)
+            .setMinimumLoggingLevel(Log.DEBUG)
             .build()
 }
-

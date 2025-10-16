@@ -1,13 +1,13 @@
-package io.github.legandy.enigmabridge.service
+package io.github.legandy.enigmabridge.timer
 
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import io.github.legandy.enigmabridge.receiver.EnigmaClient
-import io.github.legandy.enigmabridge.utils.NotificationHelper
-import io.github.legandy.enigmabridge.receiver.Timer
+import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
+import io.github.legandy.enigmabridge.receiversettings.Timer
+import io.github.legandy.enigmabridge.settings.NotificationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
@@ -55,7 +55,7 @@ class TimerCheckService(appContext: Context, workerParams: WorkerParameters) :
         val jsonString = prefs.getString(PREVIOUS_TIMERS_KEY, null)
         return if (jsonString != null) {
             try {
-                val timerList: List<Timer> = Json.decodeFromString(jsonString)
+                val timerList: List<Timer> = Json.Default.decodeFromString(jsonString)
                 timerList.associateBy { "${it.sRef}-${it.beginTimestamp}" }
             } catch (e: Exception) {
                 Log.e(WORK_TAG, "Failed to parse previous timers JSON.", e)
@@ -85,8 +85,7 @@ class TimerCheckService(appContext: Context, workerParams: WorkerParameters) :
 
     // **THE FIX: Use Kotlinx Serialization to save the timer list**
     private fun saveCurrentTimers(timers: List<Timer>, prefs: SharedPreferences) {
-        val jsonString = Json.encodeToString(timers)
+        val jsonString = Json.Default.encodeToString(timers)
         prefs.edit().putString(PREVIOUS_TIMERS_KEY, jsonString).apply()
     }
 }
-

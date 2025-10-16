@@ -1,9 +1,9 @@
-package io.github.legandy.enigmabridge.utils
+package io.github.legandy.enigmabridge.timer
 
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
-import io.github.legandy.enigmabridge.receiver.EnigmaClient
+import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
 
 object SchedulingHelper {
 
@@ -39,7 +39,6 @@ object SchedulingHelper {
     }
 
     private fun applyBuffer(prefs: SharedPreferences, startTimeMillis: Long, endTimeMillis: Long): Pair<Long, Long> {
-        // TODO: If buffer still feels incorrect, check the values saved in SettingsActivity. The logic here is correct.
         val minutesBefore = prefs.getInt("MINUTES_BEFORE", 0)
         val minutesAfter = prefs.getInt("MINUTES_AFTER", 0)
 

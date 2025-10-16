@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.ui
+package io.github.legandy.enigmabridge.timer
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -15,13 +15,14 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import io.github.legandy.enigmabridge.receiver.EnigmaClient
+import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.service.RecordService
-import io.github.legandy.enigmabridge.receiver.Timer
-import io.github.legandy.enigmabridge.utils.TimerAdapter
-import io.github.legandy.enigmabridge.utils.TimerCheckWorker
+import io.github.legandy.enigmabridge.receiversettings.Timer
+import io.github.legandy.enigmabridge.timer.TimerAdapter
+import io.github.legandy.enigmabridge.receiver.TimerCheckWorker
 import io.github.legandy.enigmabridge.databinding.ActivityTimerListBinding
+import io.github.legandy.enigmabridge.main.MainActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,7 +41,7 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
     private val refreshReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
-                RecordService.Companion.ACTION_TIMER_LIST_CHANGED, MainActivity.ACTION_TIMER_SYNC_COMPLETED -> {
+                RecordService.Companion.ACTION_TIMER_LIST_CHANGED, MainActivity.Companion.ACTION_TIMER_SYNC_COMPLETED -> {
                     Log.d(TAG, "Received broadcast (${intent.action}), fetching timer list.")
                     fetchTimerList()
                 }
@@ -52,7 +53,6 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
         super.onCreate(savedInstanceState)
         binding = ActivityTimerListBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
@@ -67,7 +67,7 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
 
         val intentFilter = IntentFilter().apply {
             addAction(RecordService.Companion.ACTION_TIMER_LIST_CHANGED)
-            addAction(MainActivity.ACTION_TIMER_SYNC_COMPLETED)
+            addAction(MainActivity.Companion.ACTION_TIMER_SYNC_COMPLETED)
         }
         LocalBroadcastManager.getInstance(this).registerReceiver(refreshReceiver, intentFilter)
     }

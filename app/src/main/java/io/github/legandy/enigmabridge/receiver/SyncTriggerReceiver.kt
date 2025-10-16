@@ -7,7 +7,6 @@ import android.widget.Toast
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import io.github.legandy.enigmabridge.R
-import io.github.legandy.enigmabridge.utils.TimerCheckWorker
 
 class SyncTriggerReceiver : BroadcastReceiver() {
 
@@ -26,4 +25,3 @@ class SyncTriggerReceiver : BroadcastReceiver() {
         }
     }
 }
-

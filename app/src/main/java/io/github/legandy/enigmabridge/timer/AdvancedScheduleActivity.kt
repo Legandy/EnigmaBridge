@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.ui
+package io.github.legandy.enigmabridge.timer
 
 import android.app.TimePickerDialog
 import android.content.Intent
@@ -11,8 +11,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.databinding.ActivityAdvancedScheduleBinding
 import io.github.legandy.enigmabridge.service.RecordService
-import io.github.legandy.enigmabridge.utils.NotificationHelper
-import io.github.legandy.enigmabridge.utils.SchedulingHelper
+import io.github.legandy.enigmabridge.settings.NotificationHelper
+import io.github.legandy.enigmabridge.timer.SchedulingHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -144,11 +144,10 @@ class AdvancedScheduleActivity : AppCompatActivity() {
 
     private fun revertMarkAndFinish() {
         program?.let {
-            val intent = Intent(RecordService.ACTION_REVERT_MARKING)
+            val intent = Intent(RecordService.Companion.ACTION_REVERT_MARKING)
             intent.putExtra("PROGRAM_EXTRA", it)
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
         }
         finish()
     }
 }
-

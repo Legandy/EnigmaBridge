@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalSerializationApi::class, InternalSerializationApi::class)
 
-package io.github.legandy.enigmabridge.receiver
+package io.github.legandy.enigmabridge.receiversettings
 
 import android.content.SharedPreferences
 import android.os.Parcelable

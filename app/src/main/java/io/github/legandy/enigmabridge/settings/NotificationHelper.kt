@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.utils
+package io.github.legandy.enigmabridge.settings
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -11,7 +11,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import io.github.legandy.enigmabridge.R
-import io.github.legandy.enigmabridge.receiver.Timer
+import io.github.legandy.enigmabridge.receiversettings.Timer
 import org.tvbrowser.devplugin.Program
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -112,4 +112,3 @@ object NotificationHelper {
         }
     }
 }
-

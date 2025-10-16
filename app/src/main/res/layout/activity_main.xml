@@ -10,78 +10,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="24dp"
-        tools:context=".ui.MainActivity">
+        tools:context=".main.MainActivity">
 
-        <!-- Header -->
+        <!-- Receiver Settings Header -->
         <TextView
             android:id="@+id/header_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/receiver_settings"
+            android:text="@string/app_name"
             android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/switch_use_https"
-            app:layout_constraintBottom_toBottomOf="@+id/switch_use_https"/>
-
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/switch_use_https"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/label_use_https"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/ipAddressLayout"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:hint="@string/hint_ip_address"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/header_title">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editIpAddress"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textUri" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/usernameLayout"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="@string/hint_username"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/ipAddressLayout" >
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editUsername"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/username_default" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/passwordLayout"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="@string/hint_password"
-            app:passwordToggleEnabled="true"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/usernameLayout">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editPassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textPassword" />
-        </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Status Checks -->
         <ImageView
@@ -91,10 +30,11 @@
             android:layout_marginTop="24dp"
             android:src="@drawable/ic_help"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/passwordLayout"
+            app:layout_constraintTop_toBottomOf="@+id/header_title"
             app:tint="?attr/colorOnSurface"
             android:contentDescription="@null" />
 
+        <!-- Engima Connection Indicator -->
         <TextView
             android:id="@+id/statusEnigmaText"
             android:layout_width="0dp"
@@ -107,6 +47,7 @@
             app:layout_constraintStart_toEndOf="@+id/statusEnigmaIcon"
             app:layout_constraintTop_toTopOf="@+id/statusEnigmaIcon" />
 
+        <!-- TV Browser Installed Indicator Icon -->
         <ImageView
             android:id="@+id/statusTvBrowserIcon"
             android:layout_width="24dp"
@@ -118,6 +59,7 @@
             app:tint="?attr/colorOnSurface"
             android:contentDescription="@null" />
 
+        <!-- TV Browser Installed Indicator -->
         <TextView
             android:id="@+id/statusTvBrowserText"
             android:layout_width="0dp"
@@ -130,6 +72,7 @@
             app:layout_constraintStart_toEndOf="@+id/statusTvBrowserIcon"
             app:layout_constraintTop_toTopOf="@+id/statusTvBrowserIcon" />
 
+        <!-- Periodic Sync Indicator Icon -->
         <ImageView
             android:id="@+id/statusTimerSyncIcon"
             android:layout_width="24dp"
@@ -141,6 +84,7 @@
             app:tint="?attr/colorOnSurface"
             android:contentDescription="@null" />
 
+        <!-- Periodic Sync Indicator -->
         <TextView
             android:id="@+id/statusTimerSyncText"
             android:layout_width="0dp"
@@ -153,7 +97,7 @@
             app:layout_constraintStart_toEndOf="@+id/statusTimerSyncIcon"
             app:layout_constraintTop_toTopOf="@+id/statusTimerSyncIcon" />
 
-        <!-- **THE FIX: Add Notification Status indicator** -->
+        <!-- Notification Permission Indicator -->
         <ImageView
             android:id="@+id/statusNotificationIcon"
             android:layout_width="24dp"
@@ -165,6 +109,7 @@
             app:tint="?attr/colorOnSurface"
             android:contentDescription="@null" />
 
+        <!-- Notification Permission Indicator Hint -->
         <TextView
             android:id="@+id/statusNotificationText"
             android:layout_width="0dp"
@@ -177,7 +122,7 @@
             app:layout_constraintStart_toEndOf="@+id/statusNotificationIcon"
             app:layout_constraintTop_toTopOf="@+id/statusNotificationIcon" />
 
-        <!-- **THE FIX: Add Last Sync timestamp indicator** -->
+        <!-- Last Sync Timestamp Indicator -->
         <ImageView
             android:id="@+id/statusLastSyncIcon"
             android:layout_width="24dp"
@@ -201,37 +146,36 @@
             app:layout_constraintStart_toEndOf="@+id/statusLastSyncIcon"
             app:layout_constraintTop_toTopOf="@+id/statusLastSyncIcon" />
 
+
+        <!-- Horizontal Divider -->
         <View
             android:id="@+id/divider"
             android:layout_width="0dp"
             android:layout_height="1dp"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="16dp"
             android:background="?attr/colorOutlineVariant"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/statusLastSyncText" />
 
-        <Spinner
-            android:id="@+id/bouquets_spinner"
+
+
+
+
+        <!-- Receiver Settings Button -->
+        <Button
+            android:id="@+id/button_receiver_settings"
+            style="?attr/materialButtonOutlinedStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:minHeight="48dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:text="@string/button_receiver_settings"
+            app:layout_constraintTop_toBottomOf="@+id/divider"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/divider" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
-        <Button
-            android:id="@+id/button_sync_channels"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/sync_selected_bouquet"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/bouquets_spinner" />
-
+        <!-- Timer Button -->
         <Button
             android:id="@+id/button_view_timers"
             style="?attr/materialButtonOutlinedStyle"
@@ -239,10 +183,11 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/view_scheduled_timers"
-            app:layout_constraintEnd_toEndOf="@+id/button_sync_channels"
-            app:layout_constraintStart_toStartOf="@+id/button_sync_channels"
-            app:layout_constraintTop_toBottomOf="@+id/button_sync_channels" />
+            app:layout_constraintEnd_toEndOf="@+id/button_receiver_settings"
+            app:layout_constraintStart_toStartOf="@+id/button_receiver_settings"
+            app:layout_constraintTop_toBottomOf="@+id/button_receiver_settings" />
 
+        <!-- App Settings Button -->
         <Button
             android:id="@+id/button_settings"
             style="?attr/materialButtonOutlinedStyle"
@@ -254,6 +199,7 @@
             app:layout_constraintStart_toStartOf="@+id/button_view_timers"
             app:layout_constraintTop_toBottomOf="@+id/button_view_timers" />
 
+        <!-- Test Connection Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonSave"
             android:layout_width="0dp"
@@ -261,25 +207,13 @@
             android:layout_marginTop="32dp"
             android:paddingTop="12dp"
             android:paddingBottom="12dp"
-            android:text="@string/button_save_and_test"
+            android:text="@string/button_test"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/button_settings"
+            app:layout_constraintTop_toBottomOf="@+id/button_settings"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintVertical_bias="1.0"/>
 
-        <ProgressBar
-            android:id="@+id/progress_bar"
-            style="?android:attr/progressBarStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@+id/divider"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/passwordLayout"
-            app:layout_constraintVertical_bias="0.5"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>
-

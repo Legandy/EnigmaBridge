@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.ui
+package io.github.legandy.enigmabridge.main
 
 import android.Manifest
 import android.content.BroadcastReceiver
@@ -11,23 +11,16 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.View
-import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import io.github.legandy.enigmabridge.receiver.EnigmaClient
-import io.github.legandy.enigmabridge.utils.NotificationHelper
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.databinding.ActivityMainBinding
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import io.github.legandy.enigmabridge.timer.TimerListActivity
+import io.github.legandy.enigmabridge.receiversettings.ReceiverSettingsActivity
+import io.github.legandy.enigmabridge.settings.SettingsActivity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -36,7 +29,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var prefs: SharedPreferences
-    private var bouquetsMap: Map<String, String> = emptyMap()
 
     companion object {
         const val ACTION_TIMER_SYNC_COMPLETED = "io.github.legandy.enigmabridge.TIMER_SYNC_COMPLETED"
@@ -53,12 +45,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        coerceInputValues = true
-        isLenient = true
-    }
-
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
@@ -71,8 +57,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // ** THE FIX: Remove the manual initialization from here. It is now handled by the Application class. **
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -107,26 +91,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
-        binding.editIpAddress.setText(prefs.getString("IP_ADDRESS", ""))
-        binding.switchUseHttps.isChecked = prefs.getBoolean("USE_HTTPS", false)
-        binding.editUsername.setText(prefs.getString("USERNAME", "root"))
-        binding.editPassword.setText(prefs.getString("PASSWORD", ""))
-
-        binding.buttonSave.setOnClickListener {
-            prefs.edit().apply {
-                putString("IP_ADDRESS", binding.editIpAddress.text.toString().trim())
-                putBoolean("USE_HTTPS", binding.switchUseHttps.isChecked)
-                putString("USERNAME", binding.editUsername.text.toString().trim())
-                putString("PASSWORD", binding.editPassword.text.toString())
-                apply()
-            }
-            runChecks()
-        }
-
-        binding.buttonSyncChannels.setOnClickListener {
-            syncSelectedBouquet()
-        }
-
         binding.buttonViewTimers.setOnClickListener {
             startActivity(Intent(this, TimerListActivity::class.java))
         }
@@ -134,93 +98,9 @@ class MainActivity : AppCompatActivity() {
         binding.buttonSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
-    }
 
-    private fun fetchBouquets() {
-        showLoading(true)
-        val ip = binding.editIpAddress.text.toString().trim()
-        val user = binding.editUsername.text.toString().trim()
-        val pass = binding.editPassword.text.toString()
-
-        if (ip.isEmpty()) {
-            showLoading(false)
-            return
-        }
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            val client = EnigmaClient(ip, user, pass, prefs)
-            val fetchedBouquets = client.getBouquets()
-
-            withContext(Dispatchers.Main) {
-                showLoading(false)
-                if (fetchedBouquets != null) {
-                    bouquetsMap = fetchedBouquets
-                    val bouquetNames = bouquetsMap.keys.toList()
-                    val adapter = ArrayAdapter(
-                        this@MainActivity,
-                        android.R.layout.simple_spinner_item,
-                        bouquetNames
-                    )
-                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                    binding.bouquetsSpinner.adapter = adapter
-                } else {
-                    Toast.makeText(
-                        applicationContext,
-                        getString(R.string.error_fetch_bouquets),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
-        }
-    }
-
-    private fun syncSelectedBouquet() {
-        val selectedBouquetName = binding.bouquetsSpinner.selectedItem as? String
-        if (selectedBouquetName == null) {
-            Toast.makeText(this, getString(R.string.error_no_bouquet_selected), Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val bouquetSref = bouquetsMap[selectedBouquetName]
-        if (bouquetSref == null) {
-            Toast.makeText(this, getString(R.string.error_sref_not_found), Toast.LENGTH_LONG).show()
-            return
-        }
-
-        showLoading(true)
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            val ip = prefs.getString("IP_ADDRESS", "") ?: ""
-            val user = prefs.getString("USERNAME", "root") ?: ""
-            val pass = prefs.getString("PASSWORD", "") ?: ""
-            val client = EnigmaClient(ip, user, pass, prefs)
-            val channels = client.getChannelsInBouquet(bouquetSref)
-
-            withContext(Dispatchers.Main) {
-                showLoading(false)
-                if (channels != null) {
-                    val jsonChannels = json.encodeToString(channels)
-                    prefs.edit().putString("SYNCED_CHANNELS", jsonChannels).apply()
-                    Toast.makeText(
-                        applicationContext,
-                        getString(R.string.sync_success_toast, channels.size),
-                        Toast.LENGTH_LONG
-                    ).show()
-
-                    if (prefs.getBoolean("NOTIFY_SYNC_SUCCESS_ENABLED", true)) {
-                        NotificationHelper.sendChannelSyncSuccessNotification(
-                            applicationContext,
-                            channels.size
-                        )
-                    }
-                } else {
-                    Toast.makeText(
-                        applicationContext,
-                        getString(R.string.error_sync_channels),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
+        binding.buttonReceiverSettings.setOnClickListener {
+            startActivity(Intent(this, ReceiverSettingsActivity::class.java))
         }
     }
 
@@ -252,42 +132,6 @@ class MainActivity : AppCompatActivity() {
 
         updatePeriodicSyncStatusIndicator()
         updateNotificationStatusIndicator()
-
-        val ip = binding.editIpAddress.text.toString().trim()
-        val user = binding.editUsername.text.toString().trim()
-        val pass = binding.editPassword.text.toString()
-
-        if (ip.isEmpty()) {
-            binding.statusEnigmaIcon.setImageResource(R.drawable.ic_error)
-            binding.statusEnigmaIcon.setColorFilter(Color.RED)
-            binding.statusEnigmaText.text = getString(R.string.status_enigma_failed)
-            return
-        }
-
-        showLoading(true)
-        lifecycleScope.launch(Dispatchers.IO) {
-            val client = EnigmaClient(ip, user, pass, prefs)
-            val isConnected = client.checkConnection()
-
-            withContext(Dispatchers.Main) {
-                showLoading(false)
-                if (isConnected) {
-                    binding.statusEnigmaIcon.setImageResource(R.drawable.ic_check_circle)
-                    binding.statusEnigmaIcon.setColorFilter(
-                        ContextCompat.getColor(
-                            applicationContext,
-                            android.R.color.holo_green_dark
-                        )
-                    )
-                    binding.statusEnigmaText.text = getString(R.string.status_enigma_success)
-                    fetchBouquets()
-                } else {
-                    binding.statusEnigmaIcon.setImageResource(R.drawable.ic_error)
-                    binding.statusEnigmaIcon.setColorFilter(Color.RED)
-                    binding.statusEnigmaText.text = getString(R.string.status_enigma_failed)
-                }
-            }
-        }
     }
 
     private fun updatePeriodicSyncStatusIndicator() {
@@ -334,7 +178,4 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showLoading(isLoading: Boolean) {
-        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-    }
 }

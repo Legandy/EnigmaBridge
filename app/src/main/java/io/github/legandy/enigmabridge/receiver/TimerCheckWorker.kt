@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.utils
+package io.github.legandy.enigmabridge.receiver
 
 import android.content.Context
 import android.content.Intent
@@ -7,9 +7,10 @@ import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import io.github.legandy.enigmabridge.receiver.EnigmaClient
-import io.github.legandy.enigmabridge.receiver.Timer
-import io.github.legandy.enigmabridge.ui.MainActivity
+import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
+import io.github.legandy.enigmabridge.receiversettings.Timer
+import io.github.legandy.enigmabridge.main.MainActivity
+import io.github.legandy.enigmabridge.settings.NotificationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
@@ -74,7 +75,7 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
         }
 
         Log.d(WORK_TAG, "Sending ACTION_TIMER_SYNC_COMPLETED broadcast.")
-        val intent = Intent(MainActivity.ACTION_TIMER_SYNC_COMPLETED)
+        val intent = Intent(MainActivity.Companion.ACTION_TIMER_SYNC_COMPLETED)
         LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
 
         Log.d(WORK_TAG, "--- TimerCheckWorker doWork() FINISHED SUCCESSFULLY ---")
@@ -117,4 +118,3 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
         prefs.edit().putString(PREVIOUS_TIMERS_KEY, jsonString).apply()
     }
 }
-
