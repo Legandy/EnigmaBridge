@@ -21,6 +21,11 @@ import io.github.legandy.enigmabridge.databinding.ActivityMainBinding
 import io.github.legandy.enigmabridge.timer.TimerListActivity
 import io.github.legandy.enigmabridge.receiversettings.ReceiverSettingsActivity
 import io.github.legandy.enigmabridge.settings.SettingsActivity
+import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -102,6 +107,40 @@ class MainActivity : AppCompatActivity() {
         binding.buttonReceiverSettings.setOnClickListener {
             startActivity(Intent(this, ReceiverSettingsActivity::class.java))
         }
+
+        // --- Test Connection Button ---
+        binding.buttonTestConnection.setOnClickListener {
+            testConnection()
+        }
+    }
+
+    private fun testConnection() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val receiverIp = prefs.getString("IP_ADDRESS", "") ?: ""
+            val receiverUsername = prefs.getString("USERNAME", "") ?: ""
+            val receiverPassword = prefs.getString("PASSWORD", "") ?: ""
+
+            if (receiverIp.isBlank()) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity, getString(R.string.toast_receiver_ip_missing), Toast.LENGTH_LONG).show()
+                }
+                return@launch
+            }
+
+            try {
+                val client = EnigmaClient(receiverIp, receiverUsername, receiverPassword, prefs)
+                // Attempt a simple operation to test connection, e.g., get timer list
+                client.getTimerList()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity, getString(R.string.toast_connection_test_successful), Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Connection test failed", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity, getString(R.string.toast_connection_test_failed), Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     }
 
     private fun isTvBrowserInstalled(): Boolean {
@@ -177,5 +216,4 @@ class MainActivity : AppCompatActivity() {
             binding.statusLastSyncText.text = getString(R.string.status_last_sync_never)
         }
     }
-
 }

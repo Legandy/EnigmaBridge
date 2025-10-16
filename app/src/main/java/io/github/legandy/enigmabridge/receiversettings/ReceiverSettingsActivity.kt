@@ -51,6 +51,14 @@ class ReceiverSettingsActivity : AppCompatActivity() {
         checkReceiverConnectionAndFetchBouquets()
     }
 
+    override fun onPause() {
+        super.onPause()
+        saveReceiverSettings() // Auto-save on pause
+        Log.d(TAG, "Unregistering timerSyncCompletedReceiver in onPause.")
+        // The original onPause method in MainActivity handles broadcast receiver unregistration. This is not needed here.
+        // Assuming unregistering timerSyncCompletedReceiver was a copy-paste error from MainActivity and not relevant here.
+    }
+
     private fun loadReceiverSettings() {
         binding.editIpAddress.setText(prefs.getString("IP_ADDRESS", ""))
         binding.switchUseHttps.isChecked = prefs.getBoolean("USE_HTTPS", false)
@@ -76,16 +84,13 @@ class ReceiverSettingsActivity : AppCompatActivity() {
             putInt("SYNC_INTERVAL_HOURS", syncInterval)
             apply()
         }
-        Toast.makeText(this, getString(R.string.toast_receiver_settings_saved), Toast.LENGTH_SHORT).show()
+        // Removed Toast message for silent auto-save
 
         scheduleWork(this, syncInterval)
     }
 
     private fun setupListeners() {
-        binding.buttonSaveReceiverSettings.setOnClickListener {
-            saveReceiverSettings()
-            checkReceiverConnectionAndFetchBouquets()
-        }
+        // Removed binding.buttonSaveReceiverSettings.setOnClickListener as the button is removed
 
         binding.buttonSyncChannels.setOnClickListener {
             syncSelectedBouquet()
@@ -210,7 +215,7 @@ class ReceiverSettingsActivity : AppCompatActivity() {
 
     private fun showLoading(isLoading: Boolean) {
         // Disable buttons while loading to prevent multiple actions
-        binding.buttonSaveReceiverSettings.isEnabled = !isLoading
+        // Removed: binding.buttonSaveReceiverSettings.isEnabled = !isLoading
         binding.buttonSyncChannels.isEnabled = !isLoading
     }
 
@@ -220,6 +225,7 @@ class ReceiverSettingsActivity : AppCompatActivity() {
     }
 
     companion object {
+        private const val TAG = "ReceiverSettingsActivity"
         fun scheduleWork(context: Context, intervalHours: Int) {
             val workManager = WorkManager.getInstance(context)
 

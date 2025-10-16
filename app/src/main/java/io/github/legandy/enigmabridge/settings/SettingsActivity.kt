@@ -35,22 +35,21 @@ class SettingsActivity : AppCompatActivity() {
             clipboard.setPrimaryClip(clip)
             Toast.makeText(this, getString(R.string.toast_intent_copied), Toast.LENGTH_SHORT).show()
         }
+    }
 
+    override fun onPause() {
+        super.onPause()
+        val prefs = getSharedPreferences("EnigmaSettings", MODE_PRIVATE)
+        prefs.edit().apply {
+            // Save the state of the notification switches.
+            putBoolean("NOTIFY_SCHEDULED_ENABLED", binding.switchNotifyScheduled.isChecked)
+            putBoolean("NOTIFY_RECORDING_STARTED_ENABLED", binding.switchNotifyRecordingStarted.isChecked)
+            putBoolean("NOTIFY_SYNC_SUCCESS_ENABLED", binding.switchNotifySyncSuccess.isChecked)
 
-        // Save Button Listener.
-        binding.buttonSaveSettings.setOnClickListener {
-            prefs.edit().apply {
-                // Save the state of the notification switches.
-                putBoolean("NOTIFY_SCHEDULED_ENABLED", binding.switchNotifyScheduled.isChecked)
-                putBoolean("NOTIFY_RECORDING_STARTED_ENABLED", binding.switchNotifyRecordingStarted.isChecked)
-                putBoolean("NOTIFY_SYNC_SUCCESS_ENABLED", binding.switchNotifySyncSuccess.isChecked)
-
-                apply()
-            }
-
-            Toast.makeText(this, getString(R.string.toast_settings_saved), Toast.LENGTH_SHORT).show()
-            finish()
+            apply()
         }
+        // Removed Toast message for silent auto-save
+        // Removed finish() as auto-save in onPause should not close the activity
     }
 
     override fun onSupportNavigateUp(): Boolean {
