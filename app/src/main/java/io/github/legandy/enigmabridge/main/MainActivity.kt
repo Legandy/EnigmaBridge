@@ -74,6 +74,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         runChecks()
+        updateConnectionStatusIndicator(false) // Check connection on resume, no toast
         updateLastSyncStatus()
         Log.d(TAG, "Registering timerSyncCompletedReceiver in onResume.")
         LocalBroadcastManager.getInstance(this).registerReceiver(timerSyncCompletedReceiver,
@@ -110,34 +111,46 @@ class MainActivity : AppCompatActivity() {
 
         // --- Test Connection Button ---
         binding.buttonTestConnection.setOnClickListener {
-            testConnection()
+            updateConnectionStatusIndicator(true) // Check connection and show toast
         }
     }
 
-    private fun testConnection() {
+    private suspend fun testConnection(): Boolean {
+        val receiverIp = prefs.getString("IP_ADDRESS", "") ?: ""
+        val receiverUsername = prefs.getString("USERNAME", "") ?: ""
+        val receiverPassword = prefs.getString("PASSWORD", "") ?: ""
+
+        if (receiverIp.isBlank()) {
+            Log.d(TAG, "Connection test skipped: IP address missing.")
+            return false
+        }
+
+        return try {
+            val client = EnigmaClient(receiverIp, receiverUsername, receiverPassword, prefs)
+            // Attempt a simple operation to test connection, e.g., get timer list
+            client.getTimerList()
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Connection test failed", e)
+            false
+        }
+    }
+
+    private fun updateConnectionStatusIndicator(showToast: Boolean) {
+        Log.d(TAG, "updateConnectionStatusIndicator() called, showToast: $showToast")
         CoroutineScope(Dispatchers.IO).launch {
-            val receiverIp = prefs.getString("IP_ADDRESS", "") ?: ""
-            val receiverUsername = prefs.getString("USERNAME", "") ?: ""
-            val receiverPassword = prefs.getString("PASSWORD", "") ?: ""
-
-            if (receiverIp.isBlank()) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, getString(R.string.toast_receiver_ip_missing), Toast.LENGTH_LONG).show()
-                }
-                return@launch
-            }
-
-            try {
-                val client = EnigmaClient(receiverIp, receiverUsername, receiverPassword, prefs)
-                // Attempt a simple operation to test connection, e.g., get timer list
-                client.getTimerList()
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, getString(R.string.toast_connection_test_successful), Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Connection test failed", e)
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, getString(R.string.toast_connection_test_failed), Toast.LENGTH_LONG).show()
+            val isConnected = testConnection()
+            withContext(Dispatchers.Main) {
+                if (isConnected) {
+                    binding.statusEnigmaIcon.setImageResource(R.drawable.ic_check_circle)
+                    binding.statusEnigmaIcon.setColorFilter(ContextCompat.getColor(this@MainActivity, android.R.color.holo_green_dark))
+                    binding.statusEnigmaText.text = getString(R.string.status_enigma_connected)
+                    if (showToast) Toast.makeText(this@MainActivity, getString(R.string.toast_connection_test_successful), Toast.LENGTH_SHORT).show()
+                } else {
+                    binding.statusEnigmaIcon.setImageResource(R.drawable.ic_error)
+                    binding.statusEnigmaIcon.setColorFilter(Color.RED)
+                    binding.statusEnigmaText.text = getString(R.string.status_enigma_disconnected)
+                    if (showToast) Toast.makeText(this@MainActivity, getString(R.string.toast_connection_test_failed), Toast.LENGTH_LONG).show()
                 }
             }
         }

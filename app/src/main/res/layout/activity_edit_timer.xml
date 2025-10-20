@@ -183,7 +183,7 @@
                     android:text="@string/label_switch" />
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
-            <com.google.android.material.button.MaterialButtonToggleGroup
+            <androidx.gridlayout.widget.GridLayout
                 android:id="@+id/repeatsOnGroup"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -191,51 +191,67 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/timerTypeGroup"
-                app:selectionRequired="true">
+                app:columnCount="3"
+                app:rowCount="3"
+                app:useDefaultMargins="true">
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/toggleMonday"
                     style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:checkable="true"
                     android:text="@string/day_mon" />
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/toggleTuesday"
                     style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:checkable="true"
                     android:text="@string/day_tue" />
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/toggleWednesday"
                     style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:checkable="true"
                     android:text="@string/day_wed" />
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/toggleThursday"
                     style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:checkable="true"
                     android:text="@string/day_thu" />
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/toggleFriday"
                     style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:checkable="true"
                     android:text="@string/day_fri" />
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/toggleSaturday"
                     style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:checkable="true"
                     android:text="@string/day_sat" />
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/toggleSunday"
                     style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:checkable="true"
                     android:text="@string/day_sun" />
-            </com.google.android.material.button.MaterialButtonToggleGroup>
+            </androidx.gridlayout.widget.GridLayout>
 
             <Button
                 android:id="@+id/buttonSave"
@@ -251,4 +267,3 @@
     </ScrollView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
-

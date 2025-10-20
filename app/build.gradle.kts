@@ -49,4 +49,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("androidx.work:work-runtime-ktx:2.9.0")
+
+    // FlexboxLayout for multi-row buttons
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
+    implementation("androidx.gridlayout:gridlayout:1.0.0")
 }

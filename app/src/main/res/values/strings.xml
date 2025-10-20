@@ -11,6 +11,10 @@
     <string name="toast_receiver_ip_missing">Receiver IP missing</string>
     <string name="toast_connection_test_successful">Connection successful</string>
     <string name="toast_connection_test_failed">Connection failed</string>
+    <string name="status_enigma_connected">Connection successful</string>
+    <string name="status_enigma_disconnected">Connection failed</string>
+
+
 
 
 

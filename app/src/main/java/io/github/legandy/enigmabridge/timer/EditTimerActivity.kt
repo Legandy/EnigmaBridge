@@ -87,7 +87,7 @@ class EditTimerActivity : AppCompatActivity() {
         if (repeats > 0) {
             dayButtonMap.forEach { (dayValue, button) ->
                 if ((repeats and dayValue) != 0) {
-                    binding.repeatsOnGroup.check(button.id)
+                    (button as? com.google.android.material.button.MaterialButton)?.isChecked = true // Correctly set the checked state for MaterialButton
                 }
             }
         }
@@ -118,8 +118,12 @@ class EditTimerActivity : AppCompatActivity() {
             binding.toggleSunday.id to 64
         )
         var repeated = 0
-        binding.repeatsOnGroup.checkedButtonIds.forEach { buttonId ->
-            repeated = repeated or (dayValueMap[buttonId] ?: 0)
+        // Iterate through children of FlexboxLayout to find checked MaterialButtons
+        for (i in 0 until binding.repeatsOnGroup.childCount) {
+            val button = binding.repeatsOnGroup.getChildAt(i) as? com.google.android.material.button.MaterialButton
+            if (button?.isChecked == true) {
+                repeated = repeated or (dayValueMap[button.id] ?: 0)
+            }
         }
 
         val afterEvent = originalTimer!!.afterEvent // This is not editable in the UI, so we keep the original value
@@ -198,4 +202,3 @@ class EditTimerActivity : AppCompatActivity() {
         return true
     }
 }
-
