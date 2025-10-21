@@ -159,6 +159,15 @@ class ReceiverSettingsActivity : AppCompatActivity() {
                     )
                     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                     binding.bouquetsSpinner.adapter = adapter
+
+                    // Restore the last selected bouquet
+                    val savedBouquetName = prefs.getString("SELECTED_BOUQUET_NAME", null)
+                    if (savedBouquetName != null) {
+                        val position = bouquetNames.indexOf(savedBouquetName)
+                        if (position >= 0) {
+                            binding.bouquetsSpinner.setSelection(position)
+                        }
+                    }
                 } else {
                     Toast.makeText(
                         applicationContext,
@@ -196,7 +205,11 @@ class ReceiverSettingsActivity : AppCompatActivity() {
                 showLoading(false)
                 if (channels != null) {
                     val jsonChannels = json.encodeToString(channels)
-                    prefs.edit().putString("SYNCED_CHANNELS", jsonChannels).apply()
+                    prefs.edit().apply {
+                        putString("SYNCED_CHANNELS", jsonChannels)
+                        putString("SELECTED_BOUQUET_NAME", selectedBouquetName) // Save the selected bouquet name
+                        apply()
+                    }
                     Toast.makeText(
                         applicationContext,
                         getString(R.string.sync_success_toast, channels.size),
