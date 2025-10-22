@@ -19,8 +19,6 @@ import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.service.RecordService
 import io.github.legandy.enigmabridge.receiversettings.Timer
-import io.github.legandy.enigmabridge.timer.TimerAdapter
-import io.github.legandy.enigmabridge.receiver.TimerCheckWorker
 import io.github.legandy.enigmabridge.databinding.ActivityTimerListBinding
 import io.github.legandy.enigmabridge.main.MainActivity
 import kotlinx.coroutines.Dispatchers

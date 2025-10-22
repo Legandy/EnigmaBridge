@@ -19,6 +19,7 @@ class TimerCheckService(appContext: Context, workerParams: WorkerParameters) :
     companion object {
         const val WORK_TAG = "TimerCheckWorker"
         private const val PREVIOUS_TIMERS_KEY = "PREVIOUS_TIMERS_LIST"
+        private const val NOTIFIED_RECORDING_TIMERS_KEY = "NOTIFIED_RECORDING_TIMERS"
     }
 
     override suspend fun doWork(): Result {
@@ -44,13 +45,14 @@ class TimerCheckService(appContext: Context, workerParams: WorkerParameters) :
         }
 
         val previousTimers = loadPreviousTimers(prefs)
-        findAndNotifyNewRecordings(previousTimers, currentTimers, prefs)
+        findAndNotifyNewRecordings(previousTimers, currentTimers, prefs) // Keep this for state-based recording start detection if needed
         saveCurrentTimers(currentTimers, prefs)
+
+        triggerTimeBasedRecordingNotifications(currentTimers, prefs)
 
         return Result.success()
     }
 
-    // **THE FIX: Use Kotlinx Serialization to read the timer list**
     private fun loadPreviousTimers(prefs: SharedPreferences): Map<String, Timer> {
         val jsonString = prefs.getString(PREVIOUS_TIMERS_KEY, null)
         return if (jsonString != null) {
@@ -68,7 +70,7 @@ class TimerCheckService(appContext: Context, workerParams: WorkerParameters) :
 
     private fun findAndNotifyNewRecordings(previousTimers: Map<String, Timer>, currentTimers: List<Timer>, prefs: SharedPreferences) {
         if (!prefs.getBoolean("NOTIFY_RECORDING_STARTED_ENABLED", true)) {
-            Log.d(WORK_TAG, "Recording start notifications disabled. Skipping check.")
+            Log.d(WORK_TAG, "Recording start notifications disabled. Skipping check for state-based detection.")
             return
         }
 
@@ -76,14 +78,76 @@ class TimerCheckService(appContext: Context, workerParams: WorkerParameters) :
             val key = "${currentTimer.sRef}-${currentTimer.beginTimestamp}"
             val previousTimer = previousTimers[key]
 
+            // This logic is for state-based detection, which was previously deemed incorrect for "recording started"
+            // Keeping it for now but the time-based trigger is the primary for "recording started" notifications
             if (currentTimer.state == 2 && (previousTimer == null || previousTimer.state < 2)) {
-                Log.i(WORK_TAG, "New recording detected: ${currentTimer.name}")
-                NotificationHelper.sendRecordingStartedNotification(applicationContext, currentTimer)
+                Log.i(WORK_TAG, "New recording detected via state change: ${currentTimer.name}")
+                // This call might need adjustment based on final NotificationHelper signature
+                // NotificationHelper.sendRecordingStartedNotification(applicationContext, currentTimer.name, currentTimer.sName)
             }
         }
     }
 
-    // **THE FIX: Use Kotlinx Serialization to save the timer list**
+    private fun triggerTimeBasedRecordingNotifications(currentTimers: List<Timer>, prefs: SharedPreferences) {
+        if (!prefs.getBoolean("NOTIFY_RECORDING_STARTED_ENABLED", true)) {
+            Log.d(WORK_TAG, "Recording start notifications disabled. Skipping time-based check.")
+            return
+        }
+
+        val currentTimeSeconds = System.currentTimeMillis() / 1000L
+        val notificationWindowStart = currentTimeSeconds - 300L // 5 minutes ago
+        val notificationWindowEnd = currentTimeSeconds + 60L    // 1 minute from now
+
+        val notifiedRecordingTimers = prefs.getStringSet(NOTIFIED_RECORDING_TIMERS_KEY, emptySet())?.toMutableSet() ?: mutableSetOf()
+
+        val editor = prefs.edit()
+        val currentNotifiedTimersSnapshot = notifiedRecordingTimers.toSet() // Snapshot for iteration
+
+        // Cleanup old entries
+        for (notifiedKey in currentNotifiedTimersSnapshot) {
+            val parts = notifiedKey.split("_")
+            if (parts.size == 2) {
+                val sRef = parts[0]
+                val beginTimestamp = parts[1].toLongOrNull()
+
+                val correspondingCurrentTimer = currentTimers.find { it.sRef == sRef && it.beginTimestamp == beginTimestamp }
+
+                // If the timer is no longer in current timers or its end time has passed, remove it from notified
+                if (correspondingCurrentTimer == null) {
+                    notifiedRecordingTimers.remove(notifiedKey)
+                    Log.d(WORK_TAG, "Cleaning up old notified timer entry: $notifiedKey")
+                } else if (correspondingCurrentTimer.endTimestamp < currentTimeSeconds) {
+                    notifiedRecordingTimers.remove(notifiedKey)
+                    Log.d(WORK_TAG, "Cleaning up old notified timer entry (end time passed): $notifiedKey")
+                }
+            } else {
+                // Handle malformed keys by removing them
+                notifiedRecordingTimers.remove(notifiedKey)
+            }
+        }
+
+
+        for (currentTimer in currentTimers) {
+            val uniqueKey = "${currentTimer.sRef}_${currentTimer.beginTimestamp}"
+
+            Log.d(WORK_TAG, "Processing timer: ${currentTimer.name}, State: ${currentTimer.state}, beginTimestamp: ${currentTimer.beginTimestamp}, endTimestamp: ${currentTimer.endTimestamp}")
+
+
+            if (currentTimer.beginTimestamp >= notificationWindowStart && currentTimer.beginTimestamp <= notificationWindowEnd) {
+                if (!notifiedRecordingTimers.contains(uniqueKey)) {
+                    Log.i(WORK_TAG, "Recording started notification criteria met for timer: ${currentTimer.name} (beginTimestamp: ${currentTimer.beginTimestamp})")
+                    NotificationHelper.sendRecordingStartedNotification(applicationContext, currentTimer.name, currentTimer.sName)
+                    notifiedRecordingTimers.add(uniqueKey)
+                    Log.d(WORK_TAG, "Recording started notification sent for timer: ${currentTimer.name}.")
+                } else {
+                    Log.d(WORK_TAG, "Timer already notified about: ${currentTimer.name}.")
+                }
+            }
+        }
+
+        editor.putStringSet(NOTIFIED_RECORDING_TIMERS_KEY, notifiedRecordingTimers).apply()
+    }
+
     private fun saveCurrentTimers(timers: List<Timer>, prefs: SharedPreferences) {
         val jsonString = Json.Default.encodeToString(timers)
         prefs.edit().putString(PREVIOUS_TIMERS_KEY, jsonString).apply()

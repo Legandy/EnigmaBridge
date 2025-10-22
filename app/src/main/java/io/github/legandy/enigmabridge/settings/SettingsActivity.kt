@@ -29,11 +29,11 @@ class SettingsActivity : AppCompatActivity() {
         binding.switchNotifySyncSuccess.isChecked = prefs.getBoolean("NOTIFY_SYNC_SUCCESS_ENABLED", true)
 
         // Copyable Intent Listener
-        binding.intentTimerSync.setOnClickListener {
+        binding.buttonCopyTimerSyncIntent.setOnClickListener {
             val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("Timer Sync Intent", binding.intentTimerSync.text)
+            val intentToCopy = getString(R.string.timer_sync_intent_value)
+            val clip = ClipData.newPlainText("Timer Sync Intent", intentToCopy)
             clipboard.setPrimaryClip(clip)
-            Toast.makeText(this, getString(R.string.toast_intent_copied), Toast.LENGTH_SHORT).show()
         }
     }
 

@@ -43,11 +43,12 @@
     <string name="label_notifications">Notifications</string>
     <string name="label_notify_on_schedule">Notify on Timer Schedule</string>
     <string name="label_notify_on_record_start">Notify on Recording Start</string>
-    <string name="label_notify_on_sync">Notify on Successful Sync</string>
+    <string name="label_notify_on_sync">Notify on Successful Timer Sync</string>
     <string name="toast_settings_saved">Settings Saved</string>
     <string name="toast_intent_copied">Intent Copied</string>
-    <string name="intents_header">Intents</string>
-    <string name="intent_timer_sync">io.github.legandy.enigmabridge.ACTION_TRIGGER_SYNC</string>
+    <string name="intents_header">Broadcast Intents</string>
+    <string name="button_timer_sync_intent">Timer Sync Intent</string>
+    <string name="timer_sync_intent_value">io.github.legandy.enigmabridge.ACTION_TRIGGER_SYNC</string>
 
 
 

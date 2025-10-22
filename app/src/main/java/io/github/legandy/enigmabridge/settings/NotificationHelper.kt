@@ -54,8 +54,8 @@ object NotificationHelper {
         sendNotification(context, builder)
     }
 
-    fun sendRecordingStartedNotification(context: Context, timer: Timer) {
-        val notificationContent = context.getString(R.string.notification_content_recording_started, timer.name, timer.sName)
+    fun sendRecordingStartedNotification(context: Context, timerName: String, sRefName: String) {
+        val notificationContent = context.getString(R.string.notification_content_recording_started, timerName, sRefName)
 
         val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_recording)

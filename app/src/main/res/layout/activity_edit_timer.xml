@@ -86,6 +86,8 @@
                 android:layout_marginTop="16dp"
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
+                app:drawableStartCompat="@drawable/ic_calendar"
+                android:drawablePadding="8dp"
                 android:focusable="true"
                 android:gravity="center"
                 android:padding="12dp"
@@ -101,6 +103,8 @@
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
+                app:drawableStartCompat="@drawable/ic_timer"
+                android:drawablePadding="8dp"
                 android:focusable="true"
                 android:gravity="center"
                 android:padding="12dp"
@@ -117,6 +121,8 @@
                 android:layout_marginTop="8dp"
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
+                app:drawableStartCompat="@drawable/ic_calendar"
+                android:drawablePadding="8dp"
                 android:focusable="true"
                 android:gravity="center"
                 android:padding="12dp"
@@ -132,6 +138,8 @@
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
+                app:drawableStartCompat="@drawable/ic_timer"
+                android:drawablePadding="8dp"
                 android:focusable="true"
                 android:gravity="center"
                 android:padding="12dp"
@@ -191,9 +199,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/timerTypeGroup"
-                app:columnCount="3"
-                app:rowCount="3"
-                app:useDefaultMargins="true">
+                app:columnCount="3">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/toggleMonday"
@@ -201,6 +207,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     app:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
                     android:checkable="true"
                     android:text="@string/day_mon" />
                 <com.google.android.material.button.MaterialButton
@@ -209,6 +220,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     app:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
                     android:checkable="true"
                     android:text="@string/day_tue" />
                 <com.google.android.material.button.MaterialButton
@@ -217,6 +233,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     app:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
                     android:checkable="true"
                     android:text="@string/day_wed" />
                 <com.google.android.material.button.MaterialButton
@@ -225,6 +246,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     app:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
                     android:checkable="true"
                     android:text="@string/day_thu" />
                 <com.google.android.material.button.MaterialButton
@@ -233,6 +259,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     app:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
                     android:checkable="true"
                     android:text="@string/day_fri" />
                 <com.google.android.material.button.MaterialButton
@@ -241,6 +272,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     app:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
                     android:checkable="true"
                     android:text="@string/day_sat" />
                 <com.google.android.material.button.MaterialButton
@@ -249,6 +285,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     app:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
                     android:checkable="true"
                     android:text="@string/day_sun" />
             </androidx.gridlayout.widget.GridLayout>
