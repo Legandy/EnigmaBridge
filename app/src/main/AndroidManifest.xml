@@ -7,9 +7,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-    <permission
-        android:name="io.github.legandy.enigmabridge.permission.TRIGGER_SYNC"
-        android:protectionLevel="normal" />
+    
 
     <application
         android:name=".EnigmaBridgeApplication"
@@ -80,8 +78,7 @@
 
         <receiver
             android:name=".receiver.SyncTriggerReceiver"
-            android:exported="true"
-            android:permission="io.github.legandy.enigmabridge.permission.TRIGGER_SYNC">
+            android:exported="true">
             <intent-filter>
                 <action android:name="io.github.legandy.enigmabridge.ACTION_TRIGGER_SYNC" />
             </intent-filter>
@@ -101,4 +98,3 @@
     </queries>
 
 </manifest>
-

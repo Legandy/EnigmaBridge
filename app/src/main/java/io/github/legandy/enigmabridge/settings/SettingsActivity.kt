@@ -2,15 +2,19 @@ package io.github.legandy.enigmabridge.settings
 
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.Intent // Added import
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.localbroadcastmanager.content.LocalBroadcastManager // Added import
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.databinding.ActivitySettingsBinding
+import android.util.Log // Import Log
 
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySettingsBinding
+    private val TAG = "SettingsActivity" // Add a TAG for logging
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,7 +23,6 @@ class SettingsActivity : AppCompatActivity() {
 
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        // title is now set in the toolbar XML
 
         val prefs = getSharedPreferences("EnigmaSettings", MODE_PRIVATE)
 
@@ -34,7 +37,9 @@ class SettingsActivity : AppCompatActivity() {
             val intentToCopy = getString(R.string.timer_sync_intent_value)
             val clip = ClipData.newPlainText("Timer Sync Intent", intentToCopy)
             clipboard.setPrimaryClip(clip)
+            Toast.makeText(this, "Timer Sync Intent copied to clipboard", Toast.LENGTH_SHORT).show()
         }
+
     }
 
     override fun onPause() {
@@ -48,8 +53,6 @@ class SettingsActivity : AppCompatActivity() {
 
             apply()
         }
-        // Removed Toast message for silent auto-save
-        // Removed finish() as auto-save in onPause should not close the activity
     }
 
     override fun onSupportNavigateUp(): Boolean {

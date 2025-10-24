@@ -3,26 +3,52 @@ package io.github.legandy.enigmabridge.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.widget.Toast
-import androidx.work.OneTimeWorkRequestBuilder
+import android.util.Log // Import Log
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
-import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.timer.TimerCheckWorker
+import java.util.concurrent.TimeUnit
 
 class SyncTriggerReceiver : BroadcastReceiver() {
 
     companion object {
-        const val ACTION_TRIGGER_SYNC = "io.github.legandy.enigmabridge.ACTION_TRIGGER_SYNC"
+        private const val RECEIVER_TAG = "SyncTriggerReceiver" // Add TAG
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == ACTION_TRIGGER_SYNC) {
-            // ** THE FIX 3: Add a toast for immediate feedback **
-            Toast.makeText(context, R.string.toast_sync_triggered_externally, Toast.LENGTH_SHORT).show()
+        Log.d(RECEIVER_TAG, "onReceive() triggered for action: ${intent.action}") // Log broadcast reception
 
-            val syncWorkRequest = OneTimeWorkRequestBuilder<TimerCheckWorker>()
-                .build()
-            WorkManager.getInstance(context).enqueue(syncWorkRequest)
+        if (intent.action == "io.github.legandy.enigmabridge.ACTION_TRIGGER_SYNC") {
+            Log.d(RECEIVER_TAG, "ACTION_TRIGGER_SYNC received. Checking for existing worker.") // Log specific action
+            // Check if there's already a pending or running TimerCheckWorker
+            val workInfos = WorkManager.getInstance(context).getWorkInfosForUniqueWork("TimerCheckWorker")
+            var isRunningOrPending = false
+            workInfos.get().forEach { workInfo ->
+                if (workInfo.state == androidx.work.WorkInfo.State.RUNNING || workInfo.state == androidx.work.WorkInfo.State.ENQUEUED) {
+                    isRunningOrPending = true
+                }
+            }
+
+            if (!isRunningOrPending) {
+                Log.d(RECEIVER_TAG, "No existing TimerCheckWorker. Enqueueing new one.") // Log worker enqueue
+                // Schedule the TimerCheckWorker
+                val constraints = Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build()
+
+                val timerCheckRequest = OneTimeWorkRequest.Builder(TimerCheckWorker::class.java)
+                    .setConstraints(constraints)
+                    .setInitialDelay(5, TimeUnit.SECONDS) // Delay to ensure network is stable
+                    .build()
+
+                WorkManager.getInstance(context).enqueue(timerCheckRequest)
+            } else {
+                Log.d(RECEIVER_TAG, "TimerCheckWorker is already running or enqueued. Skipping new enqueue.") // Log skipping
+            }
+        } else {
+            Log.d(RECEIVER_TAG, "Received unexpected action: ${intent.action}") // Log unexpected actions
         }
     }
 }
