@@ -224,9 +224,13 @@ class MainActivity : AppCompatActivity() {
         if (lastSyncTimestamp > 0) {
             val sdf = SimpleDateFormat("dd.MM.yyyy 'at' HH:mm", Locale.getDefault())
             val dateString = sdf.format(Date(lastSyncTimestamp))
-            binding.statusLastSyncText.text = getString(R.string.status_last_sync_value, dateString)
+            runOnUiThread {
+                binding.statusLastSyncText.text = getString(R.string.status_last_sync_value, dateString)
+            }
         } else {
-            binding.statusLastSyncText.text = getString(R.string.status_last_sync_never)
+            runOnUiThread {
+                binding.statusLastSyncText.text = getString(R.string.status_last_sync_never)
+            }
         }
     }
 }
