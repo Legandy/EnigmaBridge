@@ -22,6 +22,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.concurrent.TimeUnit
+import kotlinx.serialization.decodeFromString // Import decodeFromString
 
 class ReceiverSettingsActivity : AppCompatActivity() {
 
@@ -46,9 +47,42 @@ class ReceiverSettingsActivity : AppCompatActivity() {
 
         prefs = getSharedPreferences("EnigmaSettings", MODE_PRIVATE)
 
+        // Load saved bouquets on startup
+        val savedBouquetsJson = prefs.getString(PREVIOUS_BOUQUETS_JSON_KEY, null)
+        if (!savedBouquetsJson.isNullOrEmpty()) {
+            try {
+                bouquetsMap = json.decodeFromString<Map<String, String>>(savedBouquetsJson)
+                val bouquetNames = bouquetsMap.keys.toList()
+                val adapter = ArrayAdapter(
+                    this@ReceiverSettingsActivity,
+                    android.R.layout.simple_spinner_item,
+                    bouquetNames
+                )
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                binding.bouquetsSpinner.adapter = adapter
+
+                // Restore the last selected bouquet
+                val savedBouquetName = prefs.getString("SELECTED_BOUQUET_NAME", null)
+                if (savedBouquetName != null) {
+                    val position = bouquetNames.indexOf(savedBouquetName)
+                    if (position >= 0) {
+                        binding.bouquetsSpinner.setSelection(position)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error decoding saved bouquets: ${e.message}")
+                bouquetsMap = emptyMap() // Clear map if decoding fails
+            }
+        }
+
         loadReceiverSettings()
         setupListeners()
-        checkReceiverConnectionAndFetchBouquets()
+        // Removed checkReceiverConnectionAndFetchBouquets() from onCreate() as per request
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Disabled connection check in onResume() as per request
     }
 
     override fun onPause() {
@@ -91,6 +125,9 @@ class ReceiverSettingsActivity : AppCompatActivity() {
 
     private fun setupListeners() {
         // Removed binding.buttonSaveReceiverSettings.setOnClickListener as the button is removed
+        binding.buttonTestConnection.setOnClickListener {
+            checkReceiverConnectionAndFetchBouquets()
+        }
 
         binding.buttonSyncChannels.setOnClickListener {
             syncSelectedBouquet()
@@ -168,6 +205,10 @@ class ReceiverSettingsActivity : AppCompatActivity() {
                             binding.bouquetsSpinner.setSelection(position)
                         }
                     }
+
+                    // Save fetched bouquets to preferences
+                    prefs.edit().putString(PREVIOUS_BOUQUETS_JSON_KEY, json.encodeToString(bouquetsMap)).apply()
+
                 } else {
                     Toast.makeText(
                         applicationContext,
@@ -229,6 +270,7 @@ class ReceiverSettingsActivity : AppCompatActivity() {
     private fun showLoading(isLoading: Boolean) {
         // Disable buttons while loading to prevent multiple actions
         // Removed: binding.buttonSaveReceiverSettings.isEnabled = !isLoading
+        binding.buttonTestConnection.isEnabled = !isLoading // Control the new button
         binding.buttonSyncChannels.isEnabled = !isLoading
     }
 
@@ -239,6 +281,8 @@ class ReceiverSettingsActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "ReceiverSettingsActivity"
+        private const val PREVIOUS_BOUQUETS_JSON_KEY = "PREVIOUS_BOUQUETS_JSON"
+
         fun scheduleWork(context: Context, intervalHours: Int) {
             val workManager = WorkManager.getInstance(context)
 
