@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.timer
+package io.github.legandy.enigmabridge.helpers
 
 import android.content.Context
 import android.content.SharedPreferences

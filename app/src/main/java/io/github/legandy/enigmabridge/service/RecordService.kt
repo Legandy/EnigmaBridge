@@ -12,9 +12,9 @@ import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.legandy.enigmabridge.timer.AdvancedScheduleActivity
 import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
-import io.github.legandy.enigmabridge.settings.NotificationHelper
+import io.github.legandy.enigmabridge.helpers.NotificationHelper
 import io.github.legandy.enigmabridge.R
-import io.github.legandy.enigmabridge.timer.SchedulingHelper
+import io.github.legandy.enigmabridge.helpers.SchedulingHelper
 import io.github.legandy.enigmabridge.receiversettings.Timer
 import io.github.legandy.enigmabridge.main.MainActivity
 import kotlinx.coroutines.CoroutineScope

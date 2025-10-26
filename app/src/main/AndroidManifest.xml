@@ -84,6 +84,11 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".notifications.RecordingNotificationReceiver"
+            android:enabled="true"
+            android:exported="false"/>
+
         <!-- ** THE DEFINITIVE FIX: Disable the default WorkManager initializer ** -->
         <provider
             android:name="androidx.startup.InitializationProvider"

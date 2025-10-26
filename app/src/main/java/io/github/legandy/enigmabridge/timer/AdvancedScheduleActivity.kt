@@ -11,8 +11,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.databinding.ActivityAdvancedScheduleBinding
 import io.github.legandy.enigmabridge.service.RecordService
-import io.github.legandy.enigmabridge.settings.NotificationHelper
-import io.github.legandy.enigmabridge.timer.SchedulingHelper
+import io.github.legandy.enigmabridge.helpers.NotificationHelper
+import io.github.legandy.enigmabridge.helpers.SchedulingHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
