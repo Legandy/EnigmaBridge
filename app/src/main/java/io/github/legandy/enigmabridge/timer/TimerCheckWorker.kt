@@ -29,6 +29,8 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
         const val WORK_TAG = "TimerCheckWorker"
         private const val PREVIOUS_TIMERS_KEY = "PREVIOUS_TIMERS_LIST"
         private const val SCHEDULED_NOTIFICATION_IDS_KEY = "SCHEDULED_NOTIFICATION_IDS"
+        const val INPUT_DATA_KEY_SILENT_SYNC = "silent_sync" // New constant for silent sync flag
+        const val ACTION_WORKER_COMPLETED = "io.github.legandy.enigmabridge.WORKER_COMPLETED" // New constant for worker completion broadcast
     }
 
     private val json = Json {
@@ -40,6 +42,9 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
     override suspend fun doWork(): Result {
         Log.d(WORK_TAG, "--- TimerCheckWorker doWork() STARTED ---")
 
+        val isSilentSync = inputData.getBoolean(INPUT_DATA_KEY_SILENT_SYNC, false)
+        Log.d(WORK_TAG, "isSilentSync: $isSilentSync")
+
         NotificationHelper.createNotificationChannel(applicationContext)
 
         val prefs = applicationContext.getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
@@ -50,6 +55,8 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
         if (ip.isEmpty()) {
             Log.w(WORK_TAG, "Aborting timer sync: IP Address not configured.")
             NotificationHelper.sendTimerSyncFailedNotification(applicationContext)
+            // Send completion broadcast even on failure to dismiss loading indicator
+            LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(Intent(ACTION_WORKER_COMPLETED))
             return Result.failure()
         }
 
@@ -63,6 +70,8 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
         if (currentTimers == null) {
             Log.e(WORK_TAG, "CRITICAL FAILURE: client.getTimerList() returned NULL. Aborting.")
             NotificationHelper.sendTimerSyncFailedNotification(applicationContext)
+            // Send completion broadcast even on failure to dismiss loading indicator
+            LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(Intent(ACTION_WORKER_COMPLETED))
             return Result.failure()
         }
 
@@ -79,21 +88,30 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
         scheduleRecordingNotifications(currentTimers, previousTimers, prefs)
         saveCurrentTimers(currentTimers, prefs)
 
+        // Always update LAST_TIMER_SYNC_TIMESTAMP
         Log.d(WORK_TAG, "Updating LAST_TIMER_SYNC_TIMESTAMP preference.")
         prefs.edit {
             putLong("LAST_TIMER_SYNC_TIMESTAMP", System.currentTimeMillis())
         }
 
-        val notifyEnabled = prefs.getBoolean("NOTIFY_SYNC_SUCCESS_ENABLED", true)
-        Log.d(WORK_TAG, "Notification on success enabled: $notifyEnabled")
-        if (notifyEnabled) {
-            Log.d(WORK_TAG, "Calling sendTimerSyncSuccessNotification...")
-            NotificationHelper.sendTimerSyncSuccessNotification(applicationContext, currentTimers.size)
+        if (!isSilentSync) {
+            val notifyEnabled = prefs.getBoolean("NOTIFY_SYNC_SUCCESS_ENABLED", true)
+            Log.d(WORK_TAG, "Notification on success enabled: $notifyEnabled")
+            if (notifyEnabled) {
+                Log.d(WORK_TAG, "Calling sendTimerSyncSuccessNotification...")
+                NotificationHelper.sendTimerSyncSuccessNotification(applicationContext, currentTimers.size)
+            }
+
+            Log.d(WORK_TAG, "Sending ACTION_TIMER_SYNC_COMPLETED broadcast.")
+            val intent = Intent(MainActivity.Companion.ACTION_TIMER_SYNC_COMPLETED)
+            LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
+        } else {
+            Log.d(WORK_TAG, "Silent sync: Skipping ACTION_TIMER_SYNC_COMPLETED broadcast.")
         }
 
-        Log.d(WORK_TAG, "Sending ACTION_TIMER_SYNC_COMPLETED broadcast.")
-        val intent = Intent(MainActivity.Companion.ACTION_TIMER_SYNC_COMPLETED)
-        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
+        // Always send ACTION_WORKER_COMPLETED broadcast at the end, regardless of silent sync or success/failure (handled above)
+        Log.d(WORK_TAG, "Sending ACTION_WORKER_COMPLETED broadcast.")
+        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(Intent(ACTION_WORKER_COMPLETED))
 
         Log.d(WORK_TAG, "--- TimerCheckWorker doWork() FINISHED SUCCESSFULLY ---")
         return Result.success()
@@ -155,6 +173,7 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
 
+                Log.d(WORK_TAG, "Scheduling recording start notification for '${timer.name}' at ${java.util.Date(timerStartTimeMillis)} with ID: $notificationId")
                 // Schedule the alarm
                 alarmManager.setAndAllowWhileIdle( // Changed from setExactAndAllowWhileIdle
                     AlarmManager.RTC_WAKEUP,

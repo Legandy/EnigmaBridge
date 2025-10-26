@@ -16,6 +16,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.workDataOf
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.receiversettings.Timer
 import io.github.legandy.enigmabridge.databinding.ActivityTimerListBinding
@@ -53,6 +54,10 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
                     loadTimersFromPreferences()
                     binding.swipeRefreshLayout.isRefreshing = false // Hide indicator
                 }
+                TimerCheckWorker.Companion.ACTION_WORKER_COMPLETED -> {
+                    Log.d(TAG, "Received broadcast (${intent.action}), hiding refresh indicator.")
+                    binding.swipeRefreshLayout.isRefreshing = false // Hide indicator for any worker completion
+                }
             }
         }
     }
@@ -73,6 +78,7 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
 
         val intentFilter = IntentFilter().apply {
             addAction(MainActivity.Companion.ACTION_TIMER_SYNC_COMPLETED)
+            addAction(TimerCheckWorker.Companion.ACTION_WORKER_COMPLETED) // Listen for general worker completion
         }
         LocalBroadcastManager.getInstance(this).registerReceiver(refreshReceiver, intentFilter)
     }
@@ -80,9 +86,11 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
     override fun onResume() {
         super.onResume()
         // Always trigger a sync when returning to this activity
-        Log.d(TAG, "onResume() triggered. Enqueuing TimerCheckWorker for sync.")
+        Log.d(TAG, "onResume() triggered. Enqueuing TimerCheckWorker for SILENT sync.")
         binding.swipeRefreshLayout.isRefreshing = true
-        val syncWorkRequest = OneTimeWorkRequestBuilder<TimerCheckWorker>().build()
+        val syncWorkRequest = OneTimeWorkRequestBuilder<TimerCheckWorker>()
+            .setInputData(workDataOf(TimerCheckWorker.Companion.INPUT_DATA_KEY_SILENT_SYNC to true))
+            .build()
         WorkManager.getInstance(this).enqueue(syncWorkRequest)
     }
 
@@ -101,7 +109,7 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
 
     private fun setupPullToRefresh() {
         binding.swipeRefreshLayout.setOnRefreshListener {
-            Log.d(TAG, "Pull-to-refresh triggered. Enqueuing TimerCheckWorker.")
+            Log.d(TAG, "Pull-to-refresh triggered. Enqueuing TimerCheckWorker for FULL sync.")
             binding.swipeRefreshLayout.isRefreshing = true
             val syncWorkRequest = OneTimeWorkRequestBuilder<TimerCheckWorker>().build()
             WorkManager.getInstance(this).enqueue(syncWorkRequest)
