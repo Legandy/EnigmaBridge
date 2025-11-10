@@ -54,6 +54,7 @@
 
 
 
+
     <!-- Status Strings -->
     <string name="status_enigma_unchecked">Enigma Receiver: Untested</string>
     <string name="status_enigma_success">Enigma Receiver: Connected</string>
@@ -182,10 +183,15 @@
     <string name="link">Link</string>
     <string name="donations">Donations</string>
     <string name="donations_description">Support the developer</string>
-    <string name="donation_option_coffee">Buy me a coffee</string>
-    <string name="donation_option_beer">Buy me a beer</string>
-    <string name="donation_option_pizza">Buy me a pizza</string>
-    <string name="donation_option_custom">Custom amount</string>
+    <string name="donation_option_buymeacoffee">Buy Me a Coffee (One-time)</string>
+    <string name="donation_desc_buymeacoffee">Support with a one-time donation</string>
+    <string name="donation_option_patreon">Patreon (Monthly Support)</string>
+    <string name="donation_desc_patreon">Become a patron for ongoing support</string>
+    <string name="donation_option_liberapay">Liberapay (Recurring Donations)</string>
+    <string name="donation_desc_liberapay">Support with recurring, voluntary donations</string>
+    <string name="donation_option_paypal">PayPal (Direct Donation)</string>
+    <string name="donation_desc_paypal">Make a direct one-time donation via PayPal</string>
+    <string name="toast_no_browser_found">No web browser found to open link.</string>
 
 
     <string-array name="repeat_options">
