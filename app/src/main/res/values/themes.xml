@@ -1,17 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.EnigmaBridge" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/material_blue_500</item>
+        <!-- Customize your light theme here. -->
+        <item name="colorPrimary">@color/material_blue_200</item>
         <item name="colorPrimaryVariant">@color/material_blue_700</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/material_blue_200</item>
+        <item name="colorSecondaryVariant">@color/material_blue_500</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Customize your theme here. -->
     </style>
 
     <style name="Theme.EnigmaBridge" parent="Base.Theme.EnigmaBridge" />
 
-    <!-- Custom Dialog Theme for the Advanced Scheduling Activity -->
-    <style name="Theme.EnigmaBridge.Dialog" parent="Theme.Material3.DayNight.Dialog">
+    <style name="Theme.EnigmaBridge.NoActionBar">
+        <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <item name="android:windowMinWidthMajor">90%</item>
-        <item name="android:windowMinWidthMinor">90%</item>
+    </style>
+
+    <style name="Theme.EnigmaBridge.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.EnigmaBridge.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="Theme.EnigmaBridge.Dialog" parent="Theme.EnigmaBridge">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowMinWidthMajor">@android:dimen/dialog_min_width_major</item>
+        <item name="android:windowMinWidthMinor">@android:dimen/dialog_min_width_minor</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowBackground">?android:attr/colorBackground</item>
     </style>
 </resources>
-
