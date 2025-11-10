@@ -19,6 +19,7 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        // This is a simple passing test to ensure the instrumented test setup is correct.
         assertEquals("io.github.legandy.enigmabridge", appContext.packageName)
     }
 }

@@ -51,19 +51,19 @@ class TimerAdapter(
         val colorRes: Int
         when (timer.state) {
             0, 1 -> { // Scheduled or Preparing
-                iconRes = R.drawable.ic_timer
+                iconRes = R.drawable.ic_outline_timer_24
                 colorRes = R.color.status_scheduled
             }
             2 -> { // Recording
-                iconRes = R.drawable.ic_recording
+                iconRes = R.drawable.ic_outline_videocam_24
                 colorRes = R.color.status_recording
             }
             3 -> { // Finished
-                iconRes = R.drawable.ic_check_circle
+                iconRes = R.drawable.ic_outline_check_circle_24
                 colorRes = R.color.status_finished
             }
             else -> { // Error or Unknown
-                iconRes = R.drawable.ic_help
+                iconRes = R.drawable.ic_outline_error_24
                 colorRes = R.color.status_error
             }
         }

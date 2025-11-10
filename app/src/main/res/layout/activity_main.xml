@@ -22,13 +22,25 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- Info Icon -->
+        <ImageView
+            android:id="@+id/infoIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@string/about_button"
+            android:src="@drawable/ic_outline_info_24"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/header_title"
+            app:layout_constraintBottom_toBottomOf="@+id/header_title"
+            app:tint="?attr/colorOnSurface" />
+
         <!-- Status Checks -->
         <ImageView
             android:id="@+id/statusEnigmaIcon"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_marginTop="24dp"
-            android:src="@drawable/ic_help"
+            android:src="@drawable/ic_outline_error_24"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/header_title"
             app:tint="?attr/colorOnSurface"
@@ -53,7 +65,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_marginTop="16dp"
-            android:src="@drawable/ic_help"
+            android:src="@drawable/ic_outline_error_24"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/statusEnigmaIcon"
             app:tint="?attr/colorOnSurface"
@@ -78,7 +90,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_marginTop="16dp"
-            android:src="@drawable/ic_error"
+            android:src="@drawable/ic_outline_error_24"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/statusTvBrowserIcon"
             app:tint="?attr/colorOnSurface"
@@ -103,7 +115,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_marginTop="16dp"
-            android:src="@drawable/ic_error"
+            android:src="@drawable/ic_outline_error_24"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/statusTimerSyncIcon"
             app:tint="?attr/colorOnSurface"
@@ -128,7 +140,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_marginTop="16dp"
-            android:src="@drawable/ic_update"
+            android:src="@drawable/ic_outline_update_24"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/statusNotificationIcon"
             app:tint="?attr/colorOnSurface"

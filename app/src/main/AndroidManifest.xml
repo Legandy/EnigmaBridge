@@ -55,6 +55,11 @@
             android:taskAffinity=""
             android:excludeFromRecents="true"/>
 
+        <activity
+            android:name=".about.AboutActivity"
+            android:label="@string/title_about"
+            android:parentActivityName=".main.MainActivity" />
+
         <!-- Services -->
         <service
             android:name=".service.RecordService"

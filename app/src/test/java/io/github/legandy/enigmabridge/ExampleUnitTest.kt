@@ -1,7 +1,6 @@
 package io.github.legandy.enigmabridge
 
 import org.junit.Test
-
 import org.junit.Assert.*
 
 /**
@@ -12,6 +11,7 @@ import org.junit.Assert.*
 class ExampleUnitTest {
     @Test
     fun addition_isCorrect() {
+        // This is a simple passing test to ensure the unit test setup is correct.
         assertEquals(4, 2 + 2)
     }
 }

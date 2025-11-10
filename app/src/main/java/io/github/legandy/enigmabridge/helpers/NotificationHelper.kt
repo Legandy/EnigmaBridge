@@ -57,7 +57,7 @@ object NotificationHelper {
         )
 
         val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_check_circle)
+            .setSmallIcon(R.drawable.ic_outline_check_circle_24)
             .setContentTitle(context.getString(R.string.notification_title))
             .setContentText(notificationContent)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -81,7 +81,7 @@ object NotificationHelper {
         )
 
         val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_recording)
+            .setSmallIcon(R.drawable.ic_outline_videocam_24)
             .setContentTitle(context.getString(R.string.notification_title_recording_started))
             .setContentText(notificationContent)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -105,7 +105,7 @@ object NotificationHelper {
         )
 
         val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_check_circle)
+            .setSmallIcon(R.drawable.ic_outline_check_circle_24)
             .setContentTitle(context.getString(R.string.notification_title_channel_sync_success))
             .setContentText(notificationContent)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -129,7 +129,7 @@ object NotificationHelper {
         )
 
         val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_update)
+            .setSmallIcon(R.drawable.ic_outline_update_24)
             .setContentTitle(context.getString(R.string.notification_title_timer_sync_success))
             .setContentText(notificationContent)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -154,7 +154,7 @@ object NotificationHelper {
         )
 
         val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_error) // Use an error icon
+            .setSmallIcon(R.drawable.ic_outline_error_24) // Use an error icon
             .setContentTitle(context.getString(R.string.notification_title_timer_sync_failed))
             .setContentText(notificationContent)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
