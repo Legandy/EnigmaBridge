@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.timer
+package io.github.legandy.enigmabridge.notifications
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -6,20 +6,20 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.core.content.edit
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import io.github.legandy.enigmabridge.notifications.RecordingNotificationReceiver
+import io.github.legandy.enigmabridge.helpers.NotificationHelper
+import io.github.legandy.enigmabridge.main.MainActivity
 import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
 import io.github.legandy.enigmabridge.receiversettings.Timer
-import io.github.legandy.enigmabridge.main.MainActivity
-import io.github.legandy.enigmabridge.helpers.NotificationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.util.Date
 import java.util.concurrent.TimeUnit
-import androidx.core.content.edit // Added for KTX SharedPreferences extension
 
 class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
     CoroutineWorker(appContext, workerParams) {
@@ -55,7 +55,11 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
             Log.w(WORK_TAG, "Aborting timer sync: IP Address not configured.")
             NotificationHelper.sendTimerSyncFailedNotification(applicationContext)
             // Send completion broadcast even on failure to dismiss loading indicator
-            LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(Intent(ACTION_WORKER_COMPLETED))
+            LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(
+                Intent(
+                    ACTION_WORKER_COMPLETED
+                )
+            )
             return Result.failure()
         }
 
@@ -70,7 +74,11 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
             Log.e(WORK_TAG, "CRITICAL FAILURE: client.getTimerList() returned NULL. Aborting.")
             NotificationHelper.sendTimerSyncFailedNotification(applicationContext)
             // Send completion broadcast even on failure to dismiss loading indicator
-            LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(Intent(ACTION_WORKER_COMPLETED))
+            LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(
+                Intent(
+                    ACTION_WORKER_COMPLETED
+                )
+            )
             return Result.failure()
         }
 
@@ -102,7 +110,7 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
             }
 
             Log.d(WORK_TAG, "Sending ACTION_TIMER_SYNC_COMPLETED broadcast.")
-            val intent = Intent(MainActivity.ACTION_TIMER_SYNC_COMPLETED)
+            val intent = Intent(MainActivity.Companion.ACTION_TIMER_SYNC_COMPLETED)
             LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
         } else {
             Log.d(WORK_TAG, "Silent sync: Skipping ACTION_TIMER_SYNC_COMPLETED broadcast.")
@@ -110,7 +118,11 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
 
         // Always send ACTION_WORKER_COMPLETED broadcast at the end, regardless of silent sync or success/failure (handled above)
         Log.d(WORK_TAG, "Sending ACTION_WORKER_COMPLETED broadcast.")
-        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(Intent(ACTION_WORKER_COMPLETED))
+        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(
+            Intent(
+                ACTION_WORKER_COMPLETED
+            )
+        )
 
         Log.d(WORK_TAG, "--- TimerCheckWorker doWork() FINISHED SUCCESSFULLY ---")
         return Result.success()
@@ -172,7 +184,7 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
 
-                Log.d(WORK_TAG, "Scheduling recording start notification for '${timer.name}' at ${java.util.Date(timerStartTimeMillis)} with ID: $notificationId")
+                Log.d(WORK_TAG, "Scheduling recording start notification for '${timer.name}' at ${Date(timerStartTimeMillis)} with ID: $notificationId")
                 // Schedule the alarm
                 alarmManager.setAndAllowWhileIdle( // Changed from setExactAndAllowWhileIdle
                     AlarmManager.RTC_WAKEUP,
@@ -180,7 +192,7 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
                     pendingIntent
                 )
 
-                Log.i(WORK_TAG, "Scheduled recording start notification for '${timer.name}' at ${java.util.Date(timerStartTimeMillis)}")
+                Log.i(WORK_TAG, "Scheduled recording start notification for '${timer.name}' at ${Date(timerStartTimeMillis)}")
                 newScheduledNotificationIds.add(notificationKey)
             } else if (scheduledNotificationIds.contains(notificationKey)) {
                 Log.d(WORK_TAG, "Notification for '${timer.name}' (ID: $notificationKey) already scheduled.")

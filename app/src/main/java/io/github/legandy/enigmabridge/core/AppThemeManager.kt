@@ -4,7 +4,7 @@ import android.app.Activity
 import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
 import io.github.legandy.enigmabridge.R
-import io.github.legandy.enigmabridge.timer.AdvancedScheduleActivity // Import AdvancedScheduleActivity
+import io.github.legandy.enigmabridge.tvbrowser.AdvancedScheduleActivity // Import AdvancedScheduleActivity
 
 object AppThemeManager {
 

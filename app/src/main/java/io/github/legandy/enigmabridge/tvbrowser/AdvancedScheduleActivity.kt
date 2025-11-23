@@ -1,17 +1,17 @@
-package io.github.legandy.enigmabridge.timer
+package io.github.legandy.enigmabridge.tvbrowser
 
 import android.app.TimePickerDialog
 import android.content.Intent
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Toast
-import androidx.activity.OnBackPressedCallback // Added import for OnBackPressedCallback
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.core.AppThemeManager
 import io.github.legandy.enigmabridge.databinding.ActivityAdvancedScheduleBinding
-import io.github.legandy.enigmabridge.service.RecordService
 import io.github.legandy.enigmabridge.helpers.NotificationHelper
 import io.github.legandy.enigmabridge.helpers.SchedulingHelper
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +21,6 @@ import org.tvbrowser.devplugin.Program
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import io.github.legandy.enigmabridge.core.AppThemeManager // Added import
 
 class AdvancedScheduleActivity : AppCompatActivity() {
 

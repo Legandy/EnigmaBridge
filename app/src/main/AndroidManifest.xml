@@ -49,7 +49,7 @@
             android:parentActivityName=".timer.TimerListActivity" />
 
         <activity
-            android:name=".timer.AdvancedScheduleActivity"
+            android:name=".tvbrowser.AdvancedScheduleActivity"
             android:theme="@style/Theme.EnigmaBridge.Dialog"
             android:label="@string/title_advanced_schedule"
             android:taskAffinity=""
@@ -62,7 +62,7 @@
 
         <!-- Services -->
         <service
-            android:name=".service.RecordService"
+            android:name=".tvbrowser.RecordService"
             android:exported="true"
             android:label="1"
             android:permission="org.tvbrowser.permission.BIND_PLUGIN">
@@ -73,7 +73,7 @@
 
         <!-- Broadcast Receivers -->
         <receiver
-            android:name=".timer.TimerCheckReceiver"
+            android:name=".receiver.TimerCheckReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>

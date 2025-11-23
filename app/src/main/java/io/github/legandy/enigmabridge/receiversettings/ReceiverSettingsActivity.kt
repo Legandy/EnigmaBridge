@@ -15,7 +15,7 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.databinding.ActivityReceiverSettingsBinding
-import io.github.legandy.enigmabridge.timer.TimerCheckWorker
+import io.github.legandy.enigmabridge.notifications.TimerCheckWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.service
+package io.github.legandy.enigmabridge.tvbrowser
 
 import android.app.Service
 import android.content.BroadcastReceiver
@@ -10,7 +10,6 @@ import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import io.github.legandy.enigmabridge.timer.AdvancedScheduleActivity
 import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
 import io.github.legandy.enigmabridge.helpers.NotificationHelper
 import io.github.legandy.enigmabridge.R

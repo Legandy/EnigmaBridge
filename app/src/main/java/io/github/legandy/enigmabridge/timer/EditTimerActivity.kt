@@ -13,7 +13,7 @@ import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.databinding.ActivityEditTimerBinding
 import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
 import io.github.legandy.enigmabridge.receiversettings.Timer
-import io.github.legandy.enigmabridge.service.RecordService
+import io.github.legandy.enigmabridge.tvbrowser.RecordService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.timer
+package io.github.legandy.enigmabridge.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -15,10 +15,9 @@ class TimerCheckReceiver : BroadcastReceiver() {
             val intervalHours = prefs.getInt("SYNC_INTERVAL_HOURS", 0)
             if (intervalHours > 0) {
                 // Call the public, static scheduling function.
-                ReceiverSettingsActivity.scheduleWork(context, intervalHours)
+                ReceiverSettingsActivity.Companion.scheduleWork(context, intervalHours)
                 Log.d("TimerCheckReceiver", "Rescheduled periodic timer check after boot.")
             }
         }
     }
 }
-
