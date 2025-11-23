@@ -2,7 +2,6 @@ package io.github.legandy.enigmabridge.timer
 
 import android.app.AlarmManager
 import android.app.PendingIntent
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -103,7 +102,7 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
             }
 
             Log.d(WORK_TAG, "Sending ACTION_TIMER_SYNC_COMPLETED broadcast.")
-            val intent = Intent(MainActivity.Companion.ACTION_TIMER_SYNC_COMPLETED)
+            val intent = Intent(MainActivity.ACTION_TIMER_SYNC_COMPLETED)
             LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
         } else {
             Log.d(WORK_TAG, "Silent sync: Skipping ACTION_TIMER_SYNC_COMPLETED broadcast.")

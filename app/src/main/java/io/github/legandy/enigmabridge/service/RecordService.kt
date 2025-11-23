@@ -87,7 +87,7 @@ class RecordService : Service() {
     }
 
     private val binder: Plugin.Stub = object : Plugin.Stub() {
-        override fun getVersion(): String { return try { packageManager.getPackageInfo(packageName, 0).versionName ?: "1.0" } catch (e: Exception) { "1.0" } }
+        override fun getVersion(): String { return try { packageManager.getPackageInfo(packageName, 0).versionName ?: "1.0" } catch (_: Exception) { "1.0" } }
         override fun getName(): String = getString(R.string.app_name)
         override fun getDescription(): String = getString(R.string.plugin_description)
         override fun getAuthor(): String = getString(R.string.plugin_author)

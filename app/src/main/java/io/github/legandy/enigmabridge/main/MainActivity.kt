@@ -30,6 +30,7 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import io.github.legandy.enigmabridge.core.AppThemeManager // Import AppThemeManager
 
 class MainActivity : AppCompatActivity() {
 
@@ -62,6 +63,7 @@ class MainActivity : AppCompatActivity() {
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        AppThemeManager.applyThemeAndAccentColor(this) // Apply theme and accent color here
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -121,7 +123,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun testConnection(): Boolean {
+    private fun testConnection(): Boolean {
         val receiverIp = prefs.getString("IP_ADDRESS", "") ?: ""
         val receiverUsername = prefs.getString("USERNAME", "") ?: ""
         val receiverPassword = prefs.getString("PASSWORD", "") ?: ""
@@ -172,7 +174,7 @@ class MainActivity : AppCompatActivity() {
                 pm.getPackageInfo("org.tvbrowser.tvbrowser", 0)
             }
             true
-        } catch (e: PackageManager.NameNotFoundException) {
+        } catch (_: PackageManager.NameNotFoundException) {
             false
         }
     }

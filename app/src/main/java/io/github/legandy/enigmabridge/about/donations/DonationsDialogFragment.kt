@@ -65,7 +65,7 @@ class DonationsDialogFragment : DialogFragment() {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
         try {
             startActivity(intent)
-        } catch (e: ActivityNotFoundException) {
+        } catch (_: ActivityNotFoundException) {
             Toast.makeText(context, R.string.toast_no_browser_found, Toast.LENGTH_SHORT).show()
         }
     }

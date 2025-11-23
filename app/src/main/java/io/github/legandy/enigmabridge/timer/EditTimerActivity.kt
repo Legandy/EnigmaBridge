@@ -87,7 +87,7 @@ class EditTimerActivity : AppCompatActivity() {
         if (repeats > 0) {
             dayButtonMap.forEach { (dayValue, button) ->
                 if ((repeats and dayValue) != 0) {
-                    (button as? com.google.android.material.button.MaterialButton)?.isChecked = true // Correctly set the checked state for MaterialButton
+                    button.isChecked = true // Correctly set the checked state for MaterialButton
                 }
             }
         }

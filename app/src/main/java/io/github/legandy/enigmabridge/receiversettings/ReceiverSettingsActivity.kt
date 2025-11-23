@@ -22,7 +22,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.concurrent.TimeUnit
-import kotlinx.serialization.decodeFromString
+import io.github.legandy.enigmabridge.core.AppThemeManager // Import AppThemeManager
 
 class ReceiverSettingsActivity : AppCompatActivity() {
 
@@ -37,6 +37,7 @@ class ReceiverSettingsActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        AppThemeManager.applyThemeAndAccentColor(this) // Apply theme here
         super.onCreate(savedInstanceState)
         binding = ActivityReceiverSettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -45,7 +46,7 @@ class ReceiverSettingsActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         // title is now set in the toolbar XML
 
-        prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        prefs = getSharedPreferences(AppThemeManager.PREFS_NAME, MODE_PRIVATE)
 
         initializeBouquetDisplay()
         loadReceiverSettings()
@@ -86,7 +87,7 @@ class ReceiverSettingsActivity : AppCompatActivity() {
             android.R.layout.simple_spinner_item,
             bouquetNames
         )
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) // Corrected here
         binding.bouquetsSpinner.adapter = adapter
 
         // Restore the last selected bouquet
@@ -271,7 +272,6 @@ class ReceiverSettingsActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "ReceiverSettingsActivity"
-        private const val PREFS_NAME = "EnigmaSettings"
 
         // SharedPreferences Keys
         private const val IP_ADDRESS_KEY = "IP_ADDRESS"

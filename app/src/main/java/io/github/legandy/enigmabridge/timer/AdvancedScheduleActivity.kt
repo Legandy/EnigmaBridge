@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback // Added import for OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -20,6 +21,7 @@ import org.tvbrowser.devplugin.Program
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import io.github.legandy.enigmabridge.core.AppThemeManager // Added import
 
 class AdvancedScheduleActivity : AppCompatActivity() {
 
@@ -32,6 +34,7 @@ class AdvancedScheduleActivity : AppCompatActivity() {
     private val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        AppThemeManager.applyThemeAndAccentColor(this) // Added this line
         super.onCreate(savedInstanceState)
         binding = ActivityAdvancedScheduleBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -50,6 +53,13 @@ class AdvancedScheduleActivity : AppCompatActivity() {
         endCalendar.timeInMillis = program!!.endTimeInUTC
 
         setupUI()
+
+        // Handle back button press using OnBackPressedCallback
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                revertMarkAndFinish()
+            }
+        })
     }
 
     private fun setupUI() {
@@ -75,11 +85,6 @@ class AdvancedScheduleActivity : AppCompatActivity() {
 
         binding.buttonCancel.setOnClickListener { revertMarkAndFinish() }
         binding.buttonSave.setOnClickListener { scheduleAdvancedTimer() }
-    }
-
-    override fun onBackPressed() {
-        super.onBackPressed()
-        revertMarkAndFinish()
     }
 
     private fun showTimePickerDialog(isStart: Boolean) {
@@ -144,7 +149,7 @@ class AdvancedScheduleActivity : AppCompatActivity() {
 
     private fun revertMarkAndFinish() {
         program?.let {
-            val intent = Intent(RecordService.Companion.ACTION_REVERT_MARKING)
+            val intent = Intent(RecordService.ACTION_REVERT_MARKING)
             intent.putExtra("PROGRAM_EXTRA", it)
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
         }

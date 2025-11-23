@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+/app/src/main/java/io/github/legandy/enigmabridge/EnigmaBridgeOverview.txt
+/.idea/
+/.kotlin/

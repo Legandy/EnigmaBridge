@@ -83,7 +83,7 @@ class EnigmaClient(
 
     private fun encode(text: String): String = URLEncoder.encode(text, "UTF-8")
 
-    private suspend fun executeAction(url: String): Pair<Boolean, String> {
+    private fun executeAction(url: String): Pair<Boolean, String> {
         val jsonString = executeRequest(url)
         return if (jsonString != null) {
             try {
@@ -101,7 +101,7 @@ class EnigmaClient(
         }
     }
 
-    suspend fun addTimer(
+    fun addTimer(
         title: String, sRef: String, startTime: Long, endTime: Long, description: String,
         justPlay: Int, repeated: Int, afterEvent: Int
     ): Pair<Boolean, String> {
@@ -121,13 +121,13 @@ class EnigmaClient(
         return executeAction(url)
     }
 
-    suspend fun deleteTimer(timer: Timer): Pair<Boolean, String> {
+    fun deleteTimer(timer: Timer): Pair<Boolean, String> {
         val query = "sRef=${timer.sRef}&begin=${timer.beginTimestamp}&end=${timer.endTimestamp}"
         val url = buildUrl(API_TIMER_DELETE, query)
         return executeAction(url)
     }
 
-    suspend fun editTimer(
+    fun editTimer(
         originalTimer: Timer,
         newTitle: String,
         newDescription: String,
@@ -159,9 +159,9 @@ class EnigmaClient(
         return executeAction(url)
     }
 
-    suspend fun checkConnection(): Boolean = executeRequest(buildUrl(API_ABOUT)) != null
+    fun checkConnection(): Boolean = executeRequest(buildUrl(API_ABOUT)) != null
 
-    suspend fun getBouquets(): Map<String, String>? {
+    fun getBouquets(): Map<String, String>? {
         val url = buildUrl(API_BOUQUETS, "stype=1")
         val jsonString = executeRequest(url)
         return jsonString?.let {
@@ -170,7 +170,7 @@ class EnigmaClient(
         }
     }
 
-    suspend fun getChannelsInBouquet(bouquetSref: String): Map<String, String>? {
+    fun getChannelsInBouquet(bouquetSref: String): Map<String, String>? {
         val cleanedSref = bouquetSref.replace("\\\"", "\"")
         val useHttps = prefs.getBoolean("USE_HTTPS", false)
         val scheme = if (useHttps) "https" else "http"
@@ -183,7 +183,7 @@ class EnigmaClient(
         }
     }
 
-    suspend fun getTimerList(): List<Timer>? {
+    fun getTimerList(): List<Timer>? {
         val jsonString = executeRequest(buildUrl(API_TIMER_LIST))
         return jsonString?.let {
             try { json.decodeFromString<TimerListResponse>(it).timers }

@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge
+package io.github.legandy.enigmabridge.core
 
 import android.app.Application
 import android.util.Log

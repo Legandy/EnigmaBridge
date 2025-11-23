@@ -133,7 +133,7 @@ class TimerCheckService(appContext: Context, workerParams: WorkerParameters) :
             Log.d(WORK_TAG, "Processing timer: ${currentTimer.name}, State: ${currentTimer.state}, beginTimestamp: ${currentTimer.beginTimestamp}, endTimestamp: ${currentTimer.endTimestamp}")
 
 
-            if (currentTimer.beginTimestamp >= notificationWindowStart && currentTimer.beginTimestamp <= notificationWindowEnd) {
+            if (currentTimer.beginTimestamp in notificationWindowStart..notificationWindowEnd) {
                 if (!notifiedRecordingTimers.contains(uniqueKey)) {
                     Log.i(WORK_TAG, "Recording started notification criteria met for timer: ${currentTimer.name} (beginTimestamp: ${currentTimer.beginTimestamp})")
                     NotificationHelper.sendRecordingStartedNotification(applicationContext, currentTimer.name, currentTimer.sName)
@@ -149,7 +149,7 @@ class TimerCheckService(appContext: Context, workerParams: WorkerParameters) :
     }
 
     private fun saveCurrentTimers(timers: List<Timer>, prefs: SharedPreferences) {
-        val jsonString = Json.Default.encodeToString(timers)
+        val jsonString = Json.encodeToString(timers)
         prefs.edit().putString(PREVIOUS_TIMERS_KEY, jsonString).apply()
     }
 }

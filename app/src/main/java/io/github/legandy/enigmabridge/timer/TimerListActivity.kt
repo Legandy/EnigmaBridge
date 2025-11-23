@@ -24,14 +24,14 @@ import io.github.legandy.enigmabridge.main.MainActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import io.github.legandy.enigmabridge.core.AppThemeManager // Import AppThemeManager
 
 class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListener {
 
     private lateinit var binding: ActivityTimerListBinding
-    private lateinit var timerAdapter: TimerAdapter
     private lateinit var prefs: SharedPreferences
+    private lateinit var timerAdapter: TimerAdapter // Declare timerAdapter
     // enigmaClient is no longer directly used in TimerListActivity for fetching
 
     companion object {
@@ -49,12 +49,12 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
     private val refreshReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
-                MainActivity.Companion.ACTION_TIMER_SYNC_COMPLETED -> {
+                MainActivity.ACTION_TIMER_SYNC_COMPLETED -> {
                     Log.d(TAG, "Received broadcast (${intent.action}), loading timers from preferences.")
                     loadTimersFromPreferences()
                     binding.swipeRefreshLayout.isRefreshing = false // Hide indicator
                 }
-                TimerCheckWorker.Companion.ACTION_WORKER_COMPLETED -> {
+                TimerCheckWorker.ACTION_WORKER_COMPLETED -> {
                     Log.d(TAG, "Received broadcast (${intent.action}), hiding refresh indicator.")
                     binding.swipeRefreshLayout.isRefreshing = false // Hide indicator for any worker completion
                 }
@@ -63,13 +63,14 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        AppThemeManager.applyThemeAndAccentColor(this) // Apply theme here
         super.onCreate(savedInstanceState)
         binding = ActivityTimerListBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        prefs = getSharedPreferences("EnigmaSettings", MODE_PRIVATE)
+        prefs = getSharedPreferences(AppThemeManager.PREFS_NAME, MODE_PRIVATE) // Use AppThemeManager.PREFS_NAME
         // enigmaClient initialization removed as it's not directly used here for fetching
 
         setupRecyclerView()
@@ -77,8 +78,8 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
         loadTimersFromPreferences() // Initial load from preferences (last synced timers)
 
         val intentFilter = IntentFilter().apply {
-            addAction(MainActivity.Companion.ACTION_TIMER_SYNC_COMPLETED)
-            addAction(TimerCheckWorker.Companion.ACTION_WORKER_COMPLETED) // Listen for general worker completion
+            addAction(MainActivity.ACTION_TIMER_SYNC_COMPLETED)
+            addAction(TimerCheckWorker.ACTION_WORKER_COMPLETED) // Listen for general worker completion
         }
         LocalBroadcastManager.getInstance(this).registerReceiver(refreshReceiver, intentFilter)
     }
@@ -89,7 +90,7 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
         Log.d(TAG, "onResume() triggered. Enqueuing TimerCheckWorker for SILENT sync.")
         binding.swipeRefreshLayout.isRefreshing = true
         val syncWorkRequest = OneTimeWorkRequestBuilder<TimerCheckWorker>()
-            .setInputData(workDataOf(TimerCheckWorker.Companion.INPUT_DATA_KEY_SILENT_SYNC to true))
+            .setInputData(workDataOf(TimerCheckWorker.INPUT_DATA_KEY_SILENT_SYNC to true))
             .build()
         WorkManager.getInstance(this).enqueue(syncWorkRequest)
     }

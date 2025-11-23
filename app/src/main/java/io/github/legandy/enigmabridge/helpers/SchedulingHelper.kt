@@ -9,7 +9,7 @@ object SchedulingHelper {
 
     private const val TAG = "SchedulingHelper"
 
-    suspend fun scheduleTimer(
+    fun scheduleTimer(
         context: Context,
         title: String,
         sRef: String,

@@ -47,7 +47,7 @@ object NotificationHelper {
         val notificationContent = context.getString(R.string.notification_content, title, channelName, startTime)
 
         val intent = Intent(context, TimerListActivity::class.java).apply {
-            this.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            this.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
             context,
@@ -71,7 +71,7 @@ object NotificationHelper {
         val notificationContent = context.getString(R.string.notification_content_recording_started, timerName, sRefName)
 
         val intent = Intent(context, TimerListActivity::class.java).apply {
-            this.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            this.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
             context,
@@ -95,7 +95,7 @@ object NotificationHelper {
         val notificationContent = context.getString(R.string.notification_content_channel_sync_success, channelCount)
 
         val intent = Intent(context, TimerListActivity::class.java).apply {
-            this.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            this.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
             context,
@@ -119,7 +119,7 @@ object NotificationHelper {
         val notificationContent = context.getString(R.string.notification_content_timer_sync_success, timerCount)
 
         val intent = Intent(context, TimerListActivity::class.java).apply {
-            this.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            this.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
             context,
@@ -144,7 +144,7 @@ object NotificationHelper {
         val notificationContent = context.getString(R.string.notification_content_timer_sync_failed)
 
         val intent = Intent(context, TimerListActivity::class.java).apply {
-            this.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            this.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
             context,

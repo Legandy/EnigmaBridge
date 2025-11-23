@@ -26,7 +26,7 @@ class TimerAdapter(
         fun onDeleteClicked(timer: Timer)
     }
 
-    inner class TimerViewHolder(val binding: ListItemTimerBinding) : RecyclerView.ViewHolder(binding.root)
+    class TimerViewHolder(val binding: ListItemTimerBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TimerViewHolder {
         val binding = ListItemTimerBinding.inflate(LayoutInflater.from(parent.context), parent, false)
