@@ -32,7 +32,7 @@
     <string name="buffer_time_stop">Buffer time stop</string>
     <string name="toast_recording_settings_saved">Settings saved.</string>
     <string name="label_periodic_sync_interval">Periodic Sync Interval (Hours)</string>
-    <string name="hint_sync_interval">Enter 0-24 (0 = Disabled)</string>
+    <string name="hint_sync_interval">Enter 0–24 (0 = Disabled)</string>
     <string name="toast_receiver_settings_saved">Settings saved.</string>
     <string name="error_ip_address_empty">IP Address Emtpy.</string>
 
@@ -47,9 +47,27 @@
     <string name="toast_intent_copied">Intent Copied</string>
     <string name="intents_header">Broadcast Intents</string>
     <string name="button_timer_sync_intent">Timer Sync Intent</string>
-    <string name="timer_sync_intent_value">io.github.legandy.enigmabridge.ACTION_TRIGGER_SYNC</string>
+    <string name="timer_sync_intent_value">io.github.legandy.enigmabridge.intent.ACTION_TRIGGER_SYNC</string>
 
+    <!-- Appearance Settings -->
+    <string name="label_appearance">Appearance</string>
+    <string name="label_theme_mode">Theme Mode</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="label_accent_color">Accent Color</string>
 
+    <string-array name="theme_options_array">
+        <item>System Default</item>
+        <item>Light</item>
+        <item>Dark</item>
+    </string-array>
+
+    <string-array name="accent_color_names_array">
+        <item>Blue 200</item>
+        <item>Blue 500</item>
+        <item>Blue 700</item>
+    </string-array>
 
 
 
@@ -74,7 +92,7 @@
     <string name="plugin_author">Legandy</string>
     <string name="plugin_license">Apache License, Version 2.0</string>
     <string name="context_menu_schedule_simple">Schedule Recording</string>
-    <string name="context_menu_schedule_advanced">Advanced Scheduling...</string>
+    <string name="context_menu_schedule_advanced">Advanced Scheduling…</string>
     <string name="context_menu_unschedule">Un-schedule Recording</string>
     <string name="context_menu_manual_unmark">Manual Unmark</string>
 
@@ -82,7 +100,7 @@
     <string name="error_channel_list_not_synced">Error: Channel list not synced. Please open the app and sync.</string>
     <string name="error_channel_not_found">Error: Channel \'%1$s\' not found in synced list.</string>
     <string name="error_ip_not_set">Error: IP Address not set.</string>
-    <string name="scheduling_toast">Scheduling \'%1$s\'...</string>
+    <string name="scheduling_toast">Scheduling \'%1$s\'…</string>
     <string name="schedule_success">Recording Scheduled!</string>
     <string name="schedule_failed">Failed to Schedule Recording.</string>
     <string name="bouquets_found_toast">%1$d bouquets found.</string>
@@ -178,7 +196,7 @@
     <string name="license_type">GPL-3.0 License</string>
     <string name="license_link">https://www.gnu.org/licenses/gpl-3.0.en.html</string>
     <string name="version">Version</string>
-    <string name="app_version_placeholder">Loading...</string>
+    <string name="app_version_placeholder">Loading…</string>
     <string name="version_unknown">Unknown</string>
     <string name="link">Link</string>
     <string name="donations">Donations</string>

@@ -20,7 +20,7 @@ class SyncTriggerReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         Log.d(RECEIVER_TAG, "onReceive() triggered for action: ${intent.action}") // Log broadcast reception
 
-        if (intent.action == "io.github.legandy.enigmabridge.ACTION_TRIGGER_SYNC") {
+        if (intent.action == "io.github.legandy.enigmabridge.intent.ACTION_TRIGGER_SYNC") {
             Log.d(RECEIVER_TAG, "ACTION_TRIGGER_SYNC received. Checking for existing worker.") // Log specific action
             // Check if there's already a pending or running TimerCheckWorker
             val workInfos = WorkManager.getInstance(context).getWorkInfosForUniqueWork("TimerCheckWorker")
