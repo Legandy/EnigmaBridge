@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.notifications
+package io.github.legandy.enigmabridge.timer
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -12,6 +12,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import io.github.legandy.enigmabridge.helpers.NotificationHelper
 import io.github.legandy.enigmabridge.main.MainActivity
+import io.github.legandy.enigmabridge.notifications.RecordingNotificationReceiver
 import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
 import io.github.legandy.enigmabridge.receiversettings.Timer
 import kotlinx.coroutines.Dispatchers
@@ -184,7 +185,11 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
 
-                Log.d(WORK_TAG, "Scheduling recording start notification for '${timer.name}' at ${Date(timerStartTimeMillis)} with ID: $notificationId")
+                Log.d(WORK_TAG, "Scheduling recording start notification for '${timer.name}' at ${
+                    Date(
+                        timerStartTimeMillis
+                    )
+                } with ID: $notificationId")
                 // Schedule the alarm
                 alarmManager.setAndAllowWhileIdle( // Changed from setExactAndAllowWhileIdle
                     AlarmManager.RTC_WAKEUP,
@@ -192,7 +197,11 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
                     pendingIntent
                 )
 
-                Log.i(WORK_TAG, "Scheduled recording start notification for '${timer.name}' at ${Date(timerStartTimeMillis)}")
+                Log.i(WORK_TAG, "Scheduled recording start notification for '${timer.name}' at ${
+                    Date(
+                        timerStartTimeMillis
+                    )
+                }")
                 newScheduledNotificationIds.add(notificationKey)
             } else if (scheduledNotificationIds.contains(notificationKey)) {
                 Log.d(WORK_TAG, "Notification for '${timer.name}' (ID: $notificationKey) already scheduled.")

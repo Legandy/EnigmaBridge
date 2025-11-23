@@ -8,7 +8,7 @@ import androidx.work.Constraints
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
-import io.github.legandy.enigmabridge.notifications.TimerCheckWorker
+import io.github.legandy.enigmabridge.timer.TimerCheckWorker
 import java.util.concurrent.TimeUnit
 
 class SyncTriggerReceiver : BroadcastReceiver() {

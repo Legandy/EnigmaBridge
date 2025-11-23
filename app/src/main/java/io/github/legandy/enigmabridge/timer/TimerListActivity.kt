@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import io.github.legandy.enigmabridge.core.AppThemeManager // Import AppThemeManager
-import io.github.legandy.enigmabridge.notifications.TimerCheckWorker
+import io.github.legandy.enigmabridge.timer.TimerCheckWorker
 
 class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListener {
 
