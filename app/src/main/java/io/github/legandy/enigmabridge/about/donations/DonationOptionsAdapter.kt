@@ -24,9 +24,12 @@ class DonationOptionsAdapter(
 
     inner class DonationOptionViewHolder(private val binding: ListItemDonationOptionBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(option: DonationOption) {
-            binding.optionTitle.text = binding.root.context.getString(option.titleResId)
-            binding.optionDescription.text = binding.root.context.getString(option.descriptionResId)
-            binding.root.setOnClickListener { onItemClick(option.url) }
+            val context = binding.root.context
+            binding.optionTitle.text = context.getString(option.titleResId)
+            binding.optionDescription.text = context.getString(option.descriptionResId)
+            binding.root.setOnClickListener { 
+                onItemClick(context.getString(option.urlResId))
+            }
         }
     }
 }

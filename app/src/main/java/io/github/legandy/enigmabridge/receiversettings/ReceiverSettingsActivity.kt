@@ -23,6 +23,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.concurrent.TimeUnit
 import io.github.legandy.enigmabridge.core.AppThemeManager // Import AppThemeManager
+import androidx.core.content.edit
 
 class ReceiverSettingsActivity : AppCompatActivity() {
 
@@ -198,7 +199,12 @@ class ReceiverSettingsActivity : AppCompatActivity() {
                     updateBouquetsSpinner(bouquetsMap)
 
                     // Save fetched bouquets to preferences
-                    prefs.edit().putString(PREVIOUS_BOUQUETS_JSON_KEY, json.encodeToString(bouquetsMap)).apply()
+                    prefs.edit {
+                        putString(
+                            PREVIOUS_BOUQUETS_JSON_KEY,
+                            json.encodeToString(bouquetsMap)
+                        )
+                    }
 
                 } else {
                     Toast.makeText(

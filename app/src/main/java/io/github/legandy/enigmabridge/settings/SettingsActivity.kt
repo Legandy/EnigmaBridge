@@ -19,6 +19,7 @@ import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
 import io.github.legandy.enigmabridge.main.MainActivity // Import MainActivity for restart
 import io.github.legandy.enigmabridge.core.AppThemeManager // Import AppThemeManager
+import androidx.core.content.edit
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -72,7 +73,7 @@ class SettingsActivity : AppCompatActivity() {
                 else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
             }
             if (newThemeMode != savedThemeMode) {
-                prefs.edit().putInt(AppThemeManager.KEY_THEME_MODE, newThemeMode).commit()
+                prefs.edit(commit = true) { putInt(AppThemeManager.KEY_THEME_MODE, newThemeMode) }
                 restartApp() // Call restartApp
             }
         }
@@ -106,7 +107,12 @@ class SettingsActivity : AppCompatActivity() {
         (binding.textInputLayoutAccentColor.editText as? AutoCompleteTextView)?.setOnItemClickListener { _, _, position, _ ->
             val selectedAccentColorItem = accentColorAdapter.getItem(position)
             if (selectedAccentColorItem != null) {
-                prefs.edit().putInt(AppThemeManager.KEY_ACCENT_COLOR, selectedAccentColorItem.colorResId).commit()
+                prefs.edit(commit = true) {
+                    putInt(
+                        AppThemeManager.KEY_ACCENT_COLOR,
+                        selectedAccentColorItem.colorResId
+                    )
+                }
                 restartApp() // Call restartApp
             }
         }

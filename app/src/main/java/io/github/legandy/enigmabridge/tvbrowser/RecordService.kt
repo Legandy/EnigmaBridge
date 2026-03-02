@@ -29,6 +29,7 @@ import org.tvbrowser.devplugin.PluginMenu
 import org.tvbrowser.devplugin.Program
 import org.tvbrowser.devplugin.ReceiveTarget
 import kotlin.math.abs
+import androidx.core.content.edit
 
 class RecordService : Service() {
 
@@ -230,7 +231,12 @@ class RecordService : Service() {
         val idString = prefs.getString(PREF_MARKED_IDS, null)
         if (!idString.isNullOrEmpty()) { markedProgramIds.clear(); markedProgramIds.addAll(idString.split(',')) }
     }
-    private fun saveMarkedProgramIds() { prefs.edit().putString(PREF_MARKED_IDS, markedProgramIds.joinToString(",")).apply() }
+    private fun saveMarkedProgramIds() { prefs.edit {
+        putString(
+            PREF_MARKED_IDS,
+            markedProgramIds.joinToString(",")
+        )
+    } }
 
     private fun findTimerForProgram(program: Program): Timer? {
         return cachedTimers.find { timer ->

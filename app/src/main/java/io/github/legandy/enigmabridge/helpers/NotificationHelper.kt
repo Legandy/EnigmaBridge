@@ -91,30 +91,6 @@ object NotificationHelper {
         sendNotification(context, builder)
     }
 
-    fun sendChannelSyncSuccessNotification(context: Context, channelCount: Int) {
-        val notificationContent = context.getString(R.string.notification_content_channel_sync_success, channelCount)
-
-        val intent = Intent(context, TimerListActivity::class.java).apply {
-            this.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_outline_check_circle_24)
-            .setContentTitle(context.getString(R.string.notification_title_channel_sync_success))
-            .setContentText(notificationContent)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent) // Set the PendingIntent
-            .setAutoCancel(true)
-
-        sendNotification(context, builder)
-    }
-
     fun sendTimerSyncSuccessNotification(context: Context, timerCount: Int) {
         val notificationContent = context.getString(R.string.notification_content_timer_sync_success, timerCount)
 
@@ -139,7 +115,6 @@ object NotificationHelper {
         sendNotification(context, builder)
     }
 
-    // **DEFINITIVE FIX: Add a function for failure notifications**
     fun sendTimerSyncFailedNotification(context: Context) {
         val notificationContent = context.getString(R.string.notification_content_timer_sync_failed)
 

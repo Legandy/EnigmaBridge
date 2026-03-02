@@ -34,7 +34,7 @@
     <string name="label_periodic_sync_interval">Periodic Sync Interval (Hours)</string>
     <string name="hint_sync_interval">Enter 0–24 (0 = Disabled)</string>
     <string name="toast_receiver_settings_saved">Settings saved.</string>
-    <string name="error_ip_address_empty">IP Address Emtpy.</string>
+    <string name="error_ip_address_empty">IP Address Empty.</string>
 
 
 
@@ -58,7 +58,7 @@
     <string name="label_accent_color">Accent Color</string>
 
     <string-array name="theme_options_array">
-        <item>System Default</item>
+        <item>System</item>
         <item>Light</item>
         <item>Dark</item>
     </string-array>
@@ -119,6 +119,7 @@
     <string name="toast_sync_triggered_externally">Timer sync triggered externally.</string>
     <string name="toast_timers_refreshed">Timer list refreshed.</string>
     <string name="label_use_https">Use HTTPS</string>
+    <string name="toast_no_browser_found">No web browser found to open link.</string>
 
     <!-- Notifications -->
     <string name="notification_channel_name">EnigmaBridge Notifications</string>
@@ -199,17 +200,23 @@
     <string name="app_version_placeholder">Loading…</string>
     <string name="version_unknown">Unknown</string>
     <string name="link">Link</string>
+
+
+    <!-- Donation -->
     <string name="donations">Donations</string>
     <string name="donations_description">Support the developer</string>
+
     <string name="donation_option_buymeacoffee">Buy Me a Coffee (One-time)</string>
     <string name="donation_desc_buymeacoffee">Support with a one-time donation</string>
-    <string name="donation_option_patreon">Patreon (Monthly Support)</string>
-    <string name="donation_desc_patreon">Become a patron for ongoing support</string>
-    <string name="donation_option_liberapay">Liberapay (Recurring Donations)</string>
-    <string name="donation_desc_liberapay">Support with recurring, voluntary donations</string>
+    <string name="link_buymeacoffee">https://www.buymeacoffee.com/legandy</string>
+
+    <string name="donation_option_kofi">Kofi (One-time)</string>
+    <string name="donation_desc_kofi">Support with a one-time donation</string>
+    <string name="link_kofi">https://ko-fi.com/legandy</string>
+
     <string name="donation_option_paypal">PayPal (Direct Donation)</string>
-    <string name="donation_desc_paypal">Make a direct one-time donation via PayPal</string>
-    <string name="toast_no_browser_found">No web browser found to open link.</string>
+    <string name="donation_desc_paypal">Support with a one-time donation</string>
+    <string name="link_paypal">https://paypal.com/legandy</string>
 
 
     <string-array name="repeat_options">

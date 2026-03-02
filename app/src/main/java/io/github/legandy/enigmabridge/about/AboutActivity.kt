@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.databinding.ActivityAboutBinding
 import io.github.legandy.enigmabridge.about.donations.DonationsDialogFragment
+import androidx.core.net.toUri
 
 class AboutActivity : AppCompatActivity() {
 
@@ -22,15 +23,15 @@ class AboutActivity : AppCompatActivity() {
 
         // Set up click listeners for the items
         binding.itemCreator.setOnClickListener {
-            openLink(Uri.parse(getString(R.string.creator_github_link)))
+            openLink(getString(R.string.creator_github_link).toUri())
         }
 
         binding.itemSource.setOnClickListener {
-            openLink(Uri.parse(getString(R.string.source_code_github_link)))
+            openLink(getString(R.string.source_code_github_link).toUri())
         }
 
         binding.itemLicense.setOnClickListener {
-            openLink(Uri.parse(getString(R.string.license_link)))
+            openLink(getString(R.string.license_link).toUri())
         }
 
         binding.itemDonations.setOnClickListener {

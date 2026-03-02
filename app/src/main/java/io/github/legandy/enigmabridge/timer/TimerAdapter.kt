@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.databinding.ListItemTimerBinding
@@ -101,10 +102,32 @@ class TimerAdapter(
 
     override fun getItemCount(): Int = timers.size
 
+    class TimerDiffCallback(
+        private val oldList: List<Timer>,
+        private val newList: List<Timer>
+    ) : DiffUtil.Callback() {
+        override fun getOldListSize() = oldList.size
+        override fun getNewListSize() = newList.size
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            val oldItem = oldList[oldItemPosition]
+            val newItem = newList[newItemPosition]
+            // Unique identifier for a timer on Enigma2
+            return oldItem.sRef == newItem.sRef &&
+                    oldItem.beginTimestamp == newItem.beginTimestamp
+        }
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldList[oldItemPosition] == newList[newItemPosition]
+        }
+    }
+
     fun updateTimers(newTimers: List<Timer>) {
+        val sortedNewTimers = newTimers.sortedByDescending { it.beginTimestamp }
+        val diffCallback = TimerDiffCallback(this.timers, sortedNewTimers)
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+
         this.timers.clear()
-        // Sort timers by their begin time, newest first
-        this.timers.addAll(newTimers.sortedByDescending { it.beginTimestamp })
-        notifyDataSetChanged()
+        this.timers.addAll(sortedNewTimers)
+        diffResult.dispatchUpdatesTo(this)
+
     }
 }

@@ -15,7 +15,7 @@ class TimerCheckReceiver : BroadcastReceiver() {
             val intervalHours = prefs.getInt("SYNC_INTERVAL_HOURS", 0)
             if (intervalHours > 0) {
                 // Call the public, static scheduling function.
-                ReceiverSettingsActivity.Companion.scheduleWork(context, intervalHours)
+                ReceiverSettingsActivity.scheduleWork(context, intervalHours)
                 Log.d("TimerCheckReceiver", "Rescheduled periodic timer check after boot.")
             }
         }

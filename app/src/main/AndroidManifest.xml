@@ -85,7 +85,7 @@
             android:name=".receiver.SyncTriggerReceiver"
             android:exported="true">
             <intent-filter>
-                <action android:name="io.github.legandy.enigmabridge.ACTION_TRIGGER_SYNC" />
+                <action android:name="io.github.legandy.enigmabridge.intent.ACTION_TRIGGER_SYNC" />
             </intent-filter>
         </receiver>
 
