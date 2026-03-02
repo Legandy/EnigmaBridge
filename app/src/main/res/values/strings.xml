@@ -206,16 +206,16 @@
     <string name="donations">Donations</string>
     <string name="donations_description">Support the developer</string>
 
-    <string name="donation_option_buymeacoffee">Buy Me a Coffee (One-time)</string>
-    <string name="donation_desc_buymeacoffee">Support with a one-time donation</string>
+    <string name="donation_option_buymeacoffee">Buy Me a Coffee</string>
+    <string name="donation_desc_buymeacoffee">Thank me with a one-time donation</string>
     <string name="link_buymeacoffee">https://www.buymeacoffee.com/legandy</string>
 
-    <string name="donation_option_kofi">Kofi (One-time)</string>
-    <string name="donation_desc_kofi">Support with a one-time donation</string>
+    <string name="donation_option_kofi">Kofi</string>
+    <string name="donation_desc_kofi">Thank me with a one-time donation</string>
     <string name="link_kofi">https://ko-fi.com/legandy</string>
 
-    <string name="donation_option_paypal">PayPal (Direct Donation)</string>
-    <string name="donation_desc_paypal">Support with a one-time donation</string>
+    <string name="donation_option_paypal">PayPal</string>
+    <string name="donation_desc_paypal">Thank me with a one-time donation</string>
     <string name="link_paypal">https://paypal.com/legandy</string>
 
 

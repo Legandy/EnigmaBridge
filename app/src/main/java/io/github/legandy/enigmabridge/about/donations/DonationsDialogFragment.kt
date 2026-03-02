@@ -43,7 +43,6 @@ class DonationsDialogFragment : DialogFragment() {
         }
         
         return MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.donations)
             .setView(binding.root)
             .create()
     }

@@ -225,7 +225,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="@string/donations"
-                    android:src="@drawable/ic_outline_heart_smile_24"
+                    android:src="@drawable/ic_outline_favorite_24"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
