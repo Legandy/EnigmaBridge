@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -25,19 +24,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import io.github.legandy.enigmabridge.core.AppThemeManager // Import AppThemeManager
+import io.github.legandy.enigmabridge.core.AppThemeManager
+import io.github.legandy.enigmabridge.core.PreferenceManager
 
 class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListener {
 
     private lateinit var binding: ActivityTimerListBinding
-    private lateinit var prefs: SharedPreferences
+    private lateinit var prefManager: PreferenceManager
     private lateinit var timerAdapter: TimerAdapter // Declare timerAdapter
     // enigmaClient is no longer directly used in TimerListActivity for fetching
 
     companion object {
         const val EXTRA_TIMER = "TIMER_EXTRA"
         private const val TAG = "TimerListActivity"
-        private const val PREVIOUS_TIMERS_KEY = "PREVIOUS_TIMERS_LIST" // from TimerCheckWorker
     }
 
     private val json = Json {
@@ -50,28 +49,31 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
                 MainActivity.ACTION_TIMER_SYNC_COMPLETED -> {
-                    Log.d(TAG, "Received broadcast (${intent.action}), loading timers from preferences.")
+                    Log.d(
+                        TAG,
+                        "Received broadcast (${intent.action}), loading timers from preferences."
+                    )
                     loadTimersFromPreferences()
                     binding.swipeRefreshLayout.isRefreshing = false // Hide indicator
                 }
+
                 TimerCheckWorker.ACTION_WORKER_COMPLETED -> {
                     Log.d(TAG, "Received broadcast (${intent.action}), hiding refresh indicator.")
-                    binding.swipeRefreshLayout.isRefreshing = false // Hide indicator for any worker completion
+                    binding.swipeRefreshLayout.isRefreshing =
+                        false // Hide indicator for any worker completion
                 }
             }
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        prefManager = PreferenceManager(this)
         AppThemeManager.applyThemeAndAccentColor(this) // Apply theme here
         super.onCreate(savedInstanceState)
         binding = ActivityTimerListBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
-        prefs = getSharedPreferences(AppThemeManager.PREFS_NAME, MODE_PRIVATE) // Use AppThemeManager.PREFS_NAME
-        // enigmaClient initialization removed as it's not directly used here for fetching
 
         setupRecyclerView()
         setupPullToRefresh()
@@ -120,14 +122,14 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
     private fun loadTimersFromPreferences() {
         binding.emptyView.visibility = View.GONE
 
-        val ip = prefs.getString("IP_ADDRESS", "") ?: ""
-        if (ip.isEmpty()) {
-            Toast.makeText(this, getString(R.string.error_ip_not_configured), Toast.LENGTH_LONG).show()
+        if (!prefManager.isReceiverConfigured()) {
+            Toast.makeText(this, getString(R.string.error_ip_not_configured), Toast.LENGTH_LONG)
+                .show()
             binding.swipeRefreshLayout.isRefreshing = false
             return
         }
 
-        val previousTimersJson = prefs.getString(PREVIOUS_TIMERS_KEY, null)
+        val previousTimersJson = prefManager.getPreviousTimersJson()
         val timers: List<Timer> = if (previousTimersJson != null) {
             try {
                 json.decodeFromString<List<Timer>>(previousTimersJson)
@@ -176,19 +178,10 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
     }
 
     private fun deleteTimer(timer: Timer) {
-        // Since enigmaClient is removed, we'll enqueue the worker to handle deletion and resync.
-        // The worker needs a way to know which timer to delete.
-        // For simplicity and to avoid adding complex data passing to the worker for a single delete,
-        // we'll assume deleteTimer handles the network call and then enqueues the Worker for a full refresh.
-        // Re-introducing a minimal EnigmaClient here for the delete operation as passing timer object
-        // to worker for deletion is more complex and out of immediate scope.
-        val ip = prefs.getString("IP_ADDRESS", "") ?: ""
-        val user = prefs.getString("USERNAME", "root") ?: ""
-        val pass = prefs.getString("PASSWORD", "") ?: ""
-        val enigmaClientForDelete = io.github.legandy.enigmabridge.receiversettings.EnigmaClient(ip, user, pass, prefs)
+        val client = prefManager.getEnigmaClient()
 
         lifecycleScope.launch(Dispatchers.IO) {
-            val result = enigmaClientForDelete.deleteTimer(timer) // Use a local client for delete
+            val result = client.deleteTimer(timer)
             withContext(Dispatchers.Main) {
                 if (result.first) {
                     Toast.makeText(
@@ -196,10 +189,10 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
                         getString(R.string.delete_timer_success),
                         Toast.LENGTH_SHORT
                     ).show()
-                    // After delete, trigger a full sync to update the list and MainActivity status
+                    // Trigger worker for refresh
                     val syncWorkRequest = OneTimeWorkRequestBuilder<TimerCheckWorker>().build()
                     WorkManager.getInstance(this@TimerListActivity).enqueue(syncWorkRequest)
-                    binding.swipeRefreshLayout.isRefreshing = true // Show indicator
+                    binding.swipeRefreshLayout.isRefreshing = true
                 } else {
                     Toast.makeText(applicationContext, result.second, Toast.LENGTH_LONG).show()
                 }

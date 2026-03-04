@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.core.AppThemeManager
+import io.github.legandy.enigmabridge.core.PreferenceManager
 import io.github.legandy.enigmabridge.databinding.ActivityAdvancedScheduleBinding
 import io.github.legandy.enigmabridge.helpers.NotificationHelper
 import io.github.legandy.enigmabridge.helpers.SchedulingHelper
@@ -25,6 +26,8 @@ import java.util.Locale
 class AdvancedScheduleActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAdvancedScheduleBinding
+
+    private lateinit var prefManager: PreferenceManager
     private var program: Program? = null
     private var sRef: String? = null
 
@@ -33,6 +36,7 @@ class AdvancedScheduleActivity : AppCompatActivity() {
     private val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        prefManager = PreferenceManager(this)
         AppThemeManager.applyThemeAndAccentColor(this) // Added this line
         super.onCreate(savedInstanceState)
         binding = ActivityAdvancedScheduleBinding.inflate(layoutInflater)
@@ -115,7 +119,8 @@ class AdvancedScheduleActivity : AppCompatActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             val result = SchedulingHelper.scheduleTimer(
-                context = applicationContext,
+                context = this@AdvancedScheduleActivity,
+                prefManager = prefManager,
                 title = editedTitle,
                 sRef = sRef!!,
                 startTimeMillis = startCalendar.timeInMillis,
@@ -126,16 +131,12 @@ class AdvancedScheduleActivity : AppCompatActivity() {
                 afterEvent = afterEvent
             )
 
-            val success = result.first
-            val message = result.second
-
             withContext(Dispatchers.Main) {
-                // Display the specific message from the receiver.
-                Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
+                Toast.makeText(applicationContext, result.second, Toast.LENGTH_LONG).show()
 
-                if (success) {
-                    val prefs = getSharedPreferences("EnigmaSettings", MODE_PRIVATE)
-                    if (prefs.getBoolean("NOTIFY_SCHEDULED_ENABLED", true)) {
+                if (result.first) {
+                    // CLEAN REFACTOR: Use prefManager toggle
+                    if (prefManager.isNotifyScheduledEnabled()) {
                         NotificationHelper.sendSuccessNotification(applicationContext, program!!)
                     }
                     finish()

@@ -1,7 +1,6 @@
 package io.github.legandy.enigmabridge.receiversettings
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.widget.ArrayAdapter
@@ -22,13 +21,13 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.concurrent.TimeUnit
-import io.github.legandy.enigmabridge.core.AppThemeManager // Import AppThemeManager
-import androidx.core.content.edit
+import io.github.legandy.enigmabridge.core.AppThemeManager
+import io.github.legandy.enigmabridge.core.PreferenceManager
 
 class ReceiverSettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityReceiverSettingsBinding
-    private lateinit var prefs: SharedPreferences
+    private lateinit var prefManager: PreferenceManager
     private var bouquetsMap: Map<String, String> = emptyMap()
 
     private val json = Json {
@@ -38,45 +37,41 @@ class ReceiverSettingsActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        AppThemeManager.applyThemeAndAccentColor(this) // Apply theme here
+        prefManager = PreferenceManager(this)
+        AppThemeManager.applyThemeAndAccentColor(this)
         super.onCreate(savedInstanceState)
         binding = ActivityReceiverSettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        // title is now set in the toolbar XML
 
-        prefs = getSharedPreferences(AppThemeManager.PREFS_NAME, MODE_PRIVATE)
+        prefManager.getThemeMode()
 
         initializeBouquetDisplay()
         loadReceiverSettings()
         setupListeners()
-        // Removed checkReceiverConnectionAndFetchBouquets() from onCreate() as per request
+
     }
 
     override fun onResume() {
         super.onResume()
-        // Disabled connection check in onResume() as per request
     }
 
     override fun onPause() {
         super.onPause()
         saveReceiverSettings() // Auto-save on pause
-        Log.d(TAG, "Unregistering timerSyncCompletedReceiver in onPause.")
-        // The original onPause method in MainActivity handles broadcast receiver unregistration. This is not needed here.
-        // Assuming unregistering timerSyncCompletedReceiver was a copy-paste error from MainActivity and not relevant here.
     }
 
     private fun initializeBouquetDisplay() {
-        val savedBouquetsJson = prefs.getString(PREVIOUS_BOUQUETS_JSON_KEY, null)
+        val savedBouquetsJson = prefManager.getBouquetsJson()
         if (!savedBouquetsJson.isNullOrEmpty()) {
             try {
                 bouquetsMap = json.decodeFromString<Map<String, String>>(savedBouquetsJson)
                 updateBouquetsSpinner(bouquetsMap)
             } catch (e: Exception) {
                 Log.e(TAG, "Error decoding saved bouquets: ${e.message}")
-                bouquetsMap = emptyMap() // Clear map if decoding fails
+                bouquetsMap = emptyMap()
             }
         }
     }
@@ -88,11 +83,11 @@ class ReceiverSettingsActivity : AppCompatActivity() {
             android.R.layout.simple_spinner_item,
             bouquetNames
         )
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) // Corrected here
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.bouquetsSpinner.adapter = adapter
 
         // Restore the last selected bouquet
-        val savedBouquetName = prefs.getString(SELECTED_BOUQUET_NAME_KEY, null)
+        val savedBouquetName = prefManager.getSelectedBouquetName()
         if (savedBouquetName != null) {
             val position = bouquetNames.indexOf(savedBouquetName)
             if (position >= 0) {
@@ -102,37 +97,32 @@ class ReceiverSettingsActivity : AppCompatActivity() {
     }
 
     private fun loadReceiverSettings() {
-        binding.editIpAddress.setText(prefs.getString(IP_ADDRESS_KEY, ""))
-        binding.switchUseHttps.isChecked = prefs.getBoolean(USE_HTTPS_KEY, false)
-        binding.editUsername.setText(prefs.getString(USERNAME_KEY, "root"))
-        binding.editPassword.setText(prefs.getString(PASSWORD_KEY, ""))
-        binding.editMinutesBefore.setText(prefs.getInt(MINUTES_BEFORE_KEY, 2).toString())
-        binding.editMinutesAfter.setText(prefs.getInt(MINUTES_AFTER_KEY, 5).toString())
-        binding.editSyncInterval.setText(prefs.getInt(SYNC_INTERVAL_HOURS_KEY, 0).toString())
+        binding.editIpAddress.setText(prefManager.getIpAddress())
+        binding.switchUseHttps.isChecked = prefManager.getUseHttps()
+        binding.editUsername.setText(prefManager.getUsername().ifEmpty { "root" })
+        binding.editPassword.setText(prefManager.getPassword())
+        binding.editMinutesBefore.setText(prefManager.getMinutesBefore().toString())
+        binding.editMinutesAfter.setText(prefManager.getMinutesAfter().toString())
+        binding.editSyncInterval.setText(prefManager.getSyncIntervalHours().toString())
     }
 
     private fun saveReceiverSettings() {
-        val before = binding.editMinutesBefore.text.toString().toIntOrNull() ?: 0
-        val after = binding.editMinutesAfter.text.toString().toIntOrNull() ?: 0
+        val before = binding.editMinutesBefore.text.toString().toIntOrNull() ?: 2
+        val after = binding.editMinutesAfter.text.toString().toIntOrNull() ?: 5
         val syncInterval = binding.editSyncInterval.text.toString().toIntOrNull() ?: 0
 
-        prefs.edit().apply {
-            putString(IP_ADDRESS_KEY, binding.editIpAddress.text.toString().trim())
-            putBoolean(USE_HTTPS_KEY, binding.switchUseHttps.isChecked)
-            putString(USERNAME_KEY, binding.editUsername.text.toString().trim())
-            putString(PASSWORD_KEY, binding.editPassword.text.toString())
-            putInt(MINUTES_BEFORE_KEY, before)
-            putInt(MINUTES_AFTER_KEY, after)
-            putInt(SYNC_INTERVAL_HOURS_KEY, syncInterval)
-            apply()
-        }
-        // Removed Toast message for silent auto-save
+        prefManager.setIpAddress(binding.editIpAddress.text.toString().trim())
+        prefManager.setUseHttps(binding.switchUseHttps.isChecked)
+        prefManager.setUsername(binding.editUsername.text.toString())
+        prefManager.setPassword(binding.editPassword.text.toString())
+        prefManager.setMinutesBefore(before)
+        prefManager.setMinutesAfter(after)
+        prefManager.setSyncIntervalHours(syncInterval)
 
         scheduleWork(this, syncInterval)
     }
 
     private fun setupListeners() {
-        // Removed binding.buttonSaveReceiverSettings.setOnClickListener as the button is removed
         binding.buttonTestConnection.setOnClickListener {
             checkReceiverConnectionAndFetchBouquets()
         }
@@ -143,18 +133,14 @@ class ReceiverSettingsActivity : AppCompatActivity() {
     }
 
     private fun checkReceiverConnectionAndFetchBouquets() {
-        val ip = binding.editIpAddress.text.toString().trim()
-        val user = binding.editUsername.text.toString().trim()
-        val pass = binding.editPassword.text.toString()
-
-        if (ip.isEmpty()) {
+        if (!prefManager.isReceiverConfigured()) {
             Toast.makeText(this, getString(R.string.error_ip_address_empty), Toast.LENGTH_LONG).show()
             return
         }
 
         showLoading(true)
         lifecycleScope.launch(Dispatchers.IO) {
-            val client = EnigmaClient(ip, user, pass, prefs)
+            val client = prefManager.getEnigmaClient()
             val isConnected = client.checkConnection()
 
             withContext(Dispatchers.Main) {
@@ -179,17 +165,13 @@ class ReceiverSettingsActivity : AppCompatActivity() {
 
     private fun fetchBouquets() {
         showLoading(true)
-        val ip = binding.editIpAddress.text.toString().trim()
-        val user = binding.editUsername.text.toString().trim()
-        val pass = binding.editPassword.text.toString()
-
-        if (ip.isEmpty()) {
-            showLoading(false)
+        if (!prefManager.isReceiverConfigured()) {
+            Toast.makeText(this, getString(R.string.error_ip_address_empty), Toast.LENGTH_LONG).show()
             return
         }
 
         lifecycleScope.launch(Dispatchers.IO) {
-            val client = EnigmaClient(ip, user, pass, prefs)
+            val client = prefManager.getEnigmaClient()
             val fetchedBouquets = client.getBouquets()
 
             withContext(Dispatchers.Main) {
@@ -199,12 +181,7 @@ class ReceiverSettingsActivity : AppCompatActivity() {
                     updateBouquetsSpinner(bouquetsMap)
 
                     // Save fetched bouquets to preferences
-                    prefs.edit {
-                        putString(
-                            PREVIOUS_BOUQUETS_JSON_KEY,
-                            json.encodeToString(bouquetsMap)
-                        )
-                    }
+                    prefManager.setBouquetsJson(json.encodeToString(bouquetsMap))
 
                 } else {
                     Toast.makeText(
@@ -218,6 +195,10 @@ class ReceiverSettingsActivity : AppCompatActivity() {
     }
 
     private fun syncSelectedBouquet() {
+        if (!prefManager.isReceiverConfigured()) {
+            Toast.makeText(this, getString(R.string.error_ip_address_empty), Toast.LENGTH_LONG).show()
+            return
+        }
         val selectedBouquetName = binding.bouquetsSpinner.selectedItem as? String
         if (selectedBouquetName == null) {
             Toast.makeText(this@ReceiverSettingsActivity, getString(R.string.error_no_bouquet_selected), Toast.LENGTH_SHORT).show()
@@ -233,21 +214,15 @@ class ReceiverSettingsActivity : AppCompatActivity() {
         showLoading(true)
 
         lifecycleScope.launch(Dispatchers.IO) {
-            val ip = prefs.getString(IP_ADDRESS_KEY, "") ?: ""
-            val user = prefs.getString(USERNAME_KEY, "root") ?: ""
-            val pass = prefs.getString(PASSWORD_KEY, "") ?: ""
-            val client = EnigmaClient(ip, user, pass, prefs)
+            val client = prefManager.getEnigmaClient()
             val channels = client.getChannelsInBouquet(bouquetSref)
 
             withContext(Dispatchers.Main) {
                 showLoading(false)
                 if (channels != null) {
                     val jsonChannels = json.encodeToString(channels)
-                    prefs.edit().apply {
-                        putString(SYNCED_CHANNELS_KEY, jsonChannels)
-                        putString(SELECTED_BOUQUET_NAME_KEY, selectedBouquetName) // Save the selected bouquet name
-                        apply()
-                    }
+                    prefManager.setSyncedChannelsJson(jsonChannels)
+                    prefManager.setSelectedBouquetName(selectedBouquetName)
                     Toast.makeText(
                         this@ReceiverSettingsActivity, // Use activity context here
                         getString(R.string.sync_success_toast, channels.size),
@@ -265,8 +240,6 @@ class ReceiverSettingsActivity : AppCompatActivity() {
     }
 
     private fun showLoading(isLoading: Boolean) {
-        // Disable buttons while loading to prevent multiple actions
-        // Removed: binding.buttonSaveReceiverSettings.isEnabled = !isLoading
         binding.buttonTestConnection.isEnabled = !isLoading // Control the new button
         binding.buttonSyncChannels.isEnabled = !isLoading
     }
@@ -279,21 +252,8 @@ class ReceiverSettingsActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "ReceiverSettingsActivity"
 
-        // SharedPreferences Keys
-        private const val IP_ADDRESS_KEY = "IP_ADDRESS"
-        private const val USE_HTTPS_KEY = "USE_HTTPS"
-        private const val USERNAME_KEY = "USERNAME"
-        private const val PASSWORD_KEY = "PASSWORD"
-        private const val MINUTES_BEFORE_KEY = "MINUTES_BEFORE"
-        private const val MINUTES_AFTER_KEY = "MINUTES_AFTER"
-        private const val SYNC_INTERVAL_HOURS_KEY = "SYNC_INTERVAL_HOURS"
-        private const val SELECTED_BOUQUET_NAME_KEY = "SELECTED_BOUQUET_NAME"
-        private const val PREVIOUS_BOUQUETS_JSON_KEY = "PREVIOUS_BOUQUETS_JSON"
-        private const val SYNCED_CHANNELS_KEY = "SYNCED_CHANNELS"
-
-
         fun scheduleWork(context: Context, intervalHours: Int) {
-            val workManager = WorkManager.getInstance(context)
+            val workManager = WorkManager.getInstance(context.applicationContext)
 
             if (intervalHours > 0) {
                 val constraints = Constraints.Builder()

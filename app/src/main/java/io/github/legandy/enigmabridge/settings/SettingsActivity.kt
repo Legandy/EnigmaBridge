@@ -19,37 +19,40 @@ import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
 import io.github.legandy.enigmabridge.main.MainActivity // Import MainActivity for restart
 import io.github.legandy.enigmabridge.core.AppThemeManager // Import AppThemeManager
-import androidx.core.content.edit
+import io.github.legandy.enigmabridge.core.PreferenceManager
 
 class SettingsActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivitySettingsBinding // Corrected binding type
+    private lateinit var binding: ActivitySettingsBinding
+    private lateinit var prefManager: PreferenceManager
 
     // Data class for accent color items
     data class AccentColorItem(val name: String, @param:ColorRes val colorResId: Int) // Fixed annotation
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        prefManager = PreferenceManager(this)
+
         AppThemeManager.applyThemeAndAccentColor(this) // Apply theme and accent color here
         super.onCreate(savedInstanceState)
+
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val prefs = getSharedPreferences(AppThemeManager.PREFS_NAME, MODE_PRIVATE)
-
         // Load notification settings, defaulting to true (enabled).
-        binding.switchNotifyScheduled.isChecked = prefs.getBoolean("NOTIFY_SCHEDULED_ENABLED", true)
-        binding.switchNotifyRecordingStarted.isChecked = prefs.getBoolean("NOTIFY_RECORDING_STARTED_ENABLED", true)
-        binding.switchNotifySyncSuccess.isChecked = prefs.getBoolean("NOTIFY_SYNC_SUCCESS_ENABLED", true)
+        binding.switchNotifyScheduled.isChecked = prefManager.isNotifyScheduledEnabled()
+        binding.switchNotifyRecordingStarted.isChecked = prefManager.isNotifyRecordingStartedEnabled()
+        binding.switchNotifySyncSuccess.isChecked = prefManager.isNotifySyncSuccessEnabled()
 
         // Theme Picker Dropdown
         val themeOptions = resources.getStringArray(R.array.theme_options_array)
         val themeAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, themeOptions)
         (binding.textInputLayoutThemeMode.editText as? AutoCompleteTextView)?.setAdapter(themeAdapter)
 
-        val savedThemeMode = prefs.getInt(AppThemeManager.KEY_THEME_MODE, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        val savedThemeMode = prefManager.getThemeMode()
         val initialThemeSelection = when (savedThemeMode) {
             AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM -> themeOptions[0]
             AppCompatDelegate.MODE_NIGHT_NO -> themeOptions[1]
@@ -72,9 +75,10 @@ class SettingsActivity : AppCompatActivity() {
                 2 -> AppCompatDelegate.MODE_NIGHT_YES
                 else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
             }
-            if (newThemeMode != savedThemeMode) {
-                prefs.edit(commit = true) { putInt(AppThemeManager.KEY_THEME_MODE, newThemeMode) }
-                restartApp() // Call restartApp
+            // Only restart if the theme actually changed
+            if (newThemeMode != prefManager.getThemeMode()) {
+                prefManager.setThemeMode(newThemeMode)
+                restartApp()
             }
         }
 
@@ -93,7 +97,7 @@ class SettingsActivity : AppCompatActivity() {
         val accentColorAdapter = AccentColorAdapter(this, accentColors)
         (binding.textInputLayoutAccentColor.editText as? AutoCompleteTextView)?.setAdapter(accentColorAdapter)
 
-        val savedAccentColorResId = prefs.getInt(AppThemeManager.KEY_ACCENT_COLOR, R.color.material_blue_500)
+        val savedAccentColorResId = prefManager.getAccentColor()
         val initialAccentColorSelection = accentColors.find { it.colorResId == savedAccentColorResId }?.name ?: accentColors[0].name
         (binding.textInputLayoutAccentColor.editText as? AutoCompleteTextView)?.post {
             val autoCompleteTextView = (binding.textInputLayoutAccentColor.editText as? AutoCompleteTextView)
@@ -107,13 +111,8 @@ class SettingsActivity : AppCompatActivity() {
         (binding.textInputLayoutAccentColor.editText as? AutoCompleteTextView)?.setOnItemClickListener { _, _, position, _ ->
             val selectedAccentColorItem = accentColorAdapter.getItem(position)
             if (selectedAccentColorItem != null) {
-                prefs.edit(commit = true) {
-                    putInt(
-                        AppThemeManager.KEY_ACCENT_COLOR,
-                        selectedAccentColorItem.colorResId
-                    )
-                }
-                restartApp() // Call restartApp
+                prefManager.setAccentColor(selectedAccentColorItem.colorResId)
+                restartApp()
             }
         }
 
@@ -130,15 +129,9 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        val prefs = getSharedPreferences(AppThemeManager.PREFS_NAME, MODE_PRIVATE)
-        prefs.edit().apply {
-            // Save the state of the notification switches.
-            putBoolean("NOTIFY_SCHEDULED_ENABLED", binding.switchNotifyScheduled.isChecked)
-            putBoolean("NOTIFY_RECORDING_STARTED_ENABLED", binding.switchNotifyRecordingStarted.isChecked)
-            putBoolean("NOTIFY_SYNC_SUCCESS_ENABLED", binding.switchNotifySyncSuccess.isChecked)
-
-            apply()
-        }
+        prefManager.setNotifyScheduledEnabled(binding.switchNotifyScheduled.isChecked)
+        prefManager.setNotifyRecordingStartedEnabled(binding.switchNotifyRecordingStarted.isChecked)
+        prefManager.setNotifySyncSuccessEnabled(binding.switchNotifySyncSuccess.isChecked)
     }
 
     override fun onSupportNavigateUp(): Boolean {

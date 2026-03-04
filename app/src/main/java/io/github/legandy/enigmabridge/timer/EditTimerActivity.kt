@@ -10,8 +10,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.core.PreferenceManager
 import io.github.legandy.enigmabridge.databinding.ActivityEditTimerBinding
-import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
 import io.github.legandy.enigmabridge.receiversettings.Timer
 import io.github.legandy.enigmabridge.tvbrowser.RecordService
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +23,8 @@ import java.util.Locale
 
 class EditTimerActivity : AppCompatActivity() {
 
+    private lateinit var prefManager: PreferenceManager
+
     private lateinit var binding: ActivityEditTimerBinding
     private var originalTimer: Timer? = null
 
@@ -33,6 +35,8 @@ class EditTimerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        prefManager = PreferenceManager(this)
+
         binding = ActivityEditTimerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -129,13 +133,13 @@ class EditTimerActivity : AppCompatActivity() {
         val afterEvent = originalTimer!!.afterEvent // This is not editable in the UI, so we keep the original value
         val disabled = if (binding.toggleEnabled.isChecked) 0 else 1
 
-        val prefs = getSharedPreferences("EnigmaSettings", MODE_PRIVATE)
-        val ip = prefs.getString("IP_ADDRESS", "") ?: ""
-        val user = prefs.getString("USERNAME", "root") ?: ""
-        val pass = prefs.getString("PASSWORD", "") ?: ""
+        if (!prefManager.isReceiverConfigured()) {
+            Toast.makeText(this, getString(R.string.error_ip_address_empty), Toast.LENGTH_LONG).show()
+            return
+        }
 
         lifecycleScope.launch(Dispatchers.IO) {
-            val client = EnigmaClient(ip, user, pass, prefs)
+            val client = prefManager.getEnigmaClient()
             val result = client.editTimer(
                 originalTimer = originalTimer!!,
                 newTitle = newTitle,

@@ -2,7 +2,6 @@
 
 package io.github.legandy.enigmabridge.receiversettings
 
-import android.content.SharedPreferences
 import android.os.Parcelable
 import android.util.Log
 import kotlinx.parcelize.Parcelize
@@ -54,7 +53,7 @@ class EnigmaClient(
     private val ipAddress: String,
     private val user: String,
     private val pass: String,
-    private val prefs: SharedPreferences
+    private val useHttps: Boolean,
 ) {
 
     private val client = OkHttpClient()
@@ -76,7 +75,6 @@ class EnigmaClient(
     }
 
     private fun buildUrl(path: String, query: String? = null): String {
-        val useHttps = prefs.getBoolean("USE_HTTPS", false)
         val scheme = if (useHttps) "https" else "http"
         return "$scheme://$ipAddress$path".let { if (query != null) "$it?$query" else it }
     }
@@ -172,7 +170,6 @@ class EnigmaClient(
 
     fun getChannelsInBouquet(bouquetSref: String): Map<String, String>? {
         val cleanedSref = bouquetSref.replace("\\\"", "\"")
-        val useHttps = prefs.getBoolean("USE_HTTPS", false)
         val scheme = if (useHttps) "https" else "http"
         val url = "$scheme://$ipAddress$API_GET_SERVICES?sRef=$cleanedSref"
 

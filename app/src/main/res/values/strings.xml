@@ -120,6 +120,8 @@
     <string name="toast_timers_refreshed">Timer list refreshed.</string>
     <string name="label_use_https">Use HTTPS</string>
     <string name="toast_no_browser_found">No web browser found to open link.</string>
+    <string name="timer_not_found">Timer not found on receiver, unmarking locally.</string>
+
 
     <!-- Notifications -->
     <string name="notification_channel_name">EnigmaBridge Notifications</string>

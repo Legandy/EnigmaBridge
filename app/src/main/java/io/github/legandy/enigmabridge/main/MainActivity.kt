@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
@@ -15,6 +14,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.about.AboutActivity // Added import for AboutActivity
@@ -23,7 +23,6 @@ import io.github.legandy.enigmabridge.timer.TimerListActivity
 import io.github.legandy.enigmabridge.receiversettings.ReceiverSettingsActivity
 import io.github.legandy.enigmabridge.settings.SettingsActivity
 import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,11 +30,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import io.github.legandy.enigmabridge.core.AppThemeManager // Import AppThemeManager
+import io.github.legandy.enigmabridge.core.PreferenceManager
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var prefs: SharedPreferences
+    private lateinit var prefManager: PreferenceManager
 
     companion object {
         const val ACTION_TIMER_SYNC_COMPLETED = "io.github.legandy.enigmabridge.TIMER_SYNC_COMPLETED"
@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        prefs = getSharedPreferences("EnigmaSettings", MODE_PRIVATE)
+        prefManager = PreferenceManager(this)
 
         setupUI()
         requestNotificationPermission()
@@ -124,30 +124,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun testConnection(): Boolean {
-        val receiverIp = prefs.getString("IP_ADDRESS", "") ?: ""
-        val receiverUsername = prefs.getString("USERNAME", "") ?: ""
-        val receiverPassword = prefs.getString("PASSWORD", "") ?: ""
-
-        if (receiverIp.isBlank()) {
+        if (!prefManager.isReceiverConfigured()) {
             Log.d(TAG, "Connection test skipped: IP address missing.")
             return false
         }
-
-        return try {
-            val client = EnigmaClient(receiverIp, receiverUsername, receiverPassword, prefs)
-            // Attempt a simple operation to test connection, e.g., get timer list
-            client.getTimerList()
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "Connection test failed", e)
-            false
-        }
+        // getTimerList() returns null on failure, so we check for != null
+        return prefManager.getEnigmaClient().getTimerList() != null
     }
 
     private fun updateConnectionStatusIndicator(showToast: Boolean) {
         Log.d(TAG, "updateConnectionStatusIndicator() called, showToast: $showToast")
-        CoroutineScope(Dispatchers.IO).launch {
-            val isConnected = testConnection()
+            lifecycleScope.launch { // Changed from CoroutineScope
+                val isConnected = withContext(Dispatchers.IO) { testConnection() }
             withContext(Dispatchers.Main) {
                 if (isConnected) {
                     binding.statusEnigmaIcon.setImageResource(R.drawable.ic_outline_check_circle_24)
@@ -195,7 +183,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updatePeriodicSyncStatusIndicator() {
-        val intervalHours = prefs.getInt("SYNC_INTERVAL_HOURS", 0)
+        val intervalHours = prefManager.getSyncIntervalHours()
         if (intervalHours > 0) {
             binding.statusTimerSyncIcon.setImageResource(R.drawable.ic_outline_check_circle_24)
             binding.statusTimerSyncIcon.setColorFilter(ContextCompat.getColor(this, android.R.color.holo_green_dark))
@@ -228,7 +216,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateLastSyncStatus() {
         Log.d(TAG, "updateLastSyncStatus() called.")
-        val lastSyncTimestamp = prefs.getLong("LAST_TIMER_SYNC_TIMESTAMP", 0)
+        val lastSyncTimestamp = prefManager.getLastSyncTimestamp()
         if (lastSyncTimestamp > 0) {
             val sdf = SimpleDateFormat("dd.MM.yyyy 'at' HH:mm", Locale.getDefault())
             val dateString = sdf.format(Date(lastSyncTimestamp))

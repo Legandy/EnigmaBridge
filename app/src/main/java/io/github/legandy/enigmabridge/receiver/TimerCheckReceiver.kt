@@ -4,15 +4,16 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import io.github.legandy.enigmabridge.core.PreferenceManager
 import io.github.legandy.enigmabridge.receiversettings.ReceiverSettingsActivity
 
 class TimerCheckReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         // Check if the phone just finished booting.
-        if (intent.action == "android.intent.action.BOOT_COMPLETED") {
-            // If the periodic sync was enabled, reschedule it.
-            val prefs = context.getSharedPreferences("EnigmaSettings", Context.MODE_PRIVATE)
-            val intervalHours = prefs.getInt("SYNC_INTERVAL_HOURS", 0)
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == "android.intent.action.QUICKBOOT_POWERON") {
+            val prefManager = PreferenceManager(context)
+            val intervalHours = prefManager.getSyncIntervalHours()
+
             if (intervalHours > 0) {
                 // Call the public, static scheduling function.
                 ReceiverSettingsActivity.scheduleWork(context, intervalHours)

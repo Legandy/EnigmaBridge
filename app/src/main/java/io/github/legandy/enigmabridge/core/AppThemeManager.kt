@@ -1,43 +1,40 @@
 package io.github.legandy.enigmabridge.core
 
 import android.app.Activity
-import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.tvbrowser.AdvancedScheduleActivity // Import AdvancedScheduleActivity
 
 object AppThemeManager {
 
-    const val PREFS_NAME = "EnigmaSettings"
-    const val KEY_THEME_MODE = "theme_mode"
-    const val KEY_ACCENT_COLOR = "accent_color"
-
     fun applyThemeAndAccentColor(activity: Activity) {
-        val prefs = activity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefManager = PreferenceManager(activity)
 
-        // Apply Theme Mode
-        val savedThemeMode = prefs.getInt(KEY_THEME_MODE, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-        AppCompatDelegate.setDefaultNightMode(savedThemeMode)
+        // 1. Apply Night Mode (Dark/Light/System)
+        AppCompatDelegate.setDefaultNightMode(prefManager.getThemeMode())
 
-        // Determine if the activity is AdvancedScheduleActivity
-        val isAdvancedScheduleActivity = activity is AdvancedScheduleActivity
+        // 2. Determine Accent Color Choice
+        val savedAccentColor = prefManager.getAccentColor()
 
-        // Apply Accent Color
-        val savedAccentColorResId = prefs.getInt(KEY_ACCENT_COLOR, R.color.material_blue_500)
-        val baseThemeResId = when (savedAccentColorResId) {
+        // 3. Map Color Resource ID to XML Style
+        val baseThemeResId = when (savedAccentColor) {
             R.color.material_green_500 -> R.style.AppTheme_Green
             R.color.material_orange_500 -> R.style.AppTheme_Orange
             R.color.material_red_500 -> R.style.AppTheme_Red
-            else -> R.style.AppTheme_Blue // Default to blue theme if not found or default blue color
+            // Map all blue variants to the Blue Style
+            R.color.material_blue_200,
+            R.color.material_blue_500,
+            R.color.material_blue_700 -> R.style.AppTheme_Blue
+            else -> R.style.AppTheme_Blue
         }
 
-        // Select the appropriate dialog theme if it's AdvancedScheduleActivity
-        val finalThemeResId = if (isAdvancedScheduleActivity) {
-            when (savedAccentColorResId) {
-                R.color.material_green_500 -> R.style.AppTheme_Green_Dialog
-                R.color.material_orange_500 -> R.style.AppTheme_Orange_Dialog
-                R.color.material_red_500 -> R.style.AppTheme_Red_Dialog
-                else -> R.style.AppTheme_Blue_Dialog // Default to blue dialog theme
+        // 4. Handle Dialogs for specific Activities
+        val finalThemeResId = if (activity is AdvancedScheduleActivity) {
+            when (baseThemeResId) {
+                R.style.AppTheme_Green -> R.style.AppTheme_Green_Dialog
+                R.style.AppTheme_Orange -> R.style.AppTheme_Orange_Dialog
+                R.style.AppTheme_Red -> R.style.AppTheme_Red_Dialog
+                else -> R.style.AppTheme_Blue_Dialog
             }
         } else {
             baseThemeResId

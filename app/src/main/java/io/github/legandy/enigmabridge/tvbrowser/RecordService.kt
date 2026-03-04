@@ -5,12 +5,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.SharedPreferences
 import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
 import io.github.legandy.enigmabridge.helpers.NotificationHelper
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.helpers.SchedulingHelper
@@ -29,12 +27,13 @@ import org.tvbrowser.devplugin.PluginMenu
 import org.tvbrowser.devplugin.Program
 import org.tvbrowser.devplugin.ReceiveTarget
 import kotlin.math.abs
-import androidx.core.content.edit
+import io.github.legandy.enigmabridge.core.PreferenceManager
 
 class RecordService : Service() {
 
+    private lateinit var prefManager: PreferenceManager
+
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private lateinit var prefs: SharedPreferences
 
     private var mPluginManager: PluginManager? = null
     private var cachedTimers: List<Timer> = emptyList()
@@ -46,10 +45,9 @@ class RecordService : Service() {
         private const val MENU_ID_SIMPLE_SCHEDULE = 1
         private const val MENU_ID_ADVANCED_SCHEDULE = 2
         private const val MENU_ID_UNSCHEDULE = 3
-        private const val MENU_ID_MANUAL_UNMARK = 4 // New ID for the manual unmark action
+        private const val MENU_ID_MANUAL_UNMARK = 4
         const val ACTION_TIMER_LIST_CHANGED = "io.github.legandy.enigmabridge.TIMER_LIST_CHANGED"
         const val ACTION_REVERT_MARKING = "io.github.legandy.enigmabridge.ACTION_REVERT_MARKING"
-        private const val PREF_MARKED_IDS = "MARKED_PROGRAM_IDS"
     }
 
     private val json = Json {
@@ -73,9 +71,12 @@ class RecordService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        prefs = getSharedPreferences("EnigmaSettings", MODE_PRIVATE)
+        prefManager = PreferenceManager(this)
         NotificationHelper.createNotificationChannel(this)
-        loadMarkedProgramIds()
+
+        markedProgramIds.clear()
+        markedProgramIds.addAll(prefManager.getMarkedProgramIds())
+
         updateTimerCache()
         LocalBroadcastManager.getInstance(this).registerReceiver(revertMarkReceiver, IntentFilter(ACTION_REVERT_MARKING))
     }
@@ -123,23 +124,21 @@ class RecordService : Service() {
                 when (pluginMenu.id) {
                     MENU_ID_SIMPLE_SCHEDULE, MENU_ID_ADVANCED_SCHEDULE -> {
                         markedProgramIds.add(program.id.toString())
-                        saveMarkedProgramIds()
+                        prefManager.setMarkedProgramIds(markedProgramIds)
                         scheduleRecording(program, isAdvanced = (pluginMenu.id == MENU_ID_ADVANCED_SCHEDULE))
-                        // Return true because the program is now marked.
                         return true
+
                     }
                     MENU_ID_UNSCHEDULE -> {
                         unscheduleRecording(program)
-                        // ** THE FIX: Return false because the program is now unmarked. **
                         return false
                     }
                     MENU_ID_MANUAL_UNMARK -> {
                         revertMarking(program)
-                        showToast("Manually unmarked program.")
-                        // ** THE FIX: Return false because the program is now unmarked. **
                         return false
                     }
                 }
+
             }
             return false
         }
@@ -149,7 +148,16 @@ class RecordService : Service() {
     }
 
     private fun scheduleRecording(program: Program, isAdvanced: Boolean) {
-        val syncedChannels = getSyncedChannels()
+        val channelsJson = prefManager.getSyncedChannelsJson()
+        val syncedChannels: Map<String, String>? = channelsJson?.let {
+            try {
+                json.decodeFromString<Map<String, String>>(it)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to decode channels", e)
+                null
+            }
+        }
+
         if (syncedChannels == null) {
             showToast(getString(R.string.error_channel_list_not_synced))
             revertMarking(program)
@@ -175,6 +183,7 @@ class RecordService : Service() {
             serviceScope.launch {
                 val result = SchedulingHelper.scheduleTimer(
                     context = applicationContext,
+                    prefManager = prefManager,
                     title = program.title,
                     sRef = sRef,
                     startTimeMillis = program.startTimeInUTC,
@@ -185,7 +194,7 @@ class RecordService : Service() {
                     afterEvent = 0
                 )
                 if (result.first) {
-                    if (prefs.getBoolean("NOTIFY_SCHEDULED_ENABLED", true)) {
+                    if (prefManager.isNotifyScheduledEnabled()) { // Use manager toggle
                         NotificationHelper.sendSuccessNotification(applicationContext, program)
                     }
                     sendRefreshBroadcast()
@@ -201,13 +210,13 @@ class RecordService : Service() {
     private fun unscheduleRecording(program: Program) {
         val timerToZap = findTimerForProgram(program)
         if (timerToZap == null) {
-            showToast("Timer not found on receiver, unmarking locally.")
+            showToast(getString(R.string.timer_not_found))
             revertMarking(program)
             return
         }
 
         serviceScope.launch {
-            val client = getEnigmaClient() ?: return@launch
+            val client = prefManager.getEnigmaClient()
             val result = client.deleteTimer(timerToZap)
 
             showToast(result.second)
@@ -223,20 +232,11 @@ class RecordService : Service() {
 
     private fun revertMarking(program: Program) {
         markedProgramIds.remove(program.id.toString())
-        saveMarkedProgramIds()
+        prefManager.setMarkedProgramIds(markedProgramIds)
         mPluginManager?.unmarkProgram(program)
     }
 
-    private fun loadMarkedProgramIds() {
-        val idString = prefs.getString(PREF_MARKED_IDS, null)
-        if (!idString.isNullOrEmpty()) { markedProgramIds.clear(); markedProgramIds.addAll(idString.split(',')) }
-    }
-    private fun saveMarkedProgramIds() { prefs.edit {
-        putString(
-            PREF_MARKED_IDS,
-            markedProgramIds.joinToString(",")
-        )
-    } }
+
 
     private fun findTimerForProgram(program: Program): Timer? {
         return cachedTimers.find { timer ->
@@ -249,34 +249,9 @@ class RecordService : Service() {
 
     private fun updateTimerCache() {
         serviceScope.launch(Dispatchers.IO) {
-            val client = getEnigmaClient() ?: return@launch
+            val client = prefManager.getEnigmaClient()
             val timers = client.getTimerList()
             if (timers != null) { cachedTimers = timers; Log.d(TAG, "Timer cache updated with ${cachedTimers.size} timers.") }
-        }
-    }
-    private fun getEnigmaClient(): EnigmaClient? {
-        val ip = prefs.getString("IP_ADDRESS", "") ?: ""
-        return if (ip.isNotEmpty()) {
-            EnigmaClient(
-                ip,
-                prefs.getString("USERNAME", "root") ?: "",
-                prefs.getString("PASSWORD", "") ?: "",
-                prefs
-            )
-        } else { null }
-    }
-
-    private fun getSyncedChannels(): Map<String, String>? {
-        val jsonString = prefs.getString("SYNCED_CHANNELS", null)
-        return if (jsonString != null) {
-            try {
-                json.decodeFromString<Map<String, String>>(jsonString)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to parse synced channels JSON.", e)
-                null
-            }
-        } else {
-            null
         }
     }
 
