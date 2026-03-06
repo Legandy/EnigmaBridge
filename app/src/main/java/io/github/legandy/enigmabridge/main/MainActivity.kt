@@ -9,7 +9,6 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -17,36 +16,32 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.legandy.enigmabridge.R
-import io.github.legandy.enigmabridge.about.AboutActivity // Added import for AboutActivity
+import io.github.legandy.enigmabridge.about.AboutActivity
 import io.github.legandy.enigmabridge.databinding.ActivityMainBinding
 import io.github.legandy.enigmabridge.timer.TimerListActivity
 import io.github.legandy.enigmabridge.receiversettings.ReceiverSettingsActivity
 import io.github.legandy.enigmabridge.settings.SettingsActivity
-import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
-import io.github.legandy.enigmabridge.core.AppThemeManager // Import AppThemeManager
+import io.github.legandy.enigmabridge.core.AppThemeManager
+import io.github.legandy.enigmabridge.core.EnigmaBridgeApplication
 import io.github.legandy.enigmabridge.core.PreferenceManager
+import io.github.legandy.enigmabridge.data.TimerRepository
+import io.github.legandy.enigmabridge.data.TimerResult
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var prefManager: PreferenceManager
+    private lateinit var timerRepository: TimerRepository
 
     companion object {
         const val ACTION_TIMER_SYNC_COMPLETED = "io.github.legandy.enigmabridge.TIMER_SYNC_COMPLETED"
-        private const val TAG = "MainActivity"
     }
 
     private val timerSyncCompletedReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            Log.d(TAG, "--- BroadcastReceiver onReceive() TRIGGERED ---")
             if (intent?.action == ACTION_TIMER_SYNC_COMPLETED) {
-                Log.d(TAG, "Broadcast action matches. Calling UI update.")
                 updateLastSyncStatus()
             }
         }
@@ -63,12 +58,16 @@ class MainActivity : AppCompatActivity() {
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        AppThemeManager.applyThemeAndAccentColor(this) // Apply theme and accent color here
+        AppThemeManager.applyThemeAndAccentColor(this)
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        prefManager = PreferenceManager(this)
+
+        // Initialize from Application Singleton
+        val app = application as EnigmaBridgeApplication
+        prefManager = app.prefManager
+        timerRepository = app.timerRepository
 
         setupUI()
         requestNotificationPermission()
@@ -77,9 +76,8 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         runChecks()
-        updateConnectionStatusIndicator(false) // Check connection on resume, no toast
+        updateConnectionStatusIndicator(false)
         updateLastSyncStatus()
-        Log.d(TAG, "Registering timerSyncCompletedReceiver in onResume.")
         LocalBroadcastManager.getInstance(this).registerReceiver(timerSyncCompletedReceiver,
             IntentFilter(ACTION_TIMER_SYNC_COMPLETED)
         )
@@ -87,7 +85,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        Log.d(TAG, "Unregistering timerSyncCompletedReceiver in onPause.")
         LocalBroadcastManager.getInstance(this).unregisterReceiver(timerSyncCompletedReceiver)
     }
 
@@ -112,42 +109,36 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, ReceiverSettingsActivity::class.java))
         }
 
-        // --- Test Connection Button ---
         binding.buttonTestConnection.setOnClickListener {
-            updateConnectionStatusIndicator(true) // Check connection and show toast
+            updateConnectionStatusIndicator(true)
         }
 
-        // --- Info Icon Listener ---
         binding.infoIcon.setOnClickListener {
             startActivity(Intent(this, AboutActivity::class.java))
         }
     }
 
-    private fun testConnection(): Boolean {
-        if (!prefManager.isReceiverConfigured()) {
-            Log.d(TAG, "Connection test skipped: IP address missing.")
-            return false
-        }
-        // getTimerList() returns null on failure, so we check for != null
-        return prefManager.getEnigmaClient().getTimerList() != null
+    private suspend fun testConnection(): Boolean {
+        if (!prefManager.isReceiverConfigured()) return false
+        // Use repository instead of direct client call
+        val result = timerRepository.getTimers()
+        return result is TimerResult.Success
     }
 
     private fun updateConnectionStatusIndicator(showToast: Boolean) {
-        Log.d(TAG, "updateConnectionStatusIndicator() called, showToast: $showToast")
-            lifecycleScope.launch { // Changed from CoroutineScope
-                val isConnected = withContext(Dispatchers.IO) { testConnection() }
-            withContext(Dispatchers.Main) {
-                if (isConnected) {
-                    binding.statusEnigmaIcon.setImageResource(R.drawable.ic_outline_check_circle_24)
-                    binding.statusEnigmaIcon.setColorFilter(ContextCompat.getColor(this@MainActivity, android.R.color.holo_green_dark))
-                    binding.statusEnigmaText.text = getString(R.string.status_enigma_connected)
-                    if (showToast) Toast.makeText(this@MainActivity, getString(R.string.toast_connection_test_successful), Toast.LENGTH_SHORT).show()
-                } else {
-                    binding.statusEnigmaIcon.setImageResource(R.drawable.ic_outline_error_24)
-                    binding.statusEnigmaIcon.setColorFilter(Color.RED)
-                    binding.statusEnigmaText.text = getString(R.string.status_enigma_disconnected)
-                    if (showToast) Toast.makeText(this@MainActivity, getString(R.string.toast_connection_test_failed), Toast.LENGTH_LONG).show()
-                }
+        lifecycleScope.launch {
+            val isConnected = testConnection() // testConnection already handles Dispatchers.IO inside repository
+            
+            if (isConnected) {
+                binding.statusEnigmaIcon.setImageResource(R.drawable.ic_outline_check_circle_24)
+                binding.statusEnigmaIcon.setColorFilter(ContextCompat.getColor(this@MainActivity, android.R.color.holo_green_dark))
+                binding.statusEnigmaText.text = getString(R.string.status_enigma_connected)
+                if (showToast) Toast.makeText(this@MainActivity, getString(R.string.toast_connection_test_successful), Toast.LENGTH_SHORT).show()
+            } else {
+                binding.statusEnigmaIcon.setImageResource(R.drawable.ic_outline_error_24)
+                binding.statusEnigmaIcon.setColorFilter(Color.RED)
+                binding.statusEnigmaText.text = getString(R.string.status_enigma_disconnected)
+                if (showToast) Toast.makeText(this@MainActivity, getString(R.string.toast_connection_test_failed), Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -214,19 +205,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // In MainActivity.kt -> updateLastSyncStatus()
+    // In MainActivity.kt -> updateLastSyncStatus()
     private fun updateLastSyncStatus() {
-        Log.d(TAG, "updateLastSyncStatus() called.")
         val lastSyncTimestamp = prefManager.getLastSyncTimestamp()
         if (lastSyncTimestamp > 0) {
-            val sdf = SimpleDateFormat("dd.MM.yyyy 'at' HH:mm", Locale.getDefault())
-            val dateString = sdf.format(Date(lastSyncTimestamp))
-            runOnUiThread {
-                binding.statusLastSyncText.text = getString(R.string.status_last_sync_value, dateString)
-            }
-        } else {
-            runOnUiThread {
-                binding.statusLastSyncText.text = getString(R.string.status_last_sync_never)
-            }
+            val date = Date(lastSyncTimestamp)
+
+            // The "Pro" Way: Fetches the user's preferred date/time format from Android Settings
+            val dateFormat = android.text.format.DateFormat.getDateFormat(this)
+            val timeFormat = android.text.format.DateFormat.getTimeFormat(this)
+
+            val formattedDate = dateFormat.format(date)
+            val formattedTime = timeFormat.format(date)
+
+            val dateString = "$formattedDate $formattedTime"
+            binding.statusLastSyncText.text = getString(R.string.status_last_sync_value, dateString)
         }
     }
 }

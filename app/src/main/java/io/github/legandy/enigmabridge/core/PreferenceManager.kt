@@ -9,6 +9,10 @@ class PreferenceManager (context: Context) {
 
     fun isReceiverConfigured(): Boolean = getIpAddress().isNotBlank()
 
+    /**
+     * Internal helper to create an [EnigmaClient] instance.
+     * Note: This is now intended for use primarily within the data layer (e.g., TimerRepository).
+     */
     fun getEnigmaClient(): EnigmaClient {
         return EnigmaClient(
             getIpAddress(),
@@ -17,6 +21,7 @@ class PreferenceManager (context: Context) {
             getUseHttps()
         )
     }
+
     fun getIpAddress(): String = prefs.getString(KEY_IP_ADDRESS, "") ?: ""
     fun setIpAddress(ip: String) = prefs.edit { putString(KEY_IP_ADDRESS, ip) }
 

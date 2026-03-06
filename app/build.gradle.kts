@@ -2,7 +2,6 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("kotlin-parcelize")
-    // 1. Add the Kotlin serialization plugin
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.23"
 }
 
@@ -37,8 +36,7 @@ android {
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
-    // 2. Remove Gson
-    // implementation("com.google.code.gson:gson:2.10.1")
+    implementation("androidx.activity:activity-ktx:1.8.2")
 
     // 3. Add Kotlinx Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")

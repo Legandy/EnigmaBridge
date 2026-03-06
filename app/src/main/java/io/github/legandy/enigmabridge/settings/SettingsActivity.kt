@@ -166,11 +166,10 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun restartApp() {
-        AppThemeManager.applyThemeAndAccentColor(this) // Apply theme and accent color immediately
+        AppThemeManager.applyThemeAndAccentColor(this)
         val intent = Intent(this, MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
-        finishAffinity() // Close all activities in this task
-        android.os.Process.killProcess(android.os.Process.myPid()) // Terminate the app process
+        finish()
     }
 }

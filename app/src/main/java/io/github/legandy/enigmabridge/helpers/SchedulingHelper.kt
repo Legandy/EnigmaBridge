@@ -4,13 +4,16 @@ import android.content.Context
 import android.util.Log
 import io.github.legandy.enigmabridge.core.PreferenceManager
 import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.data.TimerRepository
+import io.github.legandy.enigmabridge.data.TimerResult
 
 object SchedulingHelper {
     private const val TAG = "SchedulingHelper"
 
-    fun scheduleTimer(
+    suspend fun scheduleTimer(
         context: Context,
         prefManager: PreferenceManager,
+        repository: TimerRepository,
         title: String,
         sRef: String,
         startTimeMillis: Long,
@@ -19,18 +22,16 @@ object SchedulingHelper {
         justPlay: Int,
         repeated: Int,
         afterEvent: Int
-    ): Pair<Boolean, String> {
-        // Use context.getString() for the return message
+    ): TimerResult<Pair<Boolean, String>> {
         if (!prefManager.isReceiverConfigured()) {
-            return Pair(false, context.getString(R.string.error_ip_address_empty))
+            return TimerResult.Error(context.getString(R.string.error_ip_address_empty))
         }
 
-        // Pass prefManager to the buffer logic
         val (finalStart, finalEnd) = applyBuffer(prefManager, startTimeMillis, endTimeMillis)
 
-        Log.d(TAG, "Scheduling timer... Buffered: $finalStart -> $finalEnd")
+        Log.d(TAG, "Scheduling timer via Repository... Buffered: $finalStart -> $finalEnd")
 
-        return prefManager.getEnigmaClient().addTimer(
+        return repository.addTimer(
             title, sRef, finalStart, finalEnd, description, justPlay, repeated, afterEvent
         )
     }

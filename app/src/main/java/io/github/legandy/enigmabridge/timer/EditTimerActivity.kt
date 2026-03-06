@@ -2,21 +2,19 @@ package io.github.legandy.enigmabridge.timer
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
-import android.content.Intent
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.core.EnigmaBridgeApplication
 import io.github.legandy.enigmabridge.core.PreferenceManager
+import io.github.legandy.enigmabridge.data.TimerRepository
+import io.github.legandy.enigmabridge.data.TimerResult
 import io.github.legandy.enigmabridge.databinding.ActivityEditTimerBinding
 import io.github.legandy.enigmabridge.receiversettings.Timer
-import io.github.legandy.enigmabridge.tvbrowser.RecordService
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -24,6 +22,7 @@ import java.util.Locale
 class EditTimerActivity : AppCompatActivity() {
 
     private lateinit var prefManager: PreferenceManager
+    private lateinit var repository: TimerRepository
 
     private lateinit var binding: ActivityEditTimerBinding
     private var originalTimer: Timer? = null
@@ -35,7 +34,10 @@ class EditTimerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        prefManager = PreferenceManager(this)
+        
+        val app = application as EnigmaBridgeApplication
+        prefManager = app.prefManager
+        repository = app.timerRepository
 
         binding = ActivityEditTimerBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -69,7 +71,7 @@ class EditTimerActivity : AppCompatActivity() {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.spinnerService.adapter = adapter
         binding.spinnerService.setSelection(0)
-        binding.spinnerService.isEnabled = false // User cannot change the service
+        binding.spinnerService.isEnabled = false
 
         binding.toggleEnabled.isChecked = originalTimer!!.disabled == 0
 
@@ -91,7 +93,7 @@ class EditTimerActivity : AppCompatActivity() {
         if (repeats > 0) {
             dayButtonMap.forEach { (dayValue, button) ->
                 if ((repeats and dayValue) != 0) {
-                    button.isChecked = true // Correctly set the checked state for MaterialButton
+                    button.isChecked = true
                 }
             }
         }
@@ -105,7 +107,6 @@ class EditTimerActivity : AppCompatActivity() {
         binding.buttonSave.setOnClickListener { saveTimer() }
     }
 
-    // **DEFINITIVE FIX: Correctly call the updated EnigmaClient function**
     private fun saveTimer() {
         val newTitle = binding.editProgramTitle.text.toString()
         val newDescription = binding.editDescription.text.toString()
@@ -122,7 +123,6 @@ class EditTimerActivity : AppCompatActivity() {
             binding.toggleSunday.id to 64
         )
         var repeated = 0
-        // Iterate through children of FlexboxLayout to find checked MaterialButtons
         for (i in 0 until binding.repeatsOnGroup.childCount) {
             val button = binding.repeatsOnGroup.getChildAt(i) as? com.google.android.material.button.MaterialButton
             if (button?.isChecked == true) {
@@ -130,7 +130,7 @@ class EditTimerActivity : AppCompatActivity() {
             }
         }
 
-        val afterEvent = originalTimer!!.afterEvent // This is not editable in the UI, so we keep the original value
+        val afterEvent = originalTimer!!.afterEvent
         val disabled = if (binding.toggleEnabled.isChecked) 0 else 1
 
         if (!prefManager.isReceiverConfigured()) {
@@ -138,9 +138,8 @@ class EditTimerActivity : AppCompatActivity() {
             return
         }
 
-        lifecycleScope.launch(Dispatchers.IO) {
-            val client = prefManager.getEnigmaClient()
-            val result = client.editTimer(
+        lifecycleScope.launch {
+            val result = repository.editTimer(
                 originalTimer = originalTimer!!,
                 newTitle = newTitle,
                 newDescription = newDescription,
@@ -152,14 +151,13 @@ class EditTimerActivity : AppCompatActivity() {
                 disabled = disabled
             )
 
-            withContext(Dispatchers.Main) {
-                if (result.first) {
-                    Toast.makeText(applicationContext, getString(R.string.toast_timer_saved), Toast.LENGTH_SHORT).show()
-                    val intent = Intent(RecordService.ACTION_TIMER_LIST_CHANGED)
-                    LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
-                    finish()
-                } else {
-                    Toast.makeText(applicationContext, result.second, Toast.LENGTH_LONG).show()
+            when (result) {
+                is TimerResult.Success -> {
+                    Toast.makeText(this@EditTimerActivity, getString(R.string.toast_timer_saved), Toast.LENGTH_SHORT).show()
+                    finish() // TimerListActivity will refresh automatically via Flow
+                }
+                is TimerResult.Error -> {
+                    Toast.makeText(this@EditTimerActivity, result.message, Toast.LENGTH_LONG).show()
                 }
             }
         }

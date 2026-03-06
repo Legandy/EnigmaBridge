@@ -11,13 +11,14 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.core.AppThemeManager
+import io.github.legandy.enigmabridge.core.EnigmaBridgeApplication
 import io.github.legandy.enigmabridge.core.PreferenceManager
+import io.github.legandy.enigmabridge.data.TimerRepository
+import io.github.legandy.enigmabridge.data.TimerResult
 import io.github.legandy.enigmabridge.databinding.ActivityAdvancedScheduleBinding
 import io.github.legandy.enigmabridge.helpers.NotificationHelper
 import io.github.legandy.enigmabridge.helpers.SchedulingHelper
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.tvbrowser.devplugin.Program
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -28,6 +29,7 @@ class AdvancedScheduleActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAdvancedScheduleBinding
 
     private lateinit var prefManager: PreferenceManager
+    private lateinit var repository: TimerRepository
     private var program: Program? = null
     private var sRef: String? = null
 
@@ -36,8 +38,11 @@ class AdvancedScheduleActivity : AppCompatActivity() {
     private val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        prefManager = PreferenceManager(this)
-        AppThemeManager.applyThemeAndAccentColor(this) // Added this line
+        val app = application as EnigmaBridgeApplication
+        prefManager = app.prefManager
+        repository = app.timerRepository
+        
+        AppThemeManager.applyThemeAndAccentColor(this)
         super.onCreate(savedInstanceState)
         binding = ActivityAdvancedScheduleBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -57,7 +62,6 @@ class AdvancedScheduleActivity : AppCompatActivity() {
 
         setupUI()
 
-        // Handle back button press using OnBackPressedCallback
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 revertMarkAndFinish()
@@ -81,7 +85,6 @@ class AdvancedScheduleActivity : AppCompatActivity() {
         )
         afterEventAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.spinnerAfterEvent.adapter = afterEventAdapter
-
 
         binding.textStartTime.setOnClickListener { showTimePickerDialog(isStart = true) }
         binding.textEndTime.setOnClickListener { showTimePickerDialog(isStart = false) }
@@ -117,10 +120,11 @@ class AdvancedScheduleActivity : AppCompatActivity() {
 
         Toast.makeText(this, getString(R.string.scheduling_toast, editedTitle), Toast.LENGTH_SHORT).show()
 
-        lifecycleScope.launch(Dispatchers.IO) {
+        lifecycleScope.launch {
             val result = SchedulingHelper.scheduleTimer(
                 context = this@AdvancedScheduleActivity,
                 prefManager = prefManager,
+                repository = repository,
                 title = editedTitle,
                 sRef = sRef!!,
                 startTimeMillis = startCalendar.timeInMillis,
@@ -131,16 +135,16 @@ class AdvancedScheduleActivity : AppCompatActivity() {
                 afterEvent = afterEvent
             )
 
-            withContext(Dispatchers.Main) {
-                Toast.makeText(applicationContext, result.second, Toast.LENGTH_LONG).show()
-
-                if (result.first) {
-                    // CLEAN REFACTOR: Use prefManager toggle
+            when (result) {
+                is TimerResult.Success -> {
+                    Toast.makeText(applicationContext, result.data.second, Toast.LENGTH_LONG).show()
                     if (prefManager.isNotifyScheduledEnabled()) {
                         NotificationHelper.sendSuccessNotification(applicationContext, program!!)
                     }
                     finish()
-                } else {
+                }
+                is TimerResult.Error -> {
+                    Toast.makeText(applicationContext, result.message, Toast.LENGTH_LONG).show()
                     revertMarkAndFinish()
                 }
             }

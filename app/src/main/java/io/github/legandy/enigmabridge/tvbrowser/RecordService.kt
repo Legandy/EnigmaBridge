@@ -9,11 +9,15 @@ import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import io.github.legandy.enigmabridge.helpers.NotificationHelper
 import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.core.EnigmaBridgeApplication
+import io.github.legandy.enigmabridge.core.PreferenceManager
+import io.github.legandy.enigmabridge.data.TimerRepository
+import io.github.legandy.enigmabridge.data.TimerResult
+import io.github.legandy.enigmabridge.helpers.NotificationHelper
 import io.github.legandy.enigmabridge.helpers.SchedulingHelper
-import io.github.legandy.enigmabridge.receiversettings.Timer
 import io.github.legandy.enigmabridge.main.MainActivity
+import io.github.legandy.enigmabridge.receiversettings.Timer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,11 +31,11 @@ import org.tvbrowser.devplugin.PluginMenu
 import org.tvbrowser.devplugin.Program
 import org.tvbrowser.devplugin.ReceiveTarget
 import kotlin.math.abs
-import io.github.legandy.enigmabridge.core.PreferenceManager
 
 class RecordService : Service() {
 
     private lateinit var prefManager: PreferenceManager
+    private lateinit var repository: TimerRepository
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -46,6 +50,7 @@ class RecordService : Service() {
         private const val MENU_ID_ADVANCED_SCHEDULE = 2
         private const val MENU_ID_UNSCHEDULE = 3
         private const val MENU_ID_MANUAL_UNMARK = 4
+        private const val TIMER_MATCH_THRESHOLD_MS = 5 * 60 * 1000L // 5 minutes buffer
         const val ACTION_TIMER_LIST_CHANGED = "io.github.legandy.enigmabridge.TIMER_LIST_CHANGED"
         const val ACTION_REVERT_MARKING = "io.github.legandy.enigmabridge.ACTION_REVERT_MARKING"
     }
@@ -71,7 +76,10 @@ class RecordService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        prefManager = PreferenceManager(this)
+        val app = application as EnigmaBridgeApplication
+        prefManager = app.prefManager
+        repository = app.timerRepository
+        
         NotificationHelper.createNotificationChannel(this)
 
         markedProgramIds.clear()
@@ -108,7 +116,6 @@ class RecordService : Service() {
 
         override fun getContextMenuActionsForProgram(program: Program?): Array<PluginMenu> {
             if (program != null) {
-                // Always show all available options for full manual control.
                 return arrayOf(
                     PluginMenu(MENU_ID_SIMPLE_SCHEDULE, getString(R.string.context_menu_schedule_simple)),
                     PluginMenu(MENU_ID_ADVANCED_SCHEDULE, getString(R.string.context_menu_schedule_advanced)),
@@ -184,6 +191,7 @@ class RecordService : Service() {
                 val result = SchedulingHelper.scheduleTimer(
                     context = applicationContext,
                     prefManager = prefManager,
+                    repository = repository,
                     title = program.title,
                     sRef = sRef,
                     startTimeMillis = program.startTimeInUTC,
@@ -193,16 +201,21 @@ class RecordService : Service() {
                     repeated = 0,
                     afterEvent = 0
                 )
-                if (result.first) {
-                    if (prefManager.isNotifyScheduledEnabled()) { // Use manager toggle
-                        NotificationHelper.sendSuccessNotification(applicationContext, program)
+                
+                when (result) {
+                    is TimerResult.Success -> {
+                        if (prefManager.isNotifyScheduledEnabled()) {
+                            NotificationHelper.sendSuccessNotification(applicationContext, program)
+                        }
+                        sendRefreshBroadcast()
+                        updateTimerCache()
+                        showToast(result.data.second)
                     }
-                    sendRefreshBroadcast()
-                    updateTimerCache()
-                } else {
-                    revertMarking(program)
+                    is TimerResult.Error -> {
+                        revertMarking(program)
+                        showToast(result.message)
+                    }
                 }
-                showToast(result.second)
             }
         }
     }
@@ -216,16 +229,17 @@ class RecordService : Service() {
         }
 
         serviceScope.launch {
-            val client = prefManager.getEnigmaClient()
-            val result = client.deleteTimer(timerToZap)
-
-            showToast(result.second)
-
-            revertMarking(program)
-
-            if (result.first) {
-                updateTimerCache()
-                sendRefreshBroadcast()
+            when (val result = repository.deleteTimer(timerToZap)) {
+                is TimerResult.Success -> {
+                    showToast(result.data.second)
+                    revertMarking(program)
+                    updateTimerCache()
+                    sendRefreshBroadcast()
+                }
+                is TimerResult.Error -> {
+                    showToast(result.message)
+                    revertMarking(program)
+                }
             }
         }
     }
@@ -236,22 +250,22 @@ class RecordService : Service() {
         mPluginManager?.unmarkProgram(program)
     }
 
-
-
     private fun findTimerForProgram(program: Program): Timer? {
         return cachedTimers.find { timer ->
             val titleMatch = timer.name.equals(program.title, ignoreCase = true)
             val timeDifference = abs(program.startTimeInUTC - (timer.beginTimestamp * 1000))
-            val timeMatch = timeDifference < (5 * 60 * 1000) // 5-minute tolerance
+            val timeMatch = timeDifference < TIMER_MATCH_THRESHOLD_MS
             titleMatch && timeMatch
         }
     }
 
     private fun updateTimerCache() {
-        serviceScope.launch(Dispatchers.IO) {
-            val client = prefManager.getEnigmaClient()
-            val timers = client.getTimerList()
-            if (timers != null) { cachedTimers = timers; Log.d(TAG, "Timer cache updated with ${cachedTimers.size} timers.") }
+        serviceScope.launch {
+            val result = repository.getTimers()
+            if (result is TimerResult.Success) {
+                cachedTimers = result.data
+                Log.d(TAG, "Timer cache updated with ${cachedTimers.size} timers.")
+            }
         }
     }
 
@@ -272,4 +286,3 @@ class RecordService : Service() {
 
     override fun onBind(intent: Intent): IBinder = binder
 }
-
