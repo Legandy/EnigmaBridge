@@ -34,7 +34,6 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
 
     companion object {
         const val EXTRA_TIMER = "TIMER_EXTRA"
-        private const val TAG = "TimerListActivity"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
