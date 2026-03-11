@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
  * Manages the scheduling and cancellation of notifications related to Enigma2 timers
  * using WorkManager.
  */
-class TimerNotificationManager(private val context: Context, private val prefManager: PreferenceManager) {
+class TimerNotificationManager(context: Context, private val prefManager: PreferenceManager) {
 
     private val workManager = WorkManager.getInstance(context)
 
