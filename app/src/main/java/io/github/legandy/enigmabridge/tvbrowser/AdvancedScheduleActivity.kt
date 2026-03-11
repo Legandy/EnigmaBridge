@@ -1,15 +1,16 @@
 package io.github.legandy.enigmabridge.tvbrowser
 
 import android.app.TimePickerDialog
-import android.content.Intent
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.IntentCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.core.AppEvent
+import io.github.legandy.enigmabridge.core.AppEventBus
 import io.github.legandy.enigmabridge.core.AppThemeManager
 import io.github.legandy.enigmabridge.core.EnigmaBridgeApplication
 import io.github.legandy.enigmabridge.core.PreferenceManager
@@ -47,8 +48,8 @@ class AdvancedScheduleActivity : AppCompatActivity() {
         binding = ActivityAdvancedScheduleBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        @Suppress("DEPRECATION")
-        program = intent.getParcelableExtra("PROGRAM_EXTRA")
+        // Modern, type-safe way to get Parcelable extras
+        program = IntentCompat.getParcelableExtra(intent, "PROGRAM_EXTRA", Program::class.java)
         sRef = intent.getStringExtra("SREF_EXTRA")
 
         if (program == null || sRef == null) {
@@ -153,10 +154,7 @@ class AdvancedScheduleActivity : AppCompatActivity() {
 
     private fun revertMarkAndFinish() {
         program?.let {
-            val intent = Intent(RecordService.ACTION_REVERT_MARKING)
-            intent.putExtra("PROGRAM_EXTRA", it)
-            LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
-        }
+            AppEventBus.emit(AppEvent.RevertMarking(it))    }
         finish()
     }
 }

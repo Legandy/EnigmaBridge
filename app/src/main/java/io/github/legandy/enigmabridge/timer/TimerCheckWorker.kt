@@ -1,17 +1,18 @@
 package io.github.legandy.enigmabridge.timer
 
-import android.app.AlarmManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.util.Log
 import androidx.work.CoroutineWorker
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import io.github.legandy.enigmabridge.core.EnigmaBridgeApplication
 import io.github.legandy.enigmabridge.core.PreferenceManager
 import io.github.legandy.enigmabridge.data.TimerResult
 import io.github.legandy.enigmabridge.helpers.NotificationHelper
-import io.github.legandy.enigmabridge.notifications.RecordingNotificationReceiver
+import io.github.legandy.enigmabridge.notifications.RecordingNotificationWorker
 import io.github.legandy.enigmabridge.receiversettings.Timer
 import java.util.concurrent.TimeUnit
 
@@ -70,30 +71,24 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
         previousTimers: List<Timer>,
         prefManager: PreferenceManager
     ) {
+        val workManager = WorkManager.getInstance(applicationContext)
+
         if (!prefManager.isNotifyRecordingStartedEnabled()) {
             cancelAllScheduledRecordingNotifications(prefManager)
             return
         }
 
-        val alarmManager = applicationContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val scheduledNotificationIds = prefManager.getScheduledNotificationIds().toMutableSet()
-        val newScheduledNotificationIds = mutableSetOf<String>()
+        val scheduledNotificationKeys = prefManager.getScheduledNotificationIds().toMutableSet()
+        val newScheduledNotificationKeys = mutableSetOf<String>()
 
         val currentTimerKeys = currentTimers.map { "${it.sRef}_${it.beginTimestamp}" }.toSet()
         val previousTimerKeys = previousTimers.map { "${it.sRef}_${it.beginTimestamp}" }.toSet()
 
+        // Cancel notifications for timers that were removed
         val removedTimerKeys = previousTimerKeys - currentTimerKeys
         for (key in removedTimerKeys) {
-            val parts = key.split("_")
-            if (parts.size == 2) {
-                val sRef = parts[0]
-                val beginTimestamp = parts[1].toLongOrNull()
-                if (beginTimestamp != null) {
-                    val notificationId = createNotificationId(sRef, beginTimestamp)
-                    cancelScheduledRecordingNotification(alarmManager, applicationContext, notificationId)
-                    scheduledNotificationIds.remove(key)
-                }
-            }
+            workManager.cancelUniqueWork(key)
+            scheduledNotificationKeys.remove(key)
         }
 
         for (timer in currentTimers) {
@@ -101,58 +96,36 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
             val timerStartTimeMillis = TimeUnit.SECONDS.toMillis(timer.beginTimestamp)
             val notificationKey = "${timer.sRef}_${timer.beginTimestamp}"
 
-            if (timerStartTimeMillis > now && !scheduledNotificationIds.contains(notificationKey)) {
-                val notificationId = createNotificationId(timer.sRef ?: "UNKNOWN_SREF", timer.beginTimestamp)
-                val intent = Intent(applicationContext, RecordingNotificationReceiver::class.java).apply {
-                    putExtra("title", timer.name)
-                    putExtra("channel", timer.sName)
-                    action = "io.github.legandy.enigmabridge.RECORDING_STARTED_${notificationId}"
-                }
+            if (timerStartTimeMillis > now) {
+                // Schedule or update the notification work
+                val delay = timerStartTimeMillis - now
+                val notificationWork = OneTimeWorkRequestBuilder<RecordingNotificationWorker>()
+                    .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                    .setInputData(workDataOf(
+                        "title" to timer.name,
+                        "channel" to timer.sName
+                    ))
+                    .addTag(notificationKey)
+                    .build()
 
-                val pendingIntent = PendingIntent.getBroadcast(
-                    applicationContext, notificationId, intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                workManager.enqueueUniqueWork(
+                    notificationKey,
+                    ExistingWorkPolicy.REPLACE,
+                    notificationWork
                 )
-
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timerStartTimeMillis, pendingIntent)
-                newScheduledNotificationIds.add(notificationKey)
-            } else if (scheduledNotificationIds.contains(notificationKey)) {
-                newScheduledNotificationIds.add(notificationKey)
+                newScheduledNotificationKeys.add(notificationKey)
             }
         }
-        prefManager.setScheduledNotificationIds(newScheduledNotificationIds)
+        prefManager.setScheduledNotificationIds(newScheduledNotificationKeys)
     }
 
     private fun cancelAllScheduledRecordingNotifications(prefManager: PreferenceManager) {
-        val alarmManager = applicationContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val scheduledNotificationIds = prefManager.getScheduledNotificationIds()
+        val workManager = WorkManager.getInstance(applicationContext)
+        val scheduledNotificationKeys = prefManager.getScheduledNotificationIds()
 
-        for (key in scheduledNotificationIds) {
-            val parts = key.split("_")
-            if (parts.size == 2) {
-                val sRef: String = parts[0]
-                val beginTimestamp = parts[1].toLongOrNull()
-                if (beginTimestamp != null) {
-                    val notificationId = createNotificationId(sRef, beginTimestamp)
-                    cancelScheduledRecordingNotification(alarmManager, applicationContext, notificationId)
-                }
-            }
+        for (key in scheduledNotificationKeys) {
+            workManager.cancelUniqueWork(key)
         }
         prefManager.setScheduledNotificationIds(emptySet())
     }
-
-    private fun cancelScheduledRecordingNotification(alarmManager: AlarmManager, context: Context, notificationId: Int) {
-        val intent = Intent(context, RecordingNotificationReceiver::class.java)
-        intent.action = "io.github.legandy.enigmabridge.RECORDING_STARTED_${notificationId}"
-        val pendingIntent = PendingIntent.getBroadcast(
-            context, notificationId, intent,
-            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
-        )
-        pendingIntent?.let {
-            alarmManager.cancel(it)
-            it.cancel()
-        }
-    }
-
-    private fun createNotificationId(sRef: String, beginTimestamp: Long): Int = (sRef.hashCode() + beginTimestamp).toInt()
 }

@@ -7,7 +7,8 @@ import io.github.legandy.enigmabridge.databinding.ListItemDonationOptionBinding
 
 class DonationOptionsAdapter(
     private val options: List<DonationOption>,
-    private val onItemClick: (String) -> Unit
+    private val onItemClick: (String) -> Unit,
+    private val onLongItemClick: (String) -> Unit
 ) : RecyclerView.Adapter<DonationOptionsAdapter.DonationOptionViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DonationOptionViewHolder {
@@ -27,8 +28,14 @@ class DonationOptionsAdapter(
             val context = binding.root.context
             binding.optionTitle.text = context.getString(option.titleResId)
             binding.optionDescription.text = context.getString(option.descriptionResId)
+            
             binding.root.setOnClickListener { 
                 onItemClick(context.getString(option.urlResId))
+            }
+            
+            binding.root.setOnLongClickListener {
+                onLongItemClick(context.getString(option.urlResId))
+                true
             }
         }
     }

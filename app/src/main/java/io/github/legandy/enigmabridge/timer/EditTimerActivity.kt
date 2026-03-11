@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.IntentCompat
 import androidx.lifecycle.lifecycleScope
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.core.EnigmaBridgeApplication
@@ -42,8 +43,12 @@ class EditTimerActivity : AppCompatActivity() {
         binding = ActivityEditTimerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        @Suppress("DEPRECATION")
-        originalTimer = intent.getParcelableExtra(TimerListActivity.EXTRA_TIMER)
+        // Modern, type-safe way to get Parcelable extras
+        originalTimer = IntentCompat.getParcelableExtra(
+            intent, 
+            TimerListActivity.EXTRA_TIMER, 
+            Timer::class.java
+        )
 
         if (originalTimer == null) {
             Toast.makeText(this, getString(R.string.error_program_data_missing), Toast.LENGTH_LONG).show()

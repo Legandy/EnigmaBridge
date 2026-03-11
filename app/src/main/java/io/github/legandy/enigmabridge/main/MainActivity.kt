@@ -1,10 +1,7 @@
 package io.github.legandy.enigmabridge.main
 
 import android.Manifest
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
@@ -13,10 +10,13 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.lifecycle.repeatOnLifecycle
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.about.AboutActivity
+import io.github.legandy.enigmabridge.core.AppEvent
+import io.github.legandy.enigmabridge.core.AppEventBus
 import io.github.legandy.enigmabridge.databinding.ActivityMainBinding
 import io.github.legandy.enigmabridge.timer.TimerListActivity
 import io.github.legandy.enigmabridge.receiversettings.ReceiverSettingsActivity
@@ -34,18 +34,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var prefManager: PreferenceManager
     private lateinit var timerRepository: TimerRepository
-
-    companion object {
-        const val ACTION_TIMER_SYNC_COMPLETED = "io.github.legandy.enigmabridge.TIMER_SYNC_COMPLETED"
-    }
-
-    private val timerSyncCompletedReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == ACTION_TIMER_SYNC_COMPLETED) {
-                updateLastSyncStatus()
-            }
-        }
-    }
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -71,6 +59,19 @@ class MainActivity : AppCompatActivity() {
 
         setupUI()
         requestNotificationPermission()
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                AppEventBus.events.collect { event ->
+                    when (event) {
+                        is AppEvent.TimerSyncCompleted -> {
+                            updateLastSyncStatus()
+                        }
+                        else -> { /* Ignore other events */ }
+                    }
+                }
+            }
+        }
     }
 
     override fun onResume() {
@@ -78,14 +79,6 @@ class MainActivity : AppCompatActivity() {
         runChecks()
         updateConnectionStatusIndicator(false)
         updateLastSyncStatus()
-        LocalBroadcastManager.getInstance(this).registerReceiver(timerSyncCompletedReceiver,
-            IntentFilter(ACTION_TIMER_SYNC_COMPLETED)
-        )
-    }
-
-    override fun onPause() {
-        super.onPause()
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(timerSyncCompletedReceiver)
     }
 
     private fun requestNotificationPermission() {
@@ -205,8 +198,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // In MainActivity.kt -> updateLastSyncStatus()
-    // In MainActivity.kt -> updateLastSyncStatus()
     private fun updateLastSyncStatus() {
         val lastSyncTimestamp = prefManager.getLastSyncTimestamp()
         if (lastSyncTimestamp > 0) {

@@ -1,5 +1,7 @@
 package io.github.legandy.enigmabridge.data
 
+import io.github.legandy.enigmabridge.core.AppEvent
+import io.github.legandy.enigmabridge.core.AppEventBus
 import io.github.legandy.enigmabridge.core.PreferenceManager
 import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
 import io.github.legandy.enigmabridge.receiversettings.Timer
@@ -49,6 +51,10 @@ class TimerRepository(private val prefs: PreferenceManager) {
                     prefs.setPreviousTimersJson(json.encodeToString(fetchedTimers))
                     prefs.setLastSyncTimestamp(System.currentTimeMillis())
                     _timers.value = fetchedTimers
+                    
+                    // Notify the app that a sync has completed
+                    AppEventBus.emit(AppEvent.TimerSyncCompleted)
+
                     TimerResult.Success(fetchedTimers)
                 },
                 onFailure = { TimerResult.Error("Network error: ${it.message}", it) }

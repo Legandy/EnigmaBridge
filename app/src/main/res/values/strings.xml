@@ -119,6 +119,7 @@
     <string name="toast_timers_refreshed">Timer list refreshed.</string>
     <string name="label_use_https">Use HTTPS</string>
     <string name="toast_no_browser_found">No web browser found to open link.</string>
+    <string name="toast_link_copied">Link copied to clipboard</string>
     <string name="timer_not_found">Timer not found on receiver, unmarking locally.</string>
 
 
@@ -204,20 +205,19 @@
 
 
     <!-- Donation -->
-    <string name="donations">Donations</string>
-    <string name="donations_description">Support the developer</string>
+    <string name="donations">Support Enigma Bridge</string>
+    <string name="donations_description">
+        Hey Andy here.\nI really hope my app is useful to you.\nThank you so much if you consider supporting me.
+    </string>
 
-    <string name="donation_option_buymeacoffee">Buy Me a Coffee</string>
-    <string name="donation_desc_buymeacoffee">Thank me with a one-time donation</string>
-    <string name="link_buymeacoffee">https://www.buymeacoffee.com/legandy</string>
 
     <string name="donation_option_kofi">Kofi</string>
-    <string name="donation_desc_kofi">Thank me with a one-time donation</string>
+    <string name="donation_desc_kofi">One-time donation via KoFi.</string>
     <string name="link_kofi">https://ko-fi.com/legandy</string>
 
-    <string name="donation_option_paypal">PayPal</string>
-    <string name="donation_desc_paypal">Thank me with a one-time donation</string>
-    <string name="link_paypal">https://paypal.com/legandy</string>
+    <string name="donation_option_githubsponsors">Github Sponsors</string>
+    <string name="donation_desc_githubsponsors">One-time donation via Github Sponsors.</string>
+    <string name="link_githubsponsors">https://github.com/sponsors/Legandy</string>
 
 
     <string-array name="repeat_options">

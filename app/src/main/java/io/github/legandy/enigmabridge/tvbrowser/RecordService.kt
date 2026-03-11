@@ -1,15 +1,13 @@
 package io.github.legandy.enigmabridge.tvbrowser
 
 import android.app.Service
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.core.AppEvent
+import io.github.legandy.enigmabridge.core.AppEventBus
 import io.github.legandy.enigmabridge.core.EnigmaBridgeApplication
 import io.github.legandy.enigmabridge.core.PreferenceManager
 import io.github.legandy.enigmabridge.data.TimerRepository
@@ -51,27 +49,12 @@ class RecordService : Service() {
         private const val MENU_ID_UNSCHEDULE = 3
         private const val MENU_ID_MANUAL_UNMARK = 4
         private const val TIMER_MATCH_THRESHOLD_MS = 5 * 60 * 1000L // 5 minutes buffer
-        const val ACTION_TIMER_LIST_CHANGED = "io.github.legandy.enigmabridge.TIMER_LIST_CHANGED"
-        const val ACTION_REVERT_MARKING = "io.github.legandy.enigmabridge.ACTION_REVERT_MARKING"
     }
 
     private val json = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
         isLenient = true
-    }
-
-    private val revertMarkReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == ACTION_REVERT_MARKING) {
-                @Suppress("DEPRECATION")
-                val programToUnmark: Program? = intent.getParcelableExtra("PROGRAM_EXTRA")
-                if (programToUnmark != null) {
-                    Log.d(TAG, "Received signal to revert mark for program: ${programToUnmark.title}")
-                    revertMarking(programToUnmark)
-                }
-            }
-        }
     }
 
     override fun onCreate() {
@@ -86,13 +69,21 @@ class RecordService : Service() {
         markedProgramIds.addAll(prefManager.getMarkedProgramIds())
 
         updateTimerCache()
-        LocalBroadcastManager.getInstance(this).registerReceiver(revertMarkReceiver, IntentFilter(ACTION_REVERT_MARKING))
+
+        // Listen for internal events (e.g., from AdvancedScheduleActivity)
+        serviceScope.launch {
+            AppEventBus.events.collect { event ->
+                if (event is AppEvent.RevertMarking) {
+                    Log.d(TAG, "Received signal to revert mark for program: ${event.program.title}")
+                    revertMarking(event.program)
+                }
+            }
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(revertMarkReceiver)
     }
 
     private val binder: Plugin.Stub = object : Plugin.Stub() {
@@ -207,7 +198,7 @@ class RecordService : Service() {
                         if (prefManager.isNotifyScheduledEnabled()) {
                             NotificationHelper.sendSuccessNotification(applicationContext, program)
                         }
-                        sendRefreshBroadcast()
+                        AppEventBus.emit(AppEvent.TimerListChanged)
                         updateTimerCache()
                         showToast(result.data.second)
                     }
@@ -234,7 +225,7 @@ class RecordService : Service() {
                     showToast(result.data.second)
                     revertMarking(program)
                     updateTimerCache()
-                    sendRefreshBroadcast()
+                    AppEventBus.emit(AppEvent.TimerListChanged)
                 }
                 is TimerResult.Error -> {
                     showToast(result.message)
@@ -277,12 +268,6 @@ class RecordService : Service() {
     }
 
     private fun showToast(message: String) { CoroutineScope(Dispatchers.Main).launch { Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show() } }
-
-    private fun sendRefreshBroadcast() {
-        val intent = Intent(ACTION_TIMER_LIST_CHANGED)
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
-        Log.d(TAG, "Sent timer list changed broadcast.")
-    }
 
     override fun onBind(intent: Intent): IBinder = binder
 }

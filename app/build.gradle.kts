@@ -47,7 +47,6 @@ dependencies {
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.gridlayout)
-    implementation(libs.androidx.localbroadcastmanager)
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
