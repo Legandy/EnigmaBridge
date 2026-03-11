@@ -3,18 +3,10 @@ package io.github.legandy.enigmabridge.timer
 import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import androidx.work.workDataOf
 import io.github.legandy.enigmabridge.core.EnigmaBridgeApplication
-import io.github.legandy.enigmabridge.core.PreferenceManager
 import io.github.legandy.enigmabridge.data.TimerResult
 import io.github.legandy.enigmabridge.helpers.NotificationHelper
-import io.github.legandy.enigmabridge.notifications.RecordingNotificationWorker
-import io.github.legandy.enigmabridge.receiversettings.Timer
-import java.util.concurrent.TimeUnit
 
 class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
     CoroutineWorker(appContext, workerParams) {
@@ -39,14 +31,11 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
             return Result.failure()
         }
 
-        // 1. Refresh timers using the Repository (Updates StateFlow & Prefs)
+        // 1. Refresh timers using the Repository (Updates StateFlow, Prefs & Syncs Notifications)
         return when (val result = repository.refreshTimers()) {
             is TimerResult.Success -> {
                 val currentTimers = result.data
                 Log.d(WORK_TAG, "Successfully fetched ${currentTimers.size} timers.")
-
-                // 2. Run notification logic
-                scheduleRecordingNotifications(currentTimers, prefManager)
 
                 if (!isSilentSync && prefManager.isNotifySyncSuccessEnabled()) {
                     NotificationHelper.sendTimerSyncSuccessNotification(applicationContext, currentTimers.size)
@@ -61,68 +50,5 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
                 Result.failure()
             }
         }
-    }
-
-    private fun scheduleRecordingNotifications(
-        currentTimers: List<Timer>,
-        prefManager: PreferenceManager
-    ) {
-        val workManager = WorkManager.getInstance(applicationContext)
-
-        if (!prefManager.isNotifyRecordingStartedEnabled()) {
-            cancelAllScheduledRecordingNotifications(prefManager)
-            return
-        }
-
-        val scheduledNotificationKeys = prefManager.getScheduledNotificationIds().toMutableSet()
-        val currentTimerKeys = currentTimers.map { "${it.sRef}_${it.beginTimestamp}" }.toSet()
-
-        // 1. Cancel notifications for timers that are no longer in the fetched list
-        val keysToCancel = scheduledNotificationKeys - currentTimerKeys
-        for (key in keysToCancel) {
-            Log.d(WORK_TAG, "Cancelling scheduled notification for removed timer: $key")
-            workManager.cancelUniqueWork(key)
-            scheduledNotificationKeys.remove(key)
-        }
-
-        // 2. Schedule notifications for future timers
-        for (timer in currentTimers) {
-            val now = System.currentTimeMillis()
-            val timerStartTimeMillis = TimeUnit.SECONDS.toMillis(timer.beginTimestamp)
-            val notificationKey = "${timer.sRef}_${timer.beginTimestamp}"
-
-            if (timerStartTimeMillis > now) {
-                // Schedule or update the notification work
-                val delay = timerStartTimeMillis - now
-                val notificationWork = OneTimeWorkRequestBuilder<RecordingNotificationWorker>()
-                    .setInitialDelay(delay, TimeUnit.MILLISECONDS)
-                    .setInputData(workDataOf(
-                        "title" to timer.name,
-                        "channel" to timer.sName
-                    ))
-                    .addTag(notificationKey)
-                    .build()
-
-                workManager.enqueueUniqueWork(
-                    notificationKey,
-                    ExistingWorkPolicy.REPLACE,
-                    notificationWork
-                )
-                scheduledNotificationKeys.add(notificationKey)
-            }
-        }
-        
-        // 3. Persist the currently scheduled keys
-        prefManager.setScheduledNotificationIds(scheduledNotificationKeys)
-    }
-
-    private fun cancelAllScheduledRecordingNotifications(prefManager: PreferenceManager) {
-        val workManager = WorkManager.getInstance(applicationContext)
-        val scheduledNotificationKeys = prefManager.getScheduledNotificationIds()
-
-        for (key in scheduledNotificationKeys) {
-            workManager.cancelUniqueWork(key)
-        }
-        prefManager.setScheduledNotificationIds(emptySet())
     }
 }

@@ -18,7 +18,6 @@ import io.github.legandy.enigmabridge.timer.TimerCheckWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.concurrent.TimeUnit
 import io.github.legandy.enigmabridge.core.AppThemeManager
@@ -43,7 +42,7 @@ class ReceiverSettingsActivity : AppCompatActivity() {
         binding = ActivityReceiverSettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setSupportActionBar(findViewById(R.id.toolbar))
+        setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         prefManager.getThemeMode()
@@ -176,20 +175,11 @@ class ReceiverSettingsActivity : AppCompatActivity() {
 
             withContext(Dispatchers.Main) {
                 showLoading(false)
-                if (fetchedBouquets != null) {
-                    bouquetsMap = fetchedBouquets
-                    updateBouquetsSpinner(bouquetsMap)
+                bouquetsMap = fetchedBouquets
+                updateBouquetsSpinner(bouquetsMap)
 
-                    // Save fetched bouquets to preferences
-                    prefManager.setBouquetsJson(json.encodeToString(bouquetsMap))
-
-                } else {
-                    Toast.makeText(
-                        this@ReceiverSettingsActivity, // Use activity context here
-                        getString(R.string.error_fetch_bouquets),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+                // Save fetched bouquets to preferences
+                prefManager.setBouquetsJson(json.encodeToString(bouquetsMap))
             }
         }
     }
@@ -219,22 +209,14 @@ class ReceiverSettingsActivity : AppCompatActivity() {
 
             withContext(Dispatchers.Main) {
                 showLoading(false)
-                if (channels != null) {
-                    val jsonChannels = json.encodeToString(channels)
-                    prefManager.setSyncedChannelsJson(jsonChannels)
-                    prefManager.setSelectedBouquetName(selectedBouquetName)
-                    Toast.makeText(
-                        this@ReceiverSettingsActivity, // Use activity context here
-                        getString(R.string.sync_success_toast, channels.size),
-                        Toast.LENGTH_LONG
-                    ).show()
-                } else {
-                    Toast.makeText(
-                        this@ReceiverSettingsActivity, // Use activity context here
-                        getString(R.string.error_sync_channels),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+                val jsonChannels = json.encodeToString(channels)
+                prefManager.setSyncedChannelsJson(jsonChannels)
+                prefManager.setSelectedBouquetName(selectedBouquetName)
+                Toast.makeText(
+                    this@ReceiverSettingsActivity, // Use activity context here
+                    getString(R.string.sync_success_toast, channels.size),
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }
@@ -245,7 +227,7 @@ class ReceiverSettingsActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        finish()
+        onBackPressedDispatcher.onBackPressed()
         return true
     }
 

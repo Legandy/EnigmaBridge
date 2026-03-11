@@ -1,8 +1,10 @@
 package io.github.legandy.enigmabridge.data
 
+import android.content.Context
 import io.github.legandy.enigmabridge.core.AppEvent
 import io.github.legandy.enigmabridge.core.AppEventBus
 import io.github.legandy.enigmabridge.core.PreferenceManager
+import io.github.legandy.enigmabridge.notifications.TimerNotificationManager
 import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
 import io.github.legandy.enigmabridge.receiversettings.Timer
 import kotlinx.coroutines.Dispatchers
@@ -10,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 sealed class TimerResult<out T> {
@@ -21,13 +24,15 @@ sealed class TimerResult<out T> {
  * Repository for managing Timer data.
  * Acts as a single source of truth for timer operations, bridging [EnigmaClient] and [PreferenceManager].
  */
-class TimerRepository(private val prefs: PreferenceManager) {
+class TimerRepository(context: Context, private val prefs: PreferenceManager) {
 
     private val json = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
         isLenient = true
     }
+
+    private val notificationManager = TimerNotificationManager(context, prefs)
 
     private val _timers = MutableStateFlow(loadTimersFromPrefs())
     val timers: StateFlow<List<Timer>> = _timers.asStateFlow()
@@ -51,6 +56,9 @@ class TimerRepository(private val prefs: PreferenceManager) {
                     prefs.setLastSyncTimestamp(System.currentTimeMillis())
                     _timers.value = fetchedTimers
                     
+                    // Sync notifications based on the new list
+                    notificationManager.syncNotifications(fetchedTimers)
+
                     // Notify the app that a sync has completed
                     AppEventBus.emit(AppEvent.TimerSyncCompleted)
 
@@ -95,6 +103,8 @@ class TimerRepository(private val prefs: PreferenceManager) {
         runCatching { getClient().deleteTimer(timer) }
             .fold(
                 onSuccess = { message ->
+                    // Immediately cancel the local notification work before refreshing
+                    notificationManager.cancelNotificationForTimer(timer)
                     refreshTimers()
                     TimerResult.Success(true to message)
                 },
@@ -120,6 +130,8 @@ class TimerRepository(private val prefs: PreferenceManager) {
             )
         }.fold(
             onSuccess = { message ->
+                    // Cancel the old notification key and refresh will schedule the new one
+                    notificationManager.cancelNotificationForTimer(originalTimer)
                     refreshTimers()
                     TimerResult.Success(true to message)
             },

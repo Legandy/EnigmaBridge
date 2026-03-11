@@ -205,7 +205,7 @@ class EditTimerActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        finish()
+        onBackPressedDispatcher.onBackPressed()
         return true
     }
 }

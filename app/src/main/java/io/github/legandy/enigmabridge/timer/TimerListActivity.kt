@@ -2,11 +2,15 @@ package io.github.legandy.enigmabridge.timer
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -49,6 +53,7 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+        setupMenu()
         setupRecyclerView()
         setupPullToRefresh()
         observeViewModel()
@@ -57,6 +62,28 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
     override fun onResume() {
         super.onResume()
         triggerBackgroundSync(silent = true)
+    }
+
+    private fun setupMenu() {
+        addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.timer_list_menu, menu)
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return when (menuItem.itemId) {
+                    R.id.action_refresh -> {
+                        performRefresh()
+                        true
+                    }
+                    android.R.id.home -> {
+                        onBackPressedDispatcher.onBackPressed()
+                        true
+                    }
+                    else -> false
+                }
+            }
+        }, this, Lifecycle.State.RESUMED)
     }
 
     private fun setupRecyclerView() {
@@ -69,10 +96,14 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
 
     private fun setupPullToRefresh() {
         binding.swipeRefreshLayout.setOnRefreshListener {
-            binding.swipeRefreshLayout.isRefreshing = true
-            viewModel.refresh() // Refreshes via Repository Flow
-            triggerBackgroundSync(silent = false) // Ensures notifications are also rescheduled
+            performRefresh()
         }
+    }
+
+    private fun performRefresh() {
+        binding.swipeRefreshLayout.isRefreshing = true
+        viewModel.refresh()
+        triggerBackgroundSync(silent = false)
     }
 
     private fun triggerBackgroundSync(silent: Boolean) {
@@ -85,13 +116,10 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
     private fun observeViewModel() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                // Monitor UI state for data updates
                 launch {
                     viewModel.uiState.collect { state ->
                         when (state) {
-                            is TimerListUiState.Loading -> {
-                                // Loading state can be shown if the list is empty
-                            }
+                            is TimerListUiState.Loading -> { }
                             is TimerListUiState.Success -> {
                                 updateUI(state.timers)
                             }
@@ -103,8 +131,6 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
                     }
                 }
 
-                // Monitor global sync events to stop the refreshing animation
-                // This handles cases where data might not have changed, so the uiState flow wouldn't emit.
                 launch {
                     AppEventBus.events.collect { event ->
                         if (event is AppEvent.TimerSyncCompleted) {
@@ -129,7 +155,7 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        finish()
+        onBackPressedDispatcher.onBackPressed()
         return true
     }
 

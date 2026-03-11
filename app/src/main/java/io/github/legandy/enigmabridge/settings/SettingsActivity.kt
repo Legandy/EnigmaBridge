@@ -7,18 +7,18 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import io.github.legandy.enigmabridge.R
-import io.github.legandy.enigmabridge.databinding.ActivitySettingsBinding // Corrected import
+import io.github.legandy.enigmabridge.databinding.ActivitySettingsBinding
+import io.github.legandy.enigmabridge.databinding.ListItemAccentColorBinding
 import androidx.appcompat.app.AppCompatDelegate
 import android.content.Context
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
-import io.github.legandy.enigmabridge.main.MainActivity // Import MainActivity for restart
-import io.github.legandy.enigmabridge.core.AppThemeManager // Import AppThemeManager
+import io.github.legandy.enigmabridge.main.MainActivity
+import io.github.legandy.enigmabridge.core.AppThemeManager
 import io.github.legandy.enigmabridge.core.PreferenceManager
 
 class SettingsActivity : AppCompatActivity() {
@@ -26,28 +26,25 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySettingsBinding
     private lateinit var prefManager: PreferenceManager
 
-    // Data class for accent color items
-    data class AccentColorItem(val name: String, @param:ColorRes val colorResId: Int) // Fixed annotation
+    data class AccentColorItem(val name: String, @param:ColorRes val colorResId: Int)
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
         prefManager = PreferenceManager(this)
 
-        AppThemeManager.applyThemeAndAccentColor(this) // Apply theme and accent color here
+        AppThemeManager.applyThemeAndAccentColor(this)
         super.onCreate(savedInstanceState)
 
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setSupportActionBar(findViewById(R.id.toolbar))
+        setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        // Load notification settings, defaulting to true (enabled).
         binding.switchNotifyScheduled.isChecked = prefManager.isNotifyScheduledEnabled()
         binding.switchNotifyRecordingStarted.isChecked = prefManager.isNotifyRecordingStartedEnabled()
         binding.switchNotifySyncSuccess.isChecked = prefManager.isNotifySyncSuccessEnabled()
 
-        // Theme Picker Dropdown
         val themeOptions = resources.getStringArray(R.array.theme_options_array)
         val themeAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, themeOptions)
         (binding.textInputLayoutThemeMode.editText as? AutoCompleteTextView)?.setAdapter(themeAdapter)
@@ -64,7 +61,7 @@ class SettingsActivity : AppCompatActivity() {
             autoCompleteTextView?.setText(initialThemeSelection, false)
             autoCompleteTextView?.clearFocus()
             autoCompleteTextView?.requestFocus()
-            autoCompleteTextView?.showDropDown() // Added this for robustness
+            autoCompleteTextView?.showDropDown()
         }
 
 
@@ -75,14 +72,12 @@ class SettingsActivity : AppCompatActivity() {
                 2 -> AppCompatDelegate.MODE_NIGHT_YES
                 else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
             }
-            // Only restart if the theme actually changed
             if (newThemeMode != prefManager.getThemeMode()) {
                 prefManager.setThemeMode(newThemeMode)
                 restartApp()
             }
         }
 
-        // Accent Color Picker Dropdown
         val accentColors = listOf(
             AccentColorItem("Light Blue", R.color.material_blue_200),
             AccentColorItem("Blue", R.color.material_blue_500),
@@ -104,7 +99,6 @@ class SettingsActivity : AppCompatActivity() {
             autoCompleteTextView?.setText(initialAccentColorSelection, false)
             autoCompleteTextView?.clearFocus()
             autoCompleteTextView?.requestFocus()
-            // autoCompleteTextView?.showDropDown() // Removed
         }
 
 
@@ -116,7 +110,6 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
-        // Copyable Intent Listener
         binding.buttonCopyTimerSyncIntent.setOnClickListener {
             val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
             val intentToCopy = getString(R.string.timer_sync_intent_value)
@@ -135,33 +128,34 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        finish()
+        onBackPressedDispatcher.onBackPressed()
         return true
     }
 
-    // Custom ArrayAdapter for Accent Colors
     private inner class AccentColorAdapter(context: Context, colors: List<AccentColorItem>) :
         ArrayAdapter<AccentColorItem>(context, 0, colors) {
 
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-            return createView(position, convertView, parent, R.layout.list_item_accent_color)
+            return createView(position, convertView, parent)
         }
 
         override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
-            return createView(position, convertView, parent, R.layout.list_item_accent_color)
+            return createView(position, convertView, parent)
         }
 
-        private fun createView(position: Int, convertView: View?, parent: ViewGroup, layoutRes: Int): View {
-            val view = convertView ?: layoutInflater.inflate(layoutRes, parent, false)
+        private fun createView(position: Int, convertView: View?, parent: ViewGroup): View {
+            val itemBinding = if (convertView == null) {
+                ListItemAccentColorBinding.inflate(layoutInflater, parent, false)
+            } else {
+                ListItemAccentColorBinding.bind(convertView)
+            }
             val item = getItem(position)
 
             if (item != null) {
-                val colorSwatch = view.findViewById<View>(R.id.color_swatch)
-                val colorName = view.findViewById<TextView>(R.id.color_name)
-                colorSwatch.setBackgroundColor(ContextCompat.getColor(context, item.colorResId))
-                colorName.text = item.name
+                itemBinding.colorSwatch.setBackgroundColor(ContextCompat.getColor(context, item.colorResId))
+                itemBinding.colorName.text = item.name
             }
-            return view
+            return itemBinding.root
         }
     }
 

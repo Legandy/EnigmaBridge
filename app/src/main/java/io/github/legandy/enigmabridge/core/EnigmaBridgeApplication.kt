@@ -22,7 +22,7 @@ class EnigmaBridgeApplication : Application(), Configuration.Provider {
         super.onCreate()
         // Initialize Singletons
         prefManager = PreferenceManager(this)
-        timerRepository = TimerRepository(prefManager)
+        timerRepository = TimerRepository(this, prefManager)
     }
 
     override val workManagerConfiguration: Configuration
