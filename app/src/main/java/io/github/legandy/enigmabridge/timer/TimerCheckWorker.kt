@@ -39,17 +39,14 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
             return Result.failure()
         }
 
-        // 1. Get previous timers for notification comparison
-        val previousTimers = repository.timers.value
-
-        // 2. Refresh timers using the Repository (Updates StateFlow & Prefs)
+        // 1. Refresh timers using the Repository (Updates StateFlow & Prefs)
         return when (val result = repository.refreshTimers()) {
             is TimerResult.Success -> {
                 val currentTimers = result.data
                 Log.d(WORK_TAG, "Successfully fetched ${currentTimers.size} timers.")
 
-                // 3. Run notification logic
-                scheduleRecordingNotifications(currentTimers, previousTimers, prefManager)
+                // 2. Run notification logic
+                scheduleRecordingNotifications(currentTimers, prefManager)
 
                 if (!isSilentSync && prefManager.isNotifySyncSuccessEnabled()) {
                     NotificationHelper.sendTimerSyncSuccessNotification(applicationContext, currentTimers.size)
@@ -68,7 +65,6 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
 
     private fun scheduleRecordingNotifications(
         currentTimers: List<Timer>,
-        previousTimers: List<Timer>,
         prefManager: PreferenceManager
     ) {
         val workManager = WorkManager.getInstance(applicationContext)
@@ -79,18 +75,17 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
         }
 
         val scheduledNotificationKeys = prefManager.getScheduledNotificationIds().toMutableSet()
-        val newScheduledNotificationKeys = mutableSetOf<String>()
-
         val currentTimerKeys = currentTimers.map { "${it.sRef}_${it.beginTimestamp}" }.toSet()
-        val previousTimerKeys = previousTimers.map { "${it.sRef}_${it.beginTimestamp}" }.toSet()
 
-        // Cancel notifications for timers that were removed
-        val removedTimerKeys = previousTimerKeys - currentTimerKeys
-        for (key in removedTimerKeys) {
+        // 1. Cancel notifications for timers that are no longer in the fetched list
+        val keysToCancel = scheduledNotificationKeys - currentTimerKeys
+        for (key in keysToCancel) {
+            Log.d(WORK_TAG, "Cancelling scheduled notification for removed timer: $key")
             workManager.cancelUniqueWork(key)
             scheduledNotificationKeys.remove(key)
         }
 
+        // 2. Schedule notifications for future timers
         for (timer in currentTimers) {
             val now = System.currentTimeMillis()
             val timerStartTimeMillis = TimeUnit.SECONDS.toMillis(timer.beginTimestamp)
@@ -113,10 +108,12 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
                     ExistingWorkPolicy.REPLACE,
                     notificationWork
                 )
-                newScheduledNotificationKeys.add(notificationKey)
+                scheduledNotificationKeys.add(notificationKey)
             }
         }
-        prefManager.setScheduledNotificationIds(newScheduledNotificationKeys)
+        
+        // 3. Persist the currently scheduled keys
+        prefManager.setScheduledNotificationIds(scheduledNotificationKeys)
     }
 
     private fun cancelAllScheduledRecordingNotifications(prefManager: PreferenceManager) {

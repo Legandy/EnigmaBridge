@@ -15,6 +15,8 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.core.AppEvent
+import io.github.legandy.enigmabridge.core.AppEventBus
 import io.github.legandy.enigmabridge.core.AppThemeManager
 import io.github.legandy.enigmabridge.core.EnigmaBridgeApplication
 import io.github.legandy.enigmabridge.core.PreferenceManager
@@ -83,16 +85,29 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
     private fun observeViewModel() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
-                    when (state) {
-                        is TimerListUiState.Loading -> {
-                            // Loading state can be shown if the list is empty
+                // Monitor UI state for data updates
+                launch {
+                    viewModel.uiState.collect { state ->
+                        when (state) {
+                            is TimerListUiState.Loading -> {
+                                // Loading state can be shown if the list is empty
+                            }
+                            is TimerListUiState.Success -> {
+                                updateUI(state.timers)
+                            }
+                            is TimerListUiState.Error -> {
+                                Toast.makeText(this@TimerListActivity, state.message, Toast.LENGTH_LONG).show()
+                                binding.swipeRefreshLayout.isRefreshing = false
+                            }
                         }
-                        is TimerListUiState.Success -> {
-                            updateUI(state.timers)
-                        }
-                        is TimerListUiState.Error -> {
-                            Toast.makeText(this@TimerListActivity, state.message, Toast.LENGTH_LONG).show()
+                    }
+                }
+
+                // Monitor global sync events to stop the refreshing animation
+                // This handles cases where data might not have changed, so the uiState flow wouldn't emit.
+                launch {
+                    AppEventBus.events.collect { event ->
+                        if (event is AppEvent.TimerSyncCompleted) {
                             binding.swipeRefreshLayout.isRefreshing = false
                         }
                     }
@@ -133,8 +148,8 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
             .setTitle(getString(R.string.delete_timer_title))
             .setMessage(getString(R.string.delete_timer_message, timer.name))
             .setPositiveButton(getString(R.string.action_delete)) { _, _ ->
-                viewModel.deleteTimer(timer)
                 binding.swipeRefreshLayout.isRefreshing = true
+                viewModel.deleteTimer(timer)
             }
             .setNegativeButton(getString(R.string.action_cancel), null)
             .show()
