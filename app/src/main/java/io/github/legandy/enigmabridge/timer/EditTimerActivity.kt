@@ -43,7 +43,6 @@ class EditTimerActivity : AppCompatActivity() {
         binding = ActivityEditTimerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Modern, type-safe way to get Parcelable extras
         originalTimer = IntentCompat.getParcelableExtra(
             intent, 
             TimerListActivity.EXTRA_TIMER, 

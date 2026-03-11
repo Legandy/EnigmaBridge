@@ -113,14 +113,13 @@ class MainActivity : AppCompatActivity() {
 
     private suspend fun testConnection(): Boolean {
         if (!prefManager.isReceiverConfigured()) return false
-        // Use repository instead of direct client call
         val result = timerRepository.getTimers()
         return result is TimerResult.Success
     }
 
     private fun updateConnectionStatusIndicator(showToast: Boolean) {
         lifecycleScope.launch {
-            val isConnected = testConnection() // testConnection already handles Dispatchers.IO inside repository
+            val isConnected = testConnection()
             
             if (isConnected) {
                 binding.statusEnigmaIcon.setImageResource(R.drawable.ic_outline_check_circle_24)
@@ -203,7 +202,6 @@ class MainActivity : AppCompatActivity() {
         if (lastSyncTimestamp > 0) {
             val date = Date(lastSyncTimestamp)
 
-            // The "Pro" Way: Fetches the user's preferred date/time format from Android Settings
             val dateFormat = android.text.format.DateFormat.getDateFormat(this)
             val timeFormat = android.text.format.DateFormat.getTimeFormat(this)
 

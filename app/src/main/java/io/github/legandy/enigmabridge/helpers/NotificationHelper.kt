@@ -61,7 +61,7 @@ object NotificationHelper {
             .setContentTitle(context.getString(R.string.notification_title))
             .setContentText(notificationContent)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent) // Set the PendingIntent
+            .setContentIntent(pendingIntent)
             .setAutoCancel(true)
 
         sendNotification(context, builder)
@@ -85,7 +85,7 @@ object NotificationHelper {
             .setContentTitle(context.getString(R.string.notification_title_recording_started))
             .setContentText(notificationContent)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent) // Set the PendingIntent
+            .setContentIntent(pendingIntent)
             .setAutoCancel(true)
 
         sendNotification(context, builder)
@@ -109,7 +109,7 @@ object NotificationHelper {
             .setContentTitle(context.getString(R.string.notification_title_timer_sync_success))
             .setContentText(notificationContent)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent) // Set the PendingIntent
+            .setContentIntent(pendingIntent)
             .setAutoCancel(true)
 
         sendNotification(context, builder)
@@ -133,7 +133,7 @@ object NotificationHelper {
             .setContentTitle(context.getString(R.string.notification_title_timer_sync_failed))
             .setContentText(notificationContent)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent) // Set the PendingIntent
+            .setContentIntent(pendingIntent)
             .setAutoCancel(true)
 
         sendNotification(context, builder)

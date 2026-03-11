@@ -59,7 +59,7 @@ class ReceiverSettingsActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        saveReceiverSettings() // Auto-save on pause
+        saveReceiverSettings()
     }
 
     private fun initializeBouquetDisplay() {
@@ -146,14 +146,14 @@ class ReceiverSettingsActivity : AppCompatActivity() {
                 showLoading(false)
                 if (isConnected) {
                     Toast.makeText(
-                        this@ReceiverSettingsActivity, // Use activity context here
+                        this@ReceiverSettingsActivity,
                         getString(R.string.status_enigma_success),
                         Toast.LENGTH_SHORT
                     ).show()
                     fetchBouquets()
                 } else {
                     Toast.makeText(
-                        this@ReceiverSettingsActivity, // Use activity context here
+                        this@ReceiverSettingsActivity,
                         getString(R.string.status_enigma_failed),
                         Toast.LENGTH_LONG
                     ).show()
@@ -178,7 +178,6 @@ class ReceiverSettingsActivity : AppCompatActivity() {
                 bouquetsMap = fetchedBouquets
                 updateBouquetsSpinner(bouquetsMap)
 
-                // Save fetched bouquets to preferences
                 prefManager.setBouquetsJson(json.encodeToString(bouquetsMap))
             }
         }
@@ -213,7 +212,7 @@ class ReceiverSettingsActivity : AppCompatActivity() {
                 prefManager.setSyncedChannelsJson(jsonChannels)
                 prefManager.setSelectedBouquetName(selectedBouquetName)
                 Toast.makeText(
-                    this@ReceiverSettingsActivity, // Use activity context here
+                    this@ReceiverSettingsActivity,
                     getString(R.string.sync_success_toast, channels.size),
                     Toast.LENGTH_LONG
                 ).show()
@@ -222,7 +221,7 @@ class ReceiverSettingsActivity : AppCompatActivity() {
     }
 
     private fun showLoading(isLoading: Boolean) {
-        binding.buttonTestConnection.isEnabled = !isLoading // Control the new button
+        binding.buttonTestConnection.isEnabled = !isLoading
         binding.buttonSyncChannels.isEnabled = !isLoading
     }
 

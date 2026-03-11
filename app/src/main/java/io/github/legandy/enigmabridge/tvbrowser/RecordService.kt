@@ -70,7 +70,6 @@ class RecordService : Service() {
 
         updateTimerCache()
 
-        // Listen for internal events (e.g., from AdvancedScheduleActivity)
         serviceScope.launch {
             AppEventBus.events.collect { event ->
                 if (event is AppEvent.RevertMarking) {

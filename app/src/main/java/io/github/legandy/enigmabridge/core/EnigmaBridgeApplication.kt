@@ -5,11 +5,6 @@ import android.util.Log
 import androidx.work.Configuration
 import io.github.legandy.enigmabridge.data.TimerRepository
 
-/**
- * A custom Application class to ensure WorkManager is initialized correctly.
- * This is the standard, recommended approach for robust background work.
- * Also provides singletons for [PreferenceManager] and [TimerRepository].
- */
 class EnigmaBridgeApplication : Application(), Configuration.Provider {
 
     lateinit var prefManager: PreferenceManager

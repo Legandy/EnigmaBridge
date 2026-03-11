@@ -16,7 +16,7 @@ import java.util.Locale
 
 class TimerAdapter(
     private var timers: MutableList<Timer>,
-    private val listener: OnTimerActionsListener // Listener for communicating clicks
+    private val listener: OnTimerActionsListener
 ) : RecyclerView.Adapter<TimerAdapter.TimerViewHolder>() {
 
     /**

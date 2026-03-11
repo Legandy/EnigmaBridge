@@ -9,10 +9,8 @@ class PreferenceManager (context: Context) {
 
     fun isReceiverConfigured(): Boolean = getIpAddress().isNotBlank()
 
-    /**
-     * Internal helper to create an [EnigmaClient] instance.
-     * Note: This is now intended for use primarily within the data layer (e.g., TimerRepository).
-     */
+
+     // Internal helper to create an [EnigmaClient] instance.
     fun getEnigmaClient(): EnigmaClient {
         return EnigmaClient(
             getIpAddress(),

@@ -14,15 +14,15 @@ import java.util.concurrent.TimeUnit
 class SyncTriggerReceiver : BroadcastReceiver() {
 
     companion object {
-        private const val RECEIVER_TAG = "SyncTriggerReceiver" // Add TAG
+        private const val RECEIVER_TAG = "SyncTriggerReceiver"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        Log.d(RECEIVER_TAG, "onReceive() triggered for action: ${intent.action}") // Log broadcast reception
+        Log.d(RECEIVER_TAG, "onReceive() triggered for action: ${intent.action}")
 
         if (intent.action == "io.github.legandy.enigmabridge.intent.ACTION_TRIGGER_SYNC") {
-            Log.d(RECEIVER_TAG, "ACTION_TRIGGER_SYNC received. Checking for existing worker.") // Log specific action
-            // Check if there's already a pending or running TimerCheckWorker
+            Log.d(RECEIVER_TAG, "ACTION_TRIGGER_SYNC received. Checking for existing worker.")
+
             val workInfos = WorkManager.getInstance(context).getWorkInfosForUniqueWork("TimerCheckWorker")
             var isRunningOrPending = false
             workInfos.get().forEach { workInfo ->
@@ -32,23 +32,23 @@ class SyncTriggerReceiver : BroadcastReceiver() {
             }
 
             if (!isRunningOrPending) {
-                Log.d(RECEIVER_TAG, "No existing TimerCheckWorker. Enqueueing new one.") // Log worker enqueue
-                // Schedule the TimerCheckWorker
+                Log.d(RECEIVER_TAG, "No existing TimerCheckWorker. Enqueueing new one.")
+
                 val constraints = Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)
                     .build()
 
                 val timerCheckRequest = OneTimeWorkRequest.Builder(TimerCheckWorker::class.java)
                     .setConstraints(constraints)
-                    .setInitialDelay(5, TimeUnit.SECONDS) // Delay to ensure network is stable
+                    .setInitialDelay(5, TimeUnit.SECONDS)
                     .build()
 
                 WorkManager.getInstance(context).enqueue(timerCheckRequest)
             } else {
-                Log.d(RECEIVER_TAG, "TimerCheckWorker is already running or enqueued. Skipping new enqueue.") // Log skipping
+                Log.d(RECEIVER_TAG, "TimerCheckWorker is already running or enqueued. Skipping new enqueue.")
             }
         } else {
-            Log.d(RECEIVER_TAG, "Received unexpected action: ${intent.action}") // Log unexpected actions
+            Log.d(RECEIVER_TAG, "Received unexpected action: ${intent.action}")
         }
     }
 }

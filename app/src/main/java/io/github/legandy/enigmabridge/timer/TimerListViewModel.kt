@@ -27,7 +27,6 @@ class TimerListViewModel(private val repository: TimerRepository) : ViewModel() 
     val uiState: StateFlow<TimerListUiState> = _uiState.asStateFlow()
 
     init {
-        // Observe the repository's timer flow and update the UI state accordingly.
         viewModelScope.launch {
             repository.timers.collect { timers ->
                 _uiState.value = TimerListUiState.Success(timers)

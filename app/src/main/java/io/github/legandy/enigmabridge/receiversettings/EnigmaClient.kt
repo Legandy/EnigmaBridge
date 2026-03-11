@@ -43,7 +43,6 @@ data class Timer(
     @SerialName("afterevent") val afterEvent: Int,
     @SerialName("repeated") val repeated: Int,
     @SerialName("disabled") val disabled: Int,
-    // **THE FIX: Make these fields nullable with default values to prevent parsing crash**
     @SerialName("dirname") val directoryName: String? = null,
     @SerialName("tags") val tags: String? = null
 ) : Parcelable

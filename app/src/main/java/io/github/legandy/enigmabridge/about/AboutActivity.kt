@@ -38,7 +38,6 @@ class AboutActivity : AppCompatActivity() {
             DonationsDialogFragment().show(supportFragmentManager, DonationsDialogFragment.TAG)
         }
 
-        // Set the app version
         try {
             val pInfo = applicationContext.packageManager.getPackageInfo(applicationContext.packageName, 0)
             val versionName = pInfo.versionName
