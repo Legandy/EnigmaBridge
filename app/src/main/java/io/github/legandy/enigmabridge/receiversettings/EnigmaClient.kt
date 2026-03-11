@@ -176,7 +176,7 @@ class EnigmaClient(
 
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw IOException("Unexpected code $response")
-            return response.body?.string() ?: throw IOException("Empty response body")
+            return response.body.string()
         }
     }
 }

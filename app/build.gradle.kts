@@ -2,14 +2,13 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    id("kotlin-parcelize")
+    alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.serialization)
 }
 
 android {
     namespace = "io.github.legandy.enigmabridge"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "io.github.legandy.enigmabridge"
@@ -48,6 +47,7 @@ dependencies {
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.gridlayout)
+    implementation(libs.androidx.localbroadcastmanager)
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
