@@ -113,7 +113,7 @@ class MainActivity : AppCompatActivity() {
 
     private suspend fun testConnection(): Boolean {
         if (!prefManager.isReceiverConfigured()) return false
-        val result = timerRepository.getTimers()
+        val result = timerRepository.refreshTimers()
         return result is TimerResult.Success
     }
 

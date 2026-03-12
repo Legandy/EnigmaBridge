@@ -45,16 +45,9 @@ class ReceiverSettingsActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        prefManager.getThemeMode()
-
         initializeBouquetDisplay()
         loadReceiverSettings()
         setupListeners()
-
-    }
-
-    override fun onResume() {
-        super.onResume()
     }
 
     override fun onPause() {
@@ -123,10 +116,12 @@ class ReceiverSettingsActivity : AppCompatActivity() {
 
     private fun setupListeners() {
         binding.buttonTestConnection.setOnClickListener {
+            saveReceiverSettings()
             checkReceiverConnectionAndFetchBouquets()
         }
 
         binding.buttonSyncChannels.setOnClickListener {
+            saveReceiverSettings()
             syncSelectedBouquet()
         }
     }
