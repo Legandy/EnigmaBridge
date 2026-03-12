@@ -1,6 +1,6 @@
 # Enigma Bridge
 
-**Enigma Bridge** is an Android application and plugin for the [TV-Browser](https://www.tvbrowser.org/) app. it allows you to quickly schedule recordings and manage timers on your Enigma2-based receiver (e.g., VU+, Dreambox) directly from your smartphone.
+**Enigma Bridge** is a plugin for the [TV-Browser](https://www.tvbrowser-app.de/index.php?setlang=en) app to quickly schedule a recording on your Enigma2 device via context menu.
 
 ## ✨ Features
 
