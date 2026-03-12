@@ -135,23 +135,27 @@ class ReceiverSettingsActivity : AppCompatActivity() {
         showLoading(true)
         lifecycleScope.launch(Dispatchers.IO) {
             val client = prefManager.getEnigmaClient()
-            val isConnected = client.checkConnection()
+            val result = client.checkConnection()
 
             withContext(Dispatchers.Main) {
                 showLoading(false)
-                if (isConnected) {
-                    Toast.makeText(
-                        this@ReceiverSettingsActivity,
-                        getString(R.string.status_enigma_success),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    fetchBouquets()
-                } else {
-                    Toast.makeText(
-                        this@ReceiverSettingsActivity,
-                        getString(R.string.status_enigma_failed),
-                        Toast.LENGTH_LONG
-                    ).show()
+                when (result) {
+                    is ConnectionResult.Success -> {
+                        Toast.makeText(
+                            this@ReceiverSettingsActivity,
+                            getString(R.string.status_enigma_success),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        fetchBouquets()
+                    }
+                    is ConnectionResult.Failure -> {
+                        val message = if (result.isSslIssue) {
+                            "HTTPS Error: Untrusted Certificate. Try HTTP or install the certificate."
+                        } else {
+                            result.error
+                        }
+                        Toast.makeText(this@ReceiverSettingsActivity, message, Toast.LENGTH_LONG).show()
+                    }
                 }
             }
         }

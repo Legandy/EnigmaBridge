@@ -14,6 +14,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 import java.net.URLEncoder
+import javax.net.ssl.SSLHandshakeException
 
 @Serializable
 data class BouquetResponse(@SerialName("bouquets") val bouquets: List<List<String>>)
@@ -46,6 +47,14 @@ data class Timer(
     @SerialName("dirname") val directoryName: String? = null,
     @SerialName("tags") val tags: String? = null
 ) : Parcelable
+
+/**
+ * Represents the result of a connection check.
+ */
+sealed class ConnectionResult {
+    object Success : ConnectionResult()
+    data class Failure(val error: String, val isSslIssue: Boolean = false) : ConnectionResult()
+}
 
 class EnigmaClient(
     private val ipAddress: String,
@@ -143,10 +152,18 @@ class EnigmaClient(
         return executeAction(url)
     }
 
-    fun checkConnection(): Boolean = runCatching {
-        executeRequest(buildUrl(API_ABOUT))
-    }.isSuccess
-    fun getBouquets(): Map<String, String> { // Removed ?
+    fun checkConnection(): ConnectionResult {
+        return try {
+            executeRequest(buildUrl(API_ABOUT))
+            ConnectionResult.Success
+        } catch (_: SSLHandshakeException) {
+            ConnectionResult.Failure("SSL Error: Untrusted Certificate", true)
+        } catch (e: Exception) {
+            ConnectionResult.Failure(e.localizedMessage ?: "Connection Failed")
+        }
+    }
+
+    fun getBouquets(): Map<String, String> {
         val url = buildUrl(API_BOUQUETS, "stype=1")
         val jsonString = executeRequest(url)
         return json.decodeFromString<BouquetResponse>(jsonString).bouquets.associate { b -> b[1] to b[0] }
@@ -154,8 +171,7 @@ class EnigmaClient(
 
     fun getChannelsInBouquet(bouquetSref: String): Map<String, String> {
         val cleanedSref = bouquetSref.replace("\\\"", "\"")
-        val scheme = if (useHttps) "https" else "http"
-        val url = "$scheme://$ipAddress$API_GET_SERVICES?sRef=$cleanedSref"
+        val url = buildUrl(API_GET_SERVICES, "sRef=$cleanedSref")
 
         val jsonString = executeRequest(url)
         return json.decodeFromString<ServiceResponse>(jsonString).services.associate { s -> s.sName to s.sRef }
@@ -179,4 +195,3 @@ class EnigmaClient(
         }
     }
 }
-
