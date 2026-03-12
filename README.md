@@ -33,11 +33,10 @@
     - Open TV-Browser, find a program, long-press it, and select **Schedule Recording** or **Advanced Scheduling**.
 
 ## 🏗 Development
-
-The project is currently undergoing modernization.
-- [ ] Migration to **Jetpack Compose**.
-- [ ] Transitioning to **Jetpack DataStore**.
-- [ ] F-Droid release preparation.
+This app was assisted by AI because I'm a newbie in Kotlin and Android Development.
+I used Gemini in Android Studio as a tutor and reviewer of my code but I always have the last look.
+I developed Engima Bridge for myself.
+Open Source is great, so I'm sharing my work with you.
 
 ## 🤝 Contributing
 
