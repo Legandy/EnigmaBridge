@@ -87,12 +87,12 @@
     <string name="status_notifications_disabled">Notifications: Disabled</string>
 
     <!-- Plugin Metadata -->
-    <string name="plugin_description">Schedules recordings on an Enigma2 receiver.</string>
+    <string name="plugin_description">Schedules recordings on an Enigma2 receiver via context menu.</string>
     <string name="plugin_author">Legandy</string>
-    <string name="plugin_license">Apache License, Version 2.0</string>
-    <string name="context_menu_schedule_simple">Schedule Recording</string>
-    <string name="context_menu_schedule_advanced">Advanced Scheduling…</string>
-    <string name="context_menu_unschedule">Un-schedule Recording</string>
+    <string name="plugin_license">GPL-3.0 license</string>
+    <string name="context_menu_schedule_simple">Simple Recording</string>
+    <string name="context_menu_schedule_advanced">Advanced Recording</string>
+    <string name="context_menu_unschedule">Unschedule Recording</string>
     <string name="context_menu_manual_unmark">Manual Unmark</string>
 
     <!-- Toasts and Messages -->
