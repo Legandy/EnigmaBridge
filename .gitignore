@@ -17,3 +17,8 @@ local.properties
 /.idea/
 /.kotlin/
 /AGENTS.md
+
+# Signing Files
+keystore.properties
+*.jks
+*.keystore
