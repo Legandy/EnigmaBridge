@@ -34,7 +34,7 @@
 
 ## 🏗 Build
 
-# Requires JDK 17
+Requires JDK 17
 
 1. Clone the repository:
    git clone https://github.com/legandy/EnigmaBridge.git
