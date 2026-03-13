@@ -1,30 +1,32 @@
+# IDE Settings
+.idea/
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
-/app/src/main/java/io/github/legandy/enigmabridge/EnigmaBridgeOverview.txt
-/.idea/
-/.kotlin/
-/AGENTS.md
 
-# Signing Files
+# Gradle / Build
+.gradle/
+build/
+app/build/
+captures/
+
+# Local Configuration (Sensitive/User-Specific)
+local.properties
 keystore.properties
 *.jks
 *.keystore
 
+# Kotlin / JVM
+.kotlin/
+.DS_Store
+
+# Native Build
+.externalNativeBuild
+.cxx
+
 # Build Outputs
-/app/release/
-/app/debug/
 *.apk
 *.aab
+
+# Project Specific (Local notes/prompts)
+/app/src/main/java/io/github/legandy/enigmabridge/EnigmaBridgeOverview.txt
+/AGENTS.md
+/ToDo.md
