@@ -40,7 +40,7 @@ I used Gemini in Android Studio as a tutor and reviewer of my code, but I always
 I developed Enigma Bridge for my own use case.
 Open Source is great, so I'm sharing my work with you.
 
-## Special Thanks
+## 💖 Special Thanks
 
 Without the great [TV Browser](https://www.tvbrowser-app.de/index.php?id=download) this app wouldn't exist and wouldn't be really useful.
 Of course also special thanks to [F-Droid](https://f-droid.org/en/) and [IzzyOnDroid](https://izzyondroid.org/).
