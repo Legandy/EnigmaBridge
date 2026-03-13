@@ -1,0 +1,1 @@
+A plugin for the TV-Browser app to quickly schedule a recording on your Enigma2 device via context menu.

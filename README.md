@@ -6,9 +6,9 @@
 
 - **TV-Browser Plugin**: Schedule recordings directly from the TV-Browser context menu.
 - **Advanced Scheduling**: Fine-tune timers with custom start/end padding, repeat rules (Daily, Weekly), and after-event actions (Standby, Deep Standby).
-- **Timer Management**: View, edit, delete, and even "Zap" to channels on your receiver from the app.
-- **Smart Syncing**:
-    - Automatic channel list synchronization from your favorite Bouquets.
+- **Timer Management**: View, edit and delete timers on your receiver from the app.
+- **Syncing**:
+    - Channel list synchronization from your favorite Bouquet.
     - Periodic background timer synchronization.
     - Broadcast Intent support for external sync triggers.
 - **Notifications**: Get notified when a recording starts, when a timer is scheduled, or when a sync completes.
@@ -33,10 +33,17 @@
     - Open TV-Browser, find a program, long-press it, and select **Schedule Recording** or **Advanced Scheduling**.
 
 ## 🏗 Development
-This app was assisted by AI because I'm a newbie in Kotlin and Android Development.
-I used Gemini in Android Studio as a tutor and reviewer of my code but I always have the last look.
-I developed Engima Bridge for myself.
+
+This app was created by myself with Assistance of AI.
+I'm a newbie in Kotlin and Android Development.
+I used Gemini in Android Studio as a tutor and reviewer of my code, but I always have the last look.
+I developed Enigma Bridge for my own use case.
 Open Source is great, so I'm sharing my work with you.
+
+## Special Thanks
+
+Without the great [TV Browser](https://www.tvbrowser-app.de/index.php?id=download) this app wouldn't exist and wouldn't be really useful.
+Of course also special thanks to [F-Droid](https://f-droid.org/en/) and [IzzyOnDroid](https://izzyondroid.org/).
 
 ## 🤝 Contributing
 

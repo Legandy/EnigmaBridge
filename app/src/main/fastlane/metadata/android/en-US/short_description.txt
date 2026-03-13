@@ -1,1 +1,0 @@
-Schedule recordings and manage timers on Enigma2 receivers via TV-Browser.
