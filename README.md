@@ -34,17 +34,16 @@
 
 ## 🏗 Build
 
-To build the app yourself, ensure you have **JDK 17** installed on your system.
+# Requires JDK 17
 
 1. Clone the repository:
-   ```bash
    git clone https://github.com/legandy/EnigmaBridge.git
+
+2. Navigate to the directory:
    cd EnigmaBridge
-   ```
-2. Build the unsigned release APK:
-   ```bash
+
+3. Build the release APK:
    ./gradlew :app:assembleRelease
-   ```
 
 The generated APK will be available in `app/build/outputs/apk/release/`.
 
