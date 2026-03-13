@@ -1,4 +1,7 @@
+Enigma Bridge is a plugin for the <a href='https://www.tvbrowser-app.de/index.php'>TV-Browser</a> app to quickly schedule a recording on your Enigma2 device via context menu.
+
 Features:
+
 - TV-Browser Plugin: Schedule recordings directly from the TV-Browser context menu.
 - Advanced Scheduling: Fine-tune timers with custom start/end padding, repeat rules (Daily, Weekly), and after-event actions (Standby, Deep Standby).
 - Timer Management: View, edit and delete, timers on your receiver from the app.
@@ -8,6 +11,7 @@ Features:
 - Modern UI: Supports System, Light, and Dark modes with customizable accent colors.
 
 Requirements:
+
 - Android device running 7.0 (Nougat) or higher.
 - TV-Browser Android App (to use as a plugin).
 - Enigma2 Receiver with OpenWebIf enabled.

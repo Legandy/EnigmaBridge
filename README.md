@@ -49,11 +49,11 @@ The generated APK will be available in `app/build/outputs/apk/release/`.
 
 ## 🏗 Development
 
-This app was created by myself with Assistance of AI.
+This app was created by myself with AI-assisted programming.
 I'm a newbie in Kotlin and Android Development.
-I used Gemini in Android Studio as a tutor and reviewer of my code, but I always have the last look.
+I used Gemini in Android Studio mostly as a tutor and reviewer, but AI-generated code was used too.
 I developed Enigma Bridge for my own use case.
-Open Source is great, so I'm sharing my work with you.
+Open source is great, so I'm sharing my work with you.
 
 ## 💖 Special Thanks
 
