@@ -32,6 +32,22 @@
 4. **Use in TV-Browser**:
     - Open TV-Browser, find a program, long-press it, and select **Schedule Recording** or **Advanced Scheduling**.
 
+## 🏗 Build
+
+To build the app yourself, ensure you have **JDK 17** installed on your system.
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/legandy/EnigmaBridge.git
+   cd EnigmaBridge
+   ```
+2. Build the unsigned release APK:
+   ```bash
+   ./gradlew :app:assembleRelease
+   ```
+
+The generated APK will be available in `app/build/outputs/apk/release/`.
+
 ## 🏗 Development
 
 This app was created by myself with Assistance of AI.
@@ -42,8 +58,8 @@ Open Source is great, so I'm sharing my work with you.
 
 ## 💖 Special Thanks
 
-Without the great [TV Browser](https://www.tvbrowser-app.de/index.php?id=download) this app wouldn't exist and wouldn't be really useful.
-Of course also special thanks to [F-Droid](https://f-droid.org/en/) and [IzzyOnDroid](https://izzyondroid.org/).
+Without the great [TV Browser](https://www.tvbrowser-app.de/index.php?id=download) this app wouldn't exist and wouldn't be really useful.<br>
+Of course also special thanks to [F-Droid](https://f-droid.org/en/) and [IzzyOnDroid](https://izzyondroid.org/) for creating platforms for open source apps.
 
 ## 🤝 Contributing
 
