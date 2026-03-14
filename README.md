@@ -54,6 +54,7 @@ I'm a newbie in Kotlin and Android Development.<br>
 I used Gemini in Android Studio mostly as a tutor and reviewer, but AI-generated code was used too.<br>
 I encourage the ethical use of AI, but AI-generated code must be reviewed by a human with an understanding of programming languages.<br>
 But without AI-assisted programming I wouldn't have felt encouraged enough to learn Kotlin and Android Development on a practial learning basis.<br>
+Includes code of the [SimpleMarkerPlugin](https://github.com/ds10git/tvbrowsersimplemarkerplugin) for the TV Browser to understand how the plugin system works and to mark a timer inside the TV Browser.<br>
 I developed Enigma Bridge for my own use case.<br>
 Open source is great, so I'm sharing my work with you.<br>
 
