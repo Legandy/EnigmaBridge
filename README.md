@@ -67,7 +67,7 @@ Includes code of the [SimpleMarkerPlugin](https://github.com/ds10git/tvbrowsersi
 for the TV Browser to understand how the plugin system works and to mark a timer inside the TV
 Browser.<br>
 Enigma communication logic was referenced
-from [EnigmaDroid](https://github.com/deprec8/EnigmaDroid)<br>
+from [EnigmaDroid](https://github.com/deprec8/EnigmaDroid).<br>
 I developed Enigma Bridge for my own use case.<br>
 Open source is great, so maybe this app is useful for you too.<br>
 
