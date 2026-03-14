@@ -8,7 +8,7 @@
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
     <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_500">#FF009688</color> <!-- Added teal_500 -->
+    <color name="teal_500">#FF009688</color>
     <color name="teal_700">#FF018786</color>
 
     <!-- Existing Material Blue Accent Colors -->
@@ -54,6 +54,11 @@
     <color name="material_red_200">#EF9A9A</color>
     <color name="material_red_500">#F44336</color>
     <color name="material_red_700">#D32F2F</color>
+
+    <!-- New Material Design Purple Accent Colors -->
+    <color name="material_purple_200">#E1BEE7</color>
+    <color name="material_purple_500">#9C27B0</color>
+    <color name="material_purple_700">#7B1FA2</color>
 
     <!-- Timer Status Colors -->
     <color name="status_scheduled">#FFC107</color> <!-- Amber -->

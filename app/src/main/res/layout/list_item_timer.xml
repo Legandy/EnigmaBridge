@@ -16,12 +16,12 @@
             android:id="@+id/status_icon"
             android:layout_width="24dp"
             android:layout_height="24dp"
+            android:contentDescription="@null"
+            app:layout_constraintBottom_toBottomOf="@+id/text_timer_title"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/text_timer_title"
-            app:layout_constraintBottom_toBottomOf="@+id/text_timer_title"
             tools:src="@drawable/ic_outline_timer_24"
-            tools:tint="@color/status_scheduled"
-            android:contentDescription="@null"/>
+            tools:tint="@color/status_scheduled" />
 
         <TextView
             android:id="@+id/text_timer_title"
@@ -41,8 +41,8 @@
             android:layout_marginTop="2dp"
             android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
             android:textColor="?attr/colorOnSurfaceVariant"
-            app:layout_constraintStart_toStartOf="@+id/text_timer_title"
             app:layout_constraintEnd_toEndOf="@id/text_timer_title"
+            app:layout_constraintStart_toStartOf="@+id/text_timer_title"
             app:layout_constraintTop_toBottomOf="@+id/text_timer_title"
             tools:text="@string/channel_placeholder" />
 
@@ -64,10 +64,10 @@
             android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
             android:textColor="?attr/colorPrimary"
             android:textStyle="bold"
+            android:visibility="gone"
             app:layout_constraintBaseline_toBaselineOf="@+id/text_timer_time"
             app:layout_constraintStart_toEndOf="@+id/text_timer_time"
-            tools:text="@string/zap"
-            android:visibility="gone"/>
+            tools:text="@string/Zap" />
 
 
         <ImageView
@@ -76,13 +76,13 @@
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
+            android:contentDescription="@string/menu_description"
             android:focusable="true"
             android:padding="8dp"
             android:src="@drawable/ic_baseline_more_vert_24"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:tint="?attr/colorOnSurfaceVariant"
-            android:contentDescription="@string/menu_description" />
+            app:tint="?attr/colorOnSurfaceVariant" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
