@@ -9,13 +9,13 @@ import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.core.AppEvent
 import io.github.legandy.enigmabridge.core.AppEventBus
 import io.github.legandy.enigmabridge.core.EnigmaBridgeApplication
-import io.github.legandy.enigmabridge.core.PreferenceManager
+import io.github.legandy.enigmabridge.data.PreferenceManager
+import io.github.legandy.enigmabridge.data.Timer
 import io.github.legandy.enigmabridge.data.TimerRepository
 import io.github.legandy.enigmabridge.data.TimerResult
-import io.github.legandy.enigmabridge.helpers.NotificationHelper
-import io.github.legandy.enigmabridge.helpers.SchedulingHelper
-import io.github.legandy.enigmabridge.main.MainActivity
-import io.github.legandy.enigmabridge.receiversettings.Timer
+import io.github.legandy.enigmabridge.notifications.NotificationHelper
+import io.github.legandy.enigmabridge.ui.main.MainActivity
+import io.github.legandy.enigmabridge.utils.SchedulingHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -30,7 +30,8 @@ import org.tvbrowser.devplugin.Program
 import org.tvbrowser.devplugin.ReceiveTarget
 import kotlin.math.abs
 
-class RecordService : Service() {
+// Service for communicating with TVBrowser
+class TvBrowserPluginService : Service() {
 
     private lateinit var prefManager: PreferenceManager
     private lateinit var repository: TimerRepository
@@ -43,12 +44,12 @@ class RecordService : Service() {
     private val markedProgramIds = mutableSetOf<String>()
 
     companion object {
-        private const val TAG = "RecordService"
+        private const val TAG = "TvBrowserPluginService"
         private const val MENU_ID_SIMPLE_SCHEDULE = 1
         private const val MENU_ID_ADVANCED_SCHEDULE = 2
         private const val MENU_ID_UNSCHEDULE = 3
         private const val MENU_ID_MANUAL_UNMARK = 4
-        private const val TIMER_MATCH_THRESHOLD_MS = 5 * 60 * 1000L // 5 minutes buffer
+        private const val TIMER_MATCH_THRESHOLD_MS = 5 * 60 * 1000L
     }
 
     private val json = Json {
@@ -62,7 +63,7 @@ class RecordService : Service() {
         val app = application as EnigmaBridgeApplication
         prefManager = app.prefManager
         repository = app.timerRepository
-        
+
         NotificationHelper.createNotificationChannel(this)
 
         markedProgramIds.clear()
@@ -72,9 +73,21 @@ class RecordService : Service() {
 
         serviceScope.launch {
             AppEventBus.events.collect { event ->
-                if (event is AppEvent.RevertMarking) {
-                    Log.d(TAG, "Received signal to revert mark for program: ${event.program.title}")
-                    revertMarking(event.program)
+                when (event) {
+                    is AppEvent.MarkProgram -> {
+                        Log.d(TAG, "Received signal to mark program: ${event.program.title}")
+                        markProgram(event.program)
+                    }
+
+                    is AppEvent.RevertMarking -> {
+                        Log.d(
+                            TAG,
+                            "Received signal to revert mark for program: ${event.program.title}"
+                        )
+                        revertMarking(event.program)
+                    }
+
+                    else -> {}
                 }
             }
         }
@@ -86,19 +99,36 @@ class RecordService : Service() {
     }
 
     private val binder: Plugin.Stub = object : Plugin.Stub() {
-        override fun getVersion(): String { return try { packageManager.getPackageInfo(packageName, 0).versionName ?: "1.0" } catch (_: Exception) { "1.0" } }
+        override fun getVersion(): String {
+            return try {
+                packageManager.getPackageInfo(packageName, 0).versionName ?: "1.0"
+            } catch (_: Exception) {
+                "1.0"
+            }
+        }
+
         override fun getName(): String = getString(R.string.app_name)
         override fun getDescription(): String = getString(R.string.plugin_description)
         override fun getAuthor(): String = getString(R.string.plugin_author)
         override fun getLicense(): String = getString(R.string.plugin_license)
         override fun hasPreferences(): Boolean = true
         override fun openPreferences(subscribedChannels: MutableList<Channel>?) {
-            val intent = Intent(applicationContext, MainActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+            val intent = Intent(
+                applicationContext,
+                MainActivity::class.java
+            ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
             startActivity(intent)
         }
-        override fun onActivation(pluginManager: PluginManager?) { mPluginManager = pluginManager; updateTimerCache() }
+
+        override fun onActivation(pluginManager: PluginManager?) {
+            mPluginManager = pluginManager; updateTimerCache()
+        }
+
         override fun getMarkIcon(): ByteArray? = null
-        override fun onDeactivation() { mPluginManager = null }
+        override fun onDeactivation() {
+            mPluginManager = null
+        }
+
         override fun handleFirstKnownProgramId(programId: Long) {}
         override fun getAvailableProgramReceiveTargets(): Array<ReceiveTarget>? = null
         override fun receivePrograms(programs: Array<Program>?, target: ReceiveTarget?) {}
@@ -107,29 +137,44 @@ class RecordService : Service() {
         override fun getContextMenuActionsForProgram(program: Program?): Array<PluginMenu> {
             if (program != null) {
                 return arrayOf(
-                    PluginMenu(MENU_ID_SIMPLE_SCHEDULE, getString(R.string.context_menu_schedule_simple)),
-                    PluginMenu(MENU_ID_ADVANCED_SCHEDULE, getString(R.string.context_menu_schedule_advanced)),
+                    PluginMenu(
+                        MENU_ID_SIMPLE_SCHEDULE,
+                        getString(R.string.context_menu_schedule_simple)
+                    ),
+                    PluginMenu(
+                        MENU_ID_ADVANCED_SCHEDULE,
+                        getString(R.string.context_menu_schedule_advanced)
+                    ),
                     PluginMenu(MENU_ID_UNSCHEDULE, getString(R.string.context_menu_unschedule)),
-                    PluginMenu(MENU_ID_MANUAL_UNMARK, getString(R.string.context_menu_manual_unmark))
+                    PluginMenu(
+                        MENU_ID_MANUAL_UNMARK,
+                        getString(R.string.context_menu_manual_unmark)
+                    )
                 )
             }
             return emptyArray()
         }
 
-        override fun onProgramContextMenuSelected(program: Program?, pluginMenu: PluginMenu?): Boolean {
+        override fun onProgramContextMenuSelected(
+            program: Program?,
+            pluginMenu: PluginMenu?
+        ): Boolean {
             if (program != null && pluginMenu != null) {
                 when (pluginMenu.id) {
                     MENU_ID_SIMPLE_SCHEDULE, MENU_ID_ADVANCED_SCHEDULE -> {
-                        markedProgramIds.add(program.id.toString())
-                        prefManager.setMarkedProgramIds(markedProgramIds)
-                        scheduleRecording(program, isAdvanced = (pluginMenu.id == MENU_ID_ADVANCED_SCHEDULE))
-                        return true
+                        scheduleRecording(
+                            program,
+                            isAdvanced = (pluginMenu.id == MENU_ID_ADVANCED_SCHEDULE)
+                        )
+                        return false
 
                     }
+
                     MENU_ID_UNSCHEDULE -> {
                         unscheduleRecording(program)
                         return false
                     }
+
                     MENU_ID_MANUAL_UNMARK -> {
                         revertMarking(program)
                         return false
@@ -140,8 +185,11 @@ class RecordService : Service() {
             return false
         }
 
-        override fun isMarked(programId: Long): Boolean = markedProgramIds.contains(programId.toString())
-        override fun getMarkedPrograms(): LongArray = markedProgramIds.mapNotNull { it.toLongOrNull() }.toLongArray()
+        override fun isMarked(programId: Long): Boolean =
+            markedProgramIds.contains(programId.toString())
+
+        override fun getMarkedPrograms(): LongArray =
+            markedProgramIds.mapNotNull { it.toLongOrNull() }.toLongArray()
     }
 
     private fun scheduleRecording(program: Program, isAdvanced: Boolean) {
@@ -157,14 +205,12 @@ class RecordService : Service() {
 
         if (syncedChannels == null) {
             showToast(getString(R.string.error_channel_list_not_synced))
-            revertMarking(program)
             return
         }
 
         val sRef = findSrefForChannel(program.channel.channelName, syncedChannels)
         if (sRef == null) {
             showToast(getString(R.string.error_channel_not_found, program.channel.channelName))
-            revertMarking(program)
             return
         }
 
@@ -191,7 +237,7 @@ class RecordService : Service() {
                     repeated = 0,
                     afterEvent = 0
                 )
-                
+
                 when (result) {
                     is TimerResult.Success -> {
                         if (prefManager.isNotifyScheduledEnabled()) {
@@ -199,10 +245,12 @@ class RecordService : Service() {
                         }
                         AppEventBus.emit(AppEvent.TimerListChanged)
                         updateTimerCache()
+                        // Notify to mark the program
+                        AppEventBus.emit(AppEvent.MarkProgram(program))
                         showToast(result.data.second)
                     }
+
                     is TimerResult.Error -> {
-                        revertMarking(program)
                         showToast(result.message)
                     }
                 }
@@ -226,12 +274,19 @@ class RecordService : Service() {
                     updateTimerCache()
                     AppEventBus.emit(AppEvent.TimerListChanged)
                 }
+
                 is TimerResult.Error -> {
                     showToast(result.message)
                     revertMarking(program)
                 }
             }
         }
+    }
+
+    private fun markProgram(program: Program) {
+        markedProgramIds.add(program.id.toString())
+        prefManager.setMarkedProgramIds(markedProgramIds)
+        mPluginManager?.markProgram(program)
     }
 
     private fun revertMarking(program: Program) {
@@ -259,14 +314,43 @@ class RecordService : Service() {
         }
     }
 
-    private fun findSrefForChannel(tvBrowserChannelName: String, syncedChannels: Map<String, String>): String? {
-        syncedChannels.forEach { (syncedName, sRef) -> if (syncedName.equals(tvBrowserChannelName, ignoreCase = true)) return sRef }
-        syncedChannels.forEach { (syncedName, sRef) -> if (syncedName.contains(tvBrowserChannelName, ignoreCase = true)) return sRef }
-        syncedChannels.forEach { (syncedName, sRef) -> if (tvBrowserChannelName.contains(syncedName, ignoreCase = true)) return sRef }
+    private fun findSrefForChannel(
+        tvBrowserChannelName: String,
+        syncedChannels: Map<String, String>
+    ): String? {
+        syncedChannels.forEach { (syncedName, sRef) ->
+            if (syncedName.equals(
+                    tvBrowserChannelName,
+                    ignoreCase = true
+                )
+            ) return sRef
+        }
+        syncedChannels.forEach { (syncedName, sRef) ->
+            if (syncedName.contains(
+                    tvBrowserChannelName,
+                    ignoreCase = true
+                )
+            ) return sRef
+        }
+        syncedChannels.forEach { (syncedName, sRef) ->
+            if (tvBrowserChannelName.contains(
+                    syncedName,
+                    ignoreCase = true
+                )
+            ) return sRef
+        }
         return null
     }
 
-    private fun showToast(message: String) { CoroutineScope(Dispatchers.Main).launch { Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show() } }
+    private fun showToast(message: String) {
+        CoroutineScope(Dispatchers.Main).launch {
+            Toast.makeText(
+                applicationContext,
+                message,
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
 
     override fun onBind(intent: Intent): IBinder = binder
 }

@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.timer
+package io.github.legandy.enigmabridge.background
 
 import android.content.Context
 import android.util.Log
@@ -6,8 +6,9 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import io.github.legandy.enigmabridge.core.EnigmaBridgeApplication
 import io.github.legandy.enigmabridge.data.TimerResult
-import io.github.legandy.enigmabridge.helpers.NotificationHelper
+import io.github.legandy.enigmabridge.notifications.NotificationHelper
 
+// Worker for checking timers periodically
 class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
     CoroutineWorker(appContext, workerParams) {
 
@@ -31,19 +32,22 @@ class TimerCheckWorker(appContext: Context, workerParams: WorkerParameters) :
             return Result.failure()
         }
 
-        // 1. Refresh timers using the Repository (Updates StateFlow, Prefs & Syncs Notifications)
         return when (val result = repository.refreshTimers()) {
             is TimerResult.Success -> {
                 val currentTimers = result.data
                 Log.d(WORK_TAG, "Successfully fetched ${currentTimers.size} timers.")
 
                 if (!isSilentSync && prefManager.isNotifySyncSuccessEnabled()) {
-                    NotificationHelper.sendTimerSyncSuccessNotification(applicationContext, currentTimers.size)
+                    NotificationHelper.sendTimerSyncSuccessNotification(
+                        applicationContext,
+                        currentTimers.size
+                    )
                 }
 
                 Log.d(WORK_TAG, "--- TimerCheckWorker FINISHED SUCCESSFULLY ---")
                 Result.success()
             }
+
             is TimerResult.Error -> {
                 Log.e(WORK_TAG, "Sync failed: ${result.message}")
                 NotificationHelper.sendTimerSyncFailedNotification(applicationContext)

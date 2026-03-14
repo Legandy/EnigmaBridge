@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.main
+package io.github.legandy.enigmabridge.ui.main
 
 import android.Manifest
 import android.content.Intent
@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.text.format.DateFormat
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -14,21 +15,24 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import io.github.legandy.enigmabridge.R
-import io.github.legandy.enigmabridge.about.AboutActivity
 import io.github.legandy.enigmabridge.core.AppEvent
 import io.github.legandy.enigmabridge.core.AppEventBus
-import io.github.legandy.enigmabridge.databinding.ActivityMainBinding
-import io.github.legandy.enigmabridge.timer.TimerListActivity
-import io.github.legandy.enigmabridge.receiversettings.ReceiverSettingsActivity
-import io.github.legandy.enigmabridge.settings.SettingsActivity
-import kotlinx.coroutines.launch
-import java.util.Date
 import io.github.legandy.enigmabridge.core.AppThemeManager
 import io.github.legandy.enigmabridge.core.EnigmaBridgeApplication
-import io.github.legandy.enigmabridge.core.PreferenceManager
+import io.github.legandy.enigmabridge.data.PreferenceManager
 import io.github.legandy.enigmabridge.data.TimerRepository
 import io.github.legandy.enigmabridge.data.TimerResult
+import io.github.legandy.enigmabridge.databinding.ActivityMainBinding
+import io.github.legandy.enigmabridge.ui.about.AboutActivity
+import io.github.legandy.enigmabridge.ui.receiversettings.ReceiverSettingsActivity
+import io.github.legandy.enigmabridge.ui.settings.SettingsActivity
+import io.github.legandy.enigmabridge.ui.timer.TimerListActivity
+import kotlinx.coroutines.launch
+import java.util.Date
 
+// ToDo: Refactor to Jetpack Compose
+
+// Screen for home/dashboard
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
@@ -38,9 +42,11 @@ class MainActivity : AppCompatActivity() {
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
-                Toast.makeText(this, getString(R.string.permission_granted), Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.permission_granted), Toast.LENGTH_SHORT)
+                    .show()
             } else {
-                Toast.makeText(this, getString(R.string.permission_denied), Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.permission_denied), Toast.LENGTH_SHORT)
+                    .show()
             }
             updateNotificationStatusIndicator()
         }
@@ -52,7 +58,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Initialize from Application Singleton
         val app = application as EnigmaBridgeApplication
         prefManager = app.prefManager
         timerRepository = app.timerRepository
@@ -67,7 +72,9 @@ class MainActivity : AppCompatActivity() {
                         is AppEvent.TimerSyncCompleted -> {
                             updateLastSyncStatus()
                         }
-                        else -> { /* Ignore other events */ }
+
+                        else -> { // Ignore other events
+                        }
                     }
                 }
             }
@@ -83,7 +90,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
@@ -120,17 +131,30 @@ class MainActivity : AppCompatActivity() {
     private fun updateConnectionStatusIndicator(showToast: Boolean) {
         lifecycleScope.launch {
             val isConnected = testConnection()
-            
+
             if (isConnected) {
                 binding.statusEnigmaIcon.setImageResource(R.drawable.ic_outline_check_circle_24)
-                binding.statusEnigmaIcon.setColorFilter(ContextCompat.getColor(this@MainActivity, android.R.color.holo_green_dark))
+                binding.statusEnigmaIcon.setColorFilter(
+                    ContextCompat.getColor(
+                        this@MainActivity,
+                        android.R.color.holo_green_dark
+                    )
+                )
                 binding.statusEnigmaText.text = getString(R.string.status_enigma_connected)
-                if (showToast) Toast.makeText(this@MainActivity, getString(R.string.toast_connection_test_successful), Toast.LENGTH_SHORT).show()
+                if (showToast) Toast.makeText(
+                    this@MainActivity,
+                    getString(R.string.toast_connection_test_successful),
+                    Toast.LENGTH_SHORT
+                ).show()
             } else {
                 binding.statusEnigmaIcon.setImageResource(R.drawable.ic_outline_error_24)
                 binding.statusEnigmaIcon.setColorFilter(Color.RED)
                 binding.statusEnigmaText.text = getString(R.string.status_enigma_disconnected)
-                if (showToast) Toast.makeText(this@MainActivity, getString(R.string.toast_connection_test_failed), Toast.LENGTH_LONG).show()
+                if (showToast) Toast.makeText(
+                    this@MainActivity,
+                    getString(R.string.toast_connection_test_failed),
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }
@@ -141,8 +165,7 @@ class MainActivity : AppCompatActivity() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 pm.getPackageInfo("org.tvbrowser.tvbrowser", PackageManager.PackageInfoFlags.of(0))
             } else {
-                @Suppress("DEPRECATION")
-                pm.getPackageInfo("org.tvbrowser.tvbrowser", 0)
+                @Suppress("DEPRECATION") pm.getPackageInfo("org.tvbrowser.tvbrowser", 0)
             }
             true
         } catch (_: PackageManager.NameNotFoundException) {
@@ -153,7 +176,12 @@ class MainActivity : AppCompatActivity() {
     private fun runChecks() {
         if (isTvBrowserInstalled()) {
             binding.statusTvBrowserIcon.setImageResource(R.drawable.ic_outline_check_circle_24)
-            binding.statusTvBrowserIcon.setColorFilter(ContextCompat.getColor(this, android.R.color.holo_green_dark))
+            binding.statusTvBrowserIcon.setColorFilter(
+                ContextCompat.getColor(
+                    this,
+                    android.R.color.holo_green_dark
+                )
+            )
             binding.statusTvBrowserText.text = getString(R.string.status_tvbrowser_found)
         } else {
             binding.statusTvBrowserIcon.setImageResource(R.drawable.ic_outline_error_24)
@@ -169,7 +197,12 @@ class MainActivity : AppCompatActivity() {
         val intervalHours = prefManager.getSyncIntervalHours()
         if (intervalHours > 0) {
             binding.statusTimerSyncIcon.setImageResource(R.drawable.ic_outline_check_circle_24)
-            binding.statusTimerSyncIcon.setColorFilter(ContextCompat.getColor(this, android.R.color.holo_green_dark))
+            binding.statusTimerSyncIcon.setColorFilter(
+                ContextCompat.getColor(
+                    this,
+                    android.R.color.holo_green_dark
+                )
+            )
             binding.statusTimerSyncText.text = getString(R.string.status_periodic_sync_enabled)
         } else {
             binding.statusTimerSyncIcon.setImageResource(R.drawable.ic_outline_error_24)
@@ -180,19 +213,34 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateNotificationStatusIndicator() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val hasPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+            val hasPermission = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
             if (hasPermission) {
                 binding.statusNotificationIcon.setImageResource(R.drawable.ic_outline_check_circle_24)
-                binding.statusNotificationIcon.setColorFilter(ContextCompat.getColor(this, android.R.color.holo_green_dark))
-                binding.statusNotificationText.text = getString(R.string.status_notifications_enabled)
+                binding.statusNotificationIcon.setColorFilter(
+                    ContextCompat.getColor(
+                        this,
+                        android.R.color.holo_green_dark
+                    )
+                )
+                binding.statusNotificationText.text =
+                    getString(R.string.status_notifications_enabled)
             } else {
                 binding.statusNotificationIcon.setImageResource(R.drawable.ic_outline_error_24)
                 binding.statusNotificationIcon.setColorFilter(Color.RED)
-                binding.statusNotificationText.text = getString(R.string.status_notifications_disabled)
+                binding.statusNotificationText.text =
+                    getString(R.string.status_notifications_disabled)
             }
         } else {
             binding.statusNotificationIcon.setImageResource(R.drawable.ic_outline_check_circle_24)
-            binding.statusNotificationIcon.setColorFilter(ContextCompat.getColor(this, android.R.color.holo_green_dark))
+            binding.statusNotificationIcon.setColorFilter(
+                ContextCompat.getColor(
+                    this,
+                    android.R.color.holo_green_dark
+                )
+            )
             binding.statusNotificationText.text = getString(R.string.status_notifications_enabled)
         }
     }
@@ -202,8 +250,8 @@ class MainActivity : AppCompatActivity() {
         if (lastSyncTimestamp > 0) {
             val date = Date(lastSyncTimestamp)
 
-            val dateFormat = android.text.format.DateFormat.getDateFormat(this)
-            val timeFormat = android.text.format.DateFormat.getTimeFormat(this)
+            val dateFormat = DateFormat.getDateFormat(this)
+            val timeFormat = DateFormat.getTimeFormat(this)
 
             val formattedDate = dateFormat.format(date)
             val formattedTime = timeFormat.format(date)

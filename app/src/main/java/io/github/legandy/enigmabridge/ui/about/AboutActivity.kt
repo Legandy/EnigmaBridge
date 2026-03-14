@@ -1,14 +1,15 @@
-package io.github.legandy.enigmabridge.about
+package io.github.legandy.enigmabridge.ui.about
 
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.databinding.ActivityAboutBinding
-import io.github.legandy.enigmabridge.about.donations.DonationsDialogFragment
-import androidx.core.net.toUri
+import io.github.legandy.enigmabridge.ui.donations.DonationsDialogFragment
 
+// Screen for app info
 class AboutActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAboutBinding
@@ -21,7 +22,6 @@ class AboutActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        // Set up click listeners for the items
         binding.itemCreator.setOnClickListener {
             openLink(getString(R.string.creator_github_link).toUri())
         }
@@ -35,11 +35,15 @@ class AboutActivity : AppCompatActivity() {
         }
 
         binding.itemDonations.setOnClickListener {
-            DonationsDialogFragment().show(supportFragmentManager, DonationsDialogFragment.TAG)
+            DonationsDialogFragment().show(
+                supportFragmentManager,
+                DonationsDialogFragment.TAG
+            )
         }
 
         try {
-            val pInfo = applicationContext.packageManager.getPackageInfo(applicationContext.packageName, 0)
+            val pInfo =
+                applicationContext.packageManager.getPackageInfo(applicationContext.packageName, 0)
             val versionName = pInfo.versionName
             binding.aboutVersionValue.text = versionName
         } catch (e: Exception) {

@@ -3,10 +3,7 @@ package io.github.legandy.enigmabridge.data
 import android.content.Context
 import io.github.legandy.enigmabridge.core.AppEvent
 import io.github.legandy.enigmabridge.core.AppEventBus
-import io.github.legandy.enigmabridge.core.PreferenceManager
 import io.github.legandy.enigmabridge.notifications.TimerNotificationManager
-import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
-import io.github.legandy.enigmabridge.receiversettings.Timer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,10 +16,7 @@ sealed class TimerResult<out T> {
     data class Error(val message: String, val exception: Throwable? = null) : TimerResult<Nothing>()
 }
 
-/**
- * Repository for managing Timer data.
- * Acts as a single source of truth for timer operations, bridging [EnigmaClient] and [PreferenceManager].
- */
+// Repository for managing timer data in the Enigma2 devices
 class TimerRepository(context: Context, private val prefs: PreferenceManager) {
 
     private val json = Json {
@@ -48,23 +42,14 @@ class TimerRepository(context: Context, private val prefs: PreferenceManager) {
     }
 
     suspend fun refreshTimers(): TimerResult<List<Timer>> = withContext(Dispatchers.IO) {
-        runCatching { getClient().getTimerList() }
-            .fold(
-                onSuccess = { fetchedTimers ->
-                    prefs.setPreviousTimersJson(json.encodeToString(fetchedTimers))
-                    prefs.setLastSyncTimestamp(System.currentTimeMillis())
-                    _timers.value = fetchedTimers
-                    
-                    // Sync notifications based on the new list
-                    notificationManager.syncNotifications(fetchedTimers)
-
-                    // Notify the app that a sync has completed
-                    AppEventBus.emit(AppEvent.TimerSyncCompleted)
-
-                    TimerResult.Success(fetchedTimers)
-                },
-                onFailure = { TimerResult.Error("Network error: ${it.message}", it) }
-            )
+        runCatching { getClient().getTimerList() }.fold(onSuccess = { fetchedTimers ->
+            prefs.setPreviousTimersJson(json.encodeToString(fetchedTimers))
+            prefs.setLastSyncTimestamp(System.currentTimeMillis())
+            _timers.value = fetchedTimers
+            notificationManager.syncNotifications(fetchedTimers)
+            AppEventBus.emit(AppEvent.TimerSyncCompleted)
+            TimerResult.Success(fetchedTimers)
+        }, onFailure = { TimerResult.Error("Network error: ${it.message}", it) })
     }
 
     suspend fun getTimers(): TimerResult<List<Timer>> = withContext(Dispatchers.IO) {
@@ -86,30 +71,32 @@ class TimerRepository(context: Context, private val prefs: PreferenceManager) {
         afterEvent: Int
     ): TimerResult<Pair<Boolean, String>> = withContext(Dispatchers.IO) {
         runCatching {
-            getClient().addTimer(title, sRef, startTime, endTime, description, justPlay, repeated, afterEvent)
-        }.fold(
-            onSuccess = { message ->
-                refreshTimers()
-                TimerResult.Success(true to message)
-            },
-            onFailure = {
-                TimerResult.Error(it.message ?: "Unknown error", it)
-            }
-        )
+            getClient().addTimer(
+                title,
+                sRef,
+                startTime,
+                endTime,
+                description,
+                justPlay,
+                repeated,
+                afterEvent
+            )
+        }.fold(onSuccess = { message ->
+            refreshTimers()
+            TimerResult.Success(true to message)
+        }, onFailure = {
+            TimerResult.Error(it.message ?: "Unknown error", it)
+        })
     }
 
-    suspend fun deleteTimer(timer: Timer): TimerResult<Pair<Boolean, String>> = withContext(Dispatchers.IO) {
-        runCatching { getClient().deleteTimer(timer) }
-            .fold(
-                onSuccess = { message ->
-                    // Immediately cancel the local notification work before refreshing
-                    notificationManager.cancelNotificationForTimer(timer)
-                    refreshTimers()
-                    TimerResult.Success(true to message)
-                },
-                onFailure = { TimerResult.Error("Network error: ${it.message}", it) }
-            )
-    }
+    suspend fun deleteTimer(timer: Timer): TimerResult<Pair<Boolean, String>> =
+        withContext(Dispatchers.IO) {
+            runCatching { getClient().deleteTimer(timer) }.fold(onSuccess = { message ->
+                notificationManager.cancelNotificationForTimer(timer)
+                refreshTimers()
+                TimerResult.Success(true to message)
+            }, onFailure = { TimerResult.Error("Network error: ${it.message}", it) })
+        }
 
     suspend fun editTimer(
         originalTimer: Timer,
@@ -124,17 +111,20 @@ class TimerRepository(context: Context, private val prefs: PreferenceManager) {
     ): TimerResult<Pair<Boolean, String>> = withContext(Dispatchers.IO) {
         runCatching {
             getClient().editTimer(
-                originalTimer, newTitle, newDescription, newStartTime, newEndTime,
-                justPlay, repeated, afterEvent, disabled
+                originalTimer,
+                newTitle,
+                newDescription,
+                newStartTime,
+                newEndTime,
+                justPlay,
+                repeated,
+                afterEvent,
+                disabled
             )
-        }.fold(
-            onSuccess = { message ->
-                    // Cancel the old notification key and refresh will schedule the new one
-                    notificationManager.cancelNotificationForTimer(originalTimer)
-                    refreshTimers()
-                    TimerResult.Success(true to message)
-            },
-            onFailure = { TimerResult.Error("Network error: ${it.message}", it) }
-        )
+        }.fold(onSuccess = { message ->
+            notificationManager.cancelNotificationForTimer(originalTimer)
+            refreshTimers()
+            TimerResult.Success(true to message)
+        }, onFailure = { TimerResult.Error("Network error: ${it.message}", it) })
     }
 }

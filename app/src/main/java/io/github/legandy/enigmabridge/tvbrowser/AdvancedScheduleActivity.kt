@@ -13,18 +13,22 @@ import io.github.legandy.enigmabridge.core.AppEvent
 import io.github.legandy.enigmabridge.core.AppEventBus
 import io.github.legandy.enigmabridge.core.AppThemeManager
 import io.github.legandy.enigmabridge.core.EnigmaBridgeApplication
-import io.github.legandy.enigmabridge.core.PreferenceManager
+import io.github.legandy.enigmabridge.data.PreferenceManager
 import io.github.legandy.enigmabridge.data.TimerRepository
 import io.github.legandy.enigmabridge.data.TimerResult
 import io.github.legandy.enigmabridge.databinding.ActivityAdvancedScheduleBinding
-import io.github.legandy.enigmabridge.helpers.NotificationHelper
-import io.github.legandy.enigmabridge.helpers.SchedulingHelper
+import io.github.legandy.enigmabridge.notifications.NotificationHelper
+import io.github.legandy.enigmabridge.utils.SchedulingHelper
 import kotlinx.coroutines.launch
 import org.tvbrowser.devplugin.Program
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
+// ToDo: Refactor to jetpack compose
+// ToDO: Unmark program when a timer was canceled on the Enigma2
+
+// Dialog for advanced timer scheduling inside TV Browser
 class AdvancedScheduleActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAdvancedScheduleBinding
@@ -42,18 +46,18 @@ class AdvancedScheduleActivity : AppCompatActivity() {
         val app = application as EnigmaBridgeApplication
         prefManager = app.prefManager
         repository = app.timerRepository
-        
+
         AppThemeManager.applyThemeAndAccentColor(this)
         super.onCreate(savedInstanceState)
         binding = ActivityAdvancedScheduleBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Modern, type-safe way to get Parcelable extras
         program = IntentCompat.getParcelableExtra(intent, "PROGRAM_EXTRA", Program::class.java)
         sRef = intent.getStringExtra("SREF_EXTRA")
 
         if (program == null || sRef == null) {
-            Toast.makeText(this, getString(R.string.error_program_data_missing), Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.error_program_data_missing), Toast.LENGTH_LONG)
+                .show()
             finish()
             return
         }
@@ -65,7 +69,7 @@ class AdvancedScheduleActivity : AppCompatActivity() {
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                revertMarkAndFinish()
+                finish()
             }
         })
     }
@@ -90,7 +94,7 @@ class AdvancedScheduleActivity : AppCompatActivity() {
         binding.textStartTime.setOnClickListener { showTimePickerDialog(isStart = true) }
         binding.textEndTime.setOnClickListener { showTimePickerDialog(isStart = false) }
 
-        binding.buttonCancel.setOnClickListener { revertMarkAndFinish() }
+        binding.buttonCancel.setOnClickListener { finish() }
         binding.buttonSave.setOnClickListener { scheduleAdvancedTimer() }
     }
 
@@ -101,10 +105,7 @@ class AdvancedScheduleActivity : AppCompatActivity() {
                 calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
                 calendar.set(Calendar.MINUTE, minute)
                 updateTimeTextViews()
-            },
-            calendar.get(Calendar.HOUR_OF_DAY),
-            calendar.get(Calendar.MINUTE),
-            true
+            }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true
         ).show()
     }
 
@@ -119,7 +120,8 @@ class AdvancedScheduleActivity : AppCompatActivity() {
 
         val repeated = 0
 
-        Toast.makeText(this, getString(R.string.scheduling_toast, editedTitle), Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, getString(R.string.scheduling_toast, editedTitle), Toast.LENGTH_SHORT)
+            .show()
 
         lifecycleScope.launch {
             val result = SchedulingHelper.scheduleTimer(
@@ -142,19 +144,15 @@ class AdvancedScheduleActivity : AppCompatActivity() {
                     if (prefManager.isNotifyScheduledEnabled()) {
                         NotificationHelper.sendSuccessNotification(applicationContext, program!!)
                     }
+                    program?.let { AppEventBus.emit(AppEvent.MarkProgram(it)) }
                     finish()
                 }
+
                 is TimerResult.Error -> {
                     Toast.makeText(applicationContext, result.message, Toast.LENGTH_LONG).show()
-                    revertMarkAndFinish()
+                    finish()
                 }
             }
         }
-    }
-
-    private fun revertMarkAndFinish() {
-        program?.let {
-            AppEventBus.emit(AppEvent.RevertMarking(it))    }
-        finish()
     }
 }

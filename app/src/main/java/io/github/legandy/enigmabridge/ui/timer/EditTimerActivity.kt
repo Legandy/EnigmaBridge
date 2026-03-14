@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.timer
+package io.github.legandy.enigmabridge.ui.timer
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -8,18 +8,22 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.IntentCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.button.MaterialButton
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.core.EnigmaBridgeApplication
-import io.github.legandy.enigmabridge.core.PreferenceManager
+import io.github.legandy.enigmabridge.data.PreferenceManager
+import io.github.legandy.enigmabridge.data.Timer
 import io.github.legandy.enigmabridge.data.TimerRepository
 import io.github.legandy.enigmabridge.data.TimerResult
 import io.github.legandy.enigmabridge.databinding.ActivityEditTimerBinding
-import io.github.legandy.enigmabridge.receiversettings.Timer
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
+// ToDo: Refactor to Jetpack Compose
+
+// Screen for editing timers
 class EditTimerActivity : AppCompatActivity() {
 
     private lateinit var prefManager: PreferenceManager
@@ -35,7 +39,7 @@ class EditTimerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         val app = application as EnigmaBridgeApplication
         prefManager = app.prefManager
         repository = app.timerRepository
@@ -44,13 +48,12 @@ class EditTimerActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         originalTimer = IntentCompat.getParcelableExtra(
-            intent, 
-            TimerListActivity.EXTRA_TIMER, 
-            Timer::class.java
+            intent, TimerListActivity.EXTRA_TIMER, Timer::class.java
         )
 
         if (originalTimer == null) {
-            Toast.makeText(this, getString(R.string.error_program_data_missing), Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.error_program_data_missing), Toast.LENGTH_LONG)
+                .show()
             finish()
             return
         }
@@ -88,8 +91,12 @@ class EditTimerActivity : AppCompatActivity() {
         )
 
         val dayButtonMap = mapOf(
-            1 to binding.toggleMonday, 2 to binding.toggleTuesday, 4 to binding.toggleWednesday,
-            8 to binding.toggleThursday, 16 to binding.toggleFriday, 32 to binding.toggleSaturday,
+            1 to binding.toggleMonday,
+            2 to binding.toggleTuesday,
+            4 to binding.toggleWednesday,
+            8 to binding.toggleThursday,
+            16 to binding.toggleFriday,
+            32 to binding.toggleSaturday,
             64 to binding.toggleSunday
         )
 
@@ -122,13 +129,18 @@ class EditTimerActivity : AppCompatActivity() {
         }
 
         val dayValueMap = mapOf(
-            binding.toggleMonday.id to 1, binding.toggleTuesday.id to 2, binding.toggleWednesday.id to 4,
-            binding.toggleThursday.id to 8, binding.toggleFriday.id to 16, binding.toggleSaturday.id to 32,
+            binding.toggleMonday.id to 1,
+            binding.toggleTuesday.id to 2,
+            binding.toggleWednesday.id to 4,
+            binding.toggleThursday.id to 8,
+            binding.toggleFriday.id to 16,
+            binding.toggleSaturday.id to 32,
             binding.toggleSunday.id to 64
         )
         var repeated = 0
         for (i in 0 until binding.repeatsOnGroup.childCount) {
-            val button = binding.repeatsOnGroup.getChildAt(i) as? com.google.android.material.button.MaterialButton
+            val button =
+                binding.repeatsOnGroup.getChildAt(i) as? MaterialButton
             if (button?.isChecked == true) {
                 repeated = repeated or (dayValueMap[button.id] ?: 0)
             }
@@ -138,7 +150,8 @@ class EditTimerActivity : AppCompatActivity() {
         val disabled = if (binding.toggleEnabled.isChecked) 0 else 1
 
         if (!prefManager.isReceiverConfigured()) {
-            Toast.makeText(this, getString(R.string.error_ip_address_empty), Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.error_ip_address_empty), Toast.LENGTH_LONG)
+                .show()
             return
         }
 
@@ -157,9 +170,14 @@ class EditTimerActivity : AppCompatActivity() {
 
             when (result) {
                 is TimerResult.Success -> {
-                    Toast.makeText(this@EditTimerActivity, getString(R.string.toast_timer_saved), Toast.LENGTH_SHORT).show()
-                    finish() // TimerListActivity will refresh automatically via Flow
+                    Toast.makeText(
+                        this@EditTimerActivity,
+                        getString(R.string.toast_timer_saved),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    finish()
                 }
+
                 is TimerResult.Error -> {
                     Toast.makeText(this@EditTimerActivity, result.message, Toast.LENGTH_LONG).show()
                 }
@@ -170,7 +188,8 @@ class EditTimerActivity : AppCompatActivity() {
     private fun showDatePickerDialog(isStart: Boolean) {
         val calendar = if (isStart) startCalendar else endCalendar
         DatePickerDialog(
-            this, { _, year, month, dayOfMonth ->
+            this,
+            { _, year, month, dayOfMonth ->
                 calendar.set(Calendar.YEAR, year)
                 calendar.set(Calendar.MONTH, month)
                 calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
@@ -189,10 +208,7 @@ class EditTimerActivity : AppCompatActivity() {
                 calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
                 calendar.set(Calendar.MINUTE, minute)
                 updateDateTimeTextViews()
-            },
-            calendar.get(Calendar.HOUR_OF_DAY),
-            calendar.get(Calendar.MINUTE),
-            true
+            }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true
         ).show()
     }
 

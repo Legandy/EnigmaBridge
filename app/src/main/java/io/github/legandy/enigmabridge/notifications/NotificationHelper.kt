@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.helpers
+package io.github.legandy.enigmabridge.notifications
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -13,12 +13,13 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import io.github.legandy.enigmabridge.R
-import io.github.legandy.enigmabridge.timer.TimerListActivity
+import io.github.legandy.enigmabridge.ui.timer.TimerListActivity
 import org.tvbrowser.devplugin.Program
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+// Setup for notification channels
 object NotificationHelper {
 
     private const val NOTIFICATION_CHANNEL_ID = "ENIGMA_BRIDGE_CHANNEL"
@@ -44,73 +45,61 @@ object NotificationHelper {
         val channelName = program.channel.channelName
         val title = program.title
 
-        val notificationContent = context.getString(R.string.notification_content, title, channelName, startTime)
+        val notificationContent =
+            context.getString(R.string.notification_content, title, channelName, startTime)
 
         val intent = Intent(context, TimerListActivity::class.java).apply {
             this.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            context, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_outline_check_circle_24)
             .setContentTitle(context.getString(R.string.notification_title))
-            .setContentText(notificationContent)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
+            .setContentText(notificationContent).setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent).setAutoCancel(true)
 
         sendNotification(context, builder)
     }
 
     fun sendRecordingStartedNotification(context: Context, timerName: String, sRefName: String) {
-        val notificationContent = context.getString(R.string.notification_content_recording_started, timerName, sRefName)
+        val notificationContent =
+            context.getString(R.string.notification_content_recording_started, timerName, sRefName)
 
         val intent = Intent(context, TimerListActivity::class.java).apply {
             this.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            context, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_outline_videocam_24)
             .setContentTitle(context.getString(R.string.notification_title_recording_started))
-            .setContentText(notificationContent)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
+            .setContentText(notificationContent).setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent).setAutoCancel(true)
 
         sendNotification(context, builder)
     }
 
     fun sendTimerSyncSuccessNotification(context: Context, timerCount: Int) {
-        val notificationContent = context.getString(R.string.notification_content_timer_sync_success, timerCount)
+        val notificationContent =
+            context.getString(R.string.notification_content_timer_sync_success, timerCount)
 
         val intent = Intent(context, TimerListActivity::class.java).apply {
             this.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            context, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_outline_update_24)
             .setContentTitle(context.getString(R.string.notification_title_timer_sync_success))
-            .setContentText(notificationContent)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
+            .setContentText(notificationContent).setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent).setAutoCancel(true)
 
         sendNotification(context, builder)
     }
@@ -122,26 +111,26 @@ object NotificationHelper {
             this.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            context, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_outline_error_24) // Use an error icon
+            .setSmallIcon(R.drawable.ic_outline_error_24)
             .setContentTitle(context.getString(R.string.notification_title_timer_sync_failed))
-            .setContentText(notificationContent)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
+            .setContentText(notificationContent).setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent).setAutoCancel(true)
 
         sendNotification(context, builder)
     }
 
     private fun sendNotification(context: Context, builder: NotificationCompat.Builder) {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-            NotificationManagerCompat.from(context).notify(System.currentTimeMillis().toInt(), builder.build())
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            NotificationManagerCompat.from(context)
+                .notify(System.currentTimeMillis().toInt(), builder.build())
         } else {
             Log.w(TAG, "POST_NOTIFICATIONS permission not granted. Cannot show notification.")
         }

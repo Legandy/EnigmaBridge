@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.timer
+package io.github.legandy.enigmabridge.ui.timer
 
 import android.view.LayoutInflater
 import android.view.View
@@ -8,20 +8,17 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.data.Timer
 import io.github.legandy.enigmabridge.databinding.ListItemTimerBinding
-import io.github.legandy.enigmabridge.receiversettings.Timer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+// Timer row definitions
 class TimerAdapter(
-    private var timers: MutableList<Timer>,
-    private val listener: OnTimerActionsListener
+    private var timers: MutableList<Timer>, private val listener: OnTimerActionsListener
 ) : RecyclerView.Adapter<TimerAdapter.TimerViewHolder>() {
 
-    /**
-     * An interface for the Activity to listen to item actions.
-     */
     interface OnTimerActionsListener {
         fun onEditClicked(timer: Timer)
         fun onDeleteClicked(timer: Timer)
@@ -30,7 +27,8 @@ class TimerAdapter(
     class TimerViewHolder(val binding: ListItemTimerBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TimerViewHolder {
-        val binding = ListItemTimerBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding =
+            ListItemTimerBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return TimerViewHolder(binding)
     }
 
@@ -45,7 +43,8 @@ class TimerAdapter(
 
         holder.binding.textTimerTitle.text = timer.name
         holder.binding.textTimerChannel.text = timer.sName
-        holder.binding.textTimerTime.text = context.getString(R.string.timer_time_range_detailed, startDate, endTime)
+        holder.binding.textTimerTime.text =
+            context.getString(R.string.timer_time_range_detailed, startDate, endTime)
 
         // Set status icon and color based on timer state
         val iconRes: Int
@@ -55,14 +54,17 @@ class TimerAdapter(
                 iconRes = R.drawable.ic_outline_timer_24
                 colorRes = R.color.status_scheduled
             }
+
             2 -> { // Recording
                 iconRes = R.drawable.ic_outline_videocam_24
                 colorRes = R.color.status_recording
             }
+
             3 -> { // Finished
                 iconRes = R.drawable.ic_outline_check_circle_24
                 colorRes = R.color.status_finished
             }
+
             else -> { // Error or Unknown
                 iconRes = R.drawable.ic_outline_error_24
                 colorRes = R.color.status_error
@@ -71,7 +73,7 @@ class TimerAdapter(
         holder.binding.statusIcon.setImageResource(iconRes)
         holder.binding.statusIcon.setColorFilter(ContextCompat.getColor(context, colorRes))
 
-        // Handle timer type (Zap/Switch)
+        // Handle timer type
         if (timer.justPlay == 2) {
             holder.binding.textTimerType.text = context.getString(R.string.label_switch)
             holder.binding.textTimerType.visibility = View.VISIBLE
@@ -79,20 +81,21 @@ class TimerAdapter(
             holder.binding.textTimerType.visibility = View.GONE
         }
 
-        // Set up the click listener for the 3-dot menu
         holder.binding.buttonMenu.setOnClickListener { view ->
             val popup = PopupMenu(context, view)
-            popup.inflate(R.menu.timer_item_menu) // Use the menu resource you provided
+            popup.inflate(R.menu.timer_item_menu)
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     R.id.action_edit_timer -> {
                         listener.onEditClicked(timer)
                         true
                     }
+
                     R.id.action_delete_timer -> {
                         listener.onDeleteClicked(timer)
                         true
                     }
+
                     else -> false
                 }
             }
@@ -103,18 +106,16 @@ class TimerAdapter(
     override fun getItemCount(): Int = timers.size
 
     class TimerDiffCallback(
-        private val oldList: List<Timer>,
-        private val newList: List<Timer>
+        private val oldList: List<Timer>, private val newList: List<Timer>
     ) : DiffUtil.Callback() {
         override fun getOldListSize() = oldList.size
         override fun getNewListSize() = newList.size
         override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
             val oldItem = oldList[oldItemPosition]
             val newItem = newList[newItemPosition]
-            // Unique identifier for a timer on Enigma2
-            return oldItem.sRef == newItem.sRef &&
-                    oldItem.beginTimestamp == newItem.beginTimestamp
+            return oldItem.sRef == newItem.sRef && oldItem.beginTimestamp == newItem.beginTimestamp
         }
+
         override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
             return oldList[oldItemPosition] == newList[newItemPosition]
         }

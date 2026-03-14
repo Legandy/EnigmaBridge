@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.receiversettings
+package io.github.legandy.enigmabridge.ui.receiversettings
 
 import android.content.Context
 import android.os.Bundle
@@ -13,16 +13,20 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.background.TimerCheckWorker
+import io.github.legandy.enigmabridge.core.AppThemeManager
+import io.github.legandy.enigmabridge.data.ConnectionResult
+import io.github.legandy.enigmabridge.data.PreferenceManager
 import io.github.legandy.enigmabridge.databinding.ActivityReceiverSettingsBinding
-import io.github.legandy.enigmabridge.timer.TimerCheckWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.util.concurrent.TimeUnit
-import io.github.legandy.enigmabridge.core.AppThemeManager
-import io.github.legandy.enigmabridge.core.PreferenceManager
 
+// ToDo: Refactor to Jetpack Compose
+
+// Screen for receiver settings
 class ReceiverSettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityReceiverSettingsBinding
@@ -71,9 +75,7 @@ class ReceiverSettingsActivity : AppCompatActivity() {
     private fun updateBouquetsSpinner(bouquets: Map<String, String>) {
         val bouquetNames = bouquets.keys.toList()
         val adapter = ArrayAdapter(
-            this@ReceiverSettingsActivity,
-            android.R.layout.simple_spinner_item,
-            bouquetNames
+            this@ReceiverSettingsActivity, android.R.layout.simple_spinner_item, bouquetNames
         )
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.bouquetsSpinner.adapter = adapter
@@ -128,7 +130,8 @@ class ReceiverSettingsActivity : AppCompatActivity() {
 
     private fun checkReceiverConnectionAndFetchBouquets() {
         if (!prefManager.isReceiverConfigured()) {
-            Toast.makeText(this, getString(R.string.error_ip_address_empty), Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.error_ip_address_empty), Toast.LENGTH_LONG)
+                .show()
             return
         }
 
@@ -148,13 +151,15 @@ class ReceiverSettingsActivity : AppCompatActivity() {
                         ).show()
                         fetchBouquets()
                     }
+
                     is ConnectionResult.Failure -> {
                         val message = if (result.isSslIssue) {
                             "HTTPS Error: Untrusted Certificate. Try HTTP or install the certificate."
                         } else {
                             result.error
                         }
-                        Toast.makeText(this@ReceiverSettingsActivity, message, Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@ReceiverSettingsActivity, message, Toast.LENGTH_LONG)
+                            .show()
                     }
                 }
             }
@@ -164,7 +169,8 @@ class ReceiverSettingsActivity : AppCompatActivity() {
     private fun fetchBouquets() {
         showLoading(true)
         if (!prefManager.isReceiverConfigured()) {
-            Toast.makeText(this, getString(R.string.error_ip_address_empty), Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.error_ip_address_empty), Toast.LENGTH_LONG)
+                .show()
             return
         }
 
@@ -184,18 +190,27 @@ class ReceiverSettingsActivity : AppCompatActivity() {
 
     private fun syncSelectedBouquet() {
         if (!prefManager.isReceiverConfigured()) {
-            Toast.makeText(this, getString(R.string.error_ip_address_empty), Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.error_ip_address_empty), Toast.LENGTH_LONG)
+                .show()
             return
         }
         val selectedBouquetName = binding.bouquetsSpinner.selectedItem as? String
         if (selectedBouquetName == null) {
-            Toast.makeText(this@ReceiverSettingsActivity, getString(R.string.error_no_bouquet_selected), Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this@ReceiverSettingsActivity,
+                getString(R.string.error_no_bouquet_selected),
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
 
         val bouquetSref = bouquetsMap[selectedBouquetName]
         if (bouquetSref == null) {
-            Toast.makeText(this@ReceiverSettingsActivity, getString(R.string.error_sref_not_found), Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this@ReceiverSettingsActivity,
+                getString(R.string.error_sref_not_found),
+                Toast.LENGTH_LONG
+            ).show()
             return
         }
 
@@ -236,24 +251,20 @@ class ReceiverSettingsActivity : AppCompatActivity() {
             val workManager = WorkManager.getInstance(context.applicationContext)
 
             if (intervalHours > 0) {
-                val constraints = Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build()
+                val constraints =
+                    Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 
                 val periodicWorkRequest = PeriodicWorkRequest.Builder(
-                    TimerCheckWorker::class.java,
-                    intervalHours.toLong(),
-                    TimeUnit.HOURS
-                )
-                    .setConstraints(constraints)
-                    .build()
+                    TimerCheckWorker::class.java, intervalHours.toLong(), TimeUnit.HOURS
+                ).setConstraints(constraints).build()
 
                 workManager.enqueueUniquePeriodicWork(
-                    "TimerCheckWorker",
-                    ExistingPeriodicWorkPolicy.UPDATE,
-                    periodicWorkRequest
+                    "TimerCheckWorker", ExistingPeriodicWorkPolicy.UPDATE, periodicWorkRequest
                 )
-                Log.d("ReceiverSettingsActivity", "Periodic timer check scheduled for every $intervalHours hours.")
+                Log.d(
+                    "ReceiverSettingsActivity",
+                    "Periodic timer check scheduled for every $intervalHours hours."
+                )
             } else {
                 workManager.cancelUniqueWork("TimerCheckWorker")
                 Log.d("ReceiverSettingsActivity", "Periodic timer check cancelled.")

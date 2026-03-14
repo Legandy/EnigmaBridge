@@ -6,14 +6,13 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
-import io.github.legandy.enigmabridge.core.PreferenceManager
-import io.github.legandy.enigmabridge.receiversettings.Timer
+import io.github.legandy.enigmabridge.background.RecordingNotificationWorker
+import io.github.legandy.enigmabridge.data.PreferenceManager
+import io.github.legandy.enigmabridge.data.Timer
 import java.util.concurrent.TimeUnit
 
-/**
- * Manages the scheduling and cancellation of notifications related to Enigma2 timers
- * using WorkManager.
- */
+
+// Manager for showing notifications for timers/syncs
 class TimerNotificationManager(context: Context, private val prefManager: PreferenceManager) {
 
     private val workManager = WorkManager.getInstance(context)
@@ -23,10 +22,8 @@ class TimerNotificationManager(context: Context, private val prefManager: Prefer
         fun getNotificationKey(timer: Timer): String = "${timer.sRef}_${timer.beginTimestamp}"
     }
 
-    /**
-     * Schedules or updates notifications for a list of timers.
-     * Also cancels notifications for timers that are no longer in the list.
-     */
+
+    // Schedules or updates notifications for a list of timers
     fun syncNotifications(currentTimers: List<Timer>) {
         if (!prefManager.isNotifyRecordingStartedEnabled()) {
             cancelAllNotifications()
@@ -36,7 +33,7 @@ class TimerNotificationManager(context: Context, private val prefManager: Prefer
         val scheduledNotificationKeys = prefManager.getScheduledNotificationIds().toMutableSet()
         val currentTimerKeys = currentTimers.map { getNotificationKey(it) }.toSet()
 
-        // 1. Cancel notifications for timers that are no longer in the fetched list
+        // Cancel notifications for timers that are no longer in the fetched list
         val keysToCancel = scheduledNotificationKeys - currentTimerKeys
         for (key in keysToCancel) {
             Log.d(TAG, "Cancelling scheduled notification for removed timer: $key")
@@ -44,19 +41,16 @@ class TimerNotificationManager(context: Context, private val prefManager: Prefer
             scheduledNotificationKeys.remove(key)
         }
 
-        // 2. Schedule notifications for future timers
+        // Schedule notifications for future timers
         for (timer in currentTimers) {
             scheduleNotification(timer)
             scheduledNotificationKeys.add(getNotificationKey(timer))
         }
-        
-        // 3. Persist the currently scheduled keys
+
+        // Persist the currently scheduled keys
         prefManager.setScheduledNotificationIds(scheduledNotificationKeys)
     }
 
-    /**
-     * Schedules a single notification for a timer if it starts in the future.
-     */
     fun scheduleNotification(timer: Timer) {
         val now = System.currentTimeMillis()
         val timerStartTimeMillis = TimeUnit.SECONDS.toMillis(timer.beginTimestamp)
@@ -64,32 +58,27 @@ class TimerNotificationManager(context: Context, private val prefManager: Prefer
 
         if (timerStartTimeMillis > now) {
             val delay = timerStartTimeMillis - now
-            val notificationWork = OneTimeWorkRequestBuilder<RecordingNotificationWorker>()
-                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
-                .setInputData(workDataOf(
-                    "title" to timer.name,
-                    "channel" to timer.sName
-                ))
-                .addTag(notificationKey)
-                .build()
+            val notificationWork =
+                OneTimeWorkRequestBuilder<RecordingNotificationWorker>().setInitialDelay(
+                    delay,
+                    TimeUnit.MILLISECONDS
+                ).setInputData(
+                    workDataOf(
+                        "title" to timer.name, "channel" to timer.sName
+                    )
+                ).addTag(notificationKey).build()
 
             workManager.enqueueUniqueWork(
-                notificationKey,
-                ExistingWorkPolicy.REPLACE,
-                notificationWork
+                notificationKey, ExistingWorkPolicy.REPLACE, notificationWork
             )
             Log.d(TAG, "Scheduled notification for: ${timer.name} at $notificationKey")
         }
     }
 
-    /**
-     * Immediately cancels the scheduled notification for a specific timer.
-     */
     fun cancelNotificationForTimer(timer: Timer) {
         val notificationKey = getNotificationKey(timer)
         workManager.cancelUniqueWork(notificationKey)
-        
-        // Also remove from the stored list in prefs
+
         val scheduledIds = prefManager.getScheduledNotificationIds().toMutableSet()
         if (scheduledIds.remove(notificationKey)) {
             prefManager.setScheduledNotificationIds(scheduledIds)

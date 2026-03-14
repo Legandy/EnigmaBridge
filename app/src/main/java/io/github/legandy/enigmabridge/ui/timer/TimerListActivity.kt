@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.timer
+package io.github.legandy.enigmabridge.ui.timer
 
 import android.content.Intent
 import android.os.Bundle
@@ -19,21 +19,23 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.background.TimerCheckWorker
 import io.github.legandy.enigmabridge.core.AppEvent
 import io.github.legandy.enigmabridge.core.AppEventBus
 import io.github.legandy.enigmabridge.core.AppThemeManager
 import io.github.legandy.enigmabridge.core.EnigmaBridgeApplication
-import io.github.legandy.enigmabridge.core.PreferenceManager
+import io.github.legandy.enigmabridge.data.PreferenceManager
+import io.github.legandy.enigmabridge.data.Timer
 import io.github.legandy.enigmabridge.databinding.ActivityTimerListBinding
-import io.github.legandy.enigmabridge.receiversettings.Timer
 import kotlinx.coroutines.launch
 
+// Screen for scheduled timers
 class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListener {
 
     private lateinit var binding: ActivityTimerListBinding
     private lateinit var prefManager: PreferenceManager
     private lateinit var timerAdapter: TimerAdapter
-    
+
     private val viewModel: TimerListViewModel by viewModels {
         TimerListViewModel.Factory((application as EnigmaBridgeApplication).timerRepository)
     }
@@ -46,7 +48,7 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
         val app = application as EnigmaBridgeApplication
         prefManager = app.prefManager
         AppThemeManager.applyThemeAndAccentColor(this)
-        
+
         super.onCreate(savedInstanceState)
         binding = ActivityTimerListBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -76,10 +78,12 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
                         performRefresh()
                         true
                     }
+
                     android.R.id.home -> {
                         onBackPressedDispatcher.onBackPressed()
                         true
                     }
+
                     else -> false
                 }
             }
@@ -107,9 +111,9 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
     }
 
     private fun triggerBackgroundSync(silent: Boolean) {
-        val syncWorkRequest = OneTimeWorkRequestBuilder<TimerCheckWorker>()
-            .setInputData(workDataOf(TimerCheckWorker.INPUT_DATA_KEY_SILENT_SYNC to silent))
-            .build()
+        val syncWorkRequest =
+            OneTimeWorkRequestBuilder<TimerCheckWorker>().setInputData(workDataOf(TimerCheckWorker.INPUT_DATA_KEY_SILENT_SYNC to silent))
+                .build()
         WorkManager.getInstance(this).enqueue(syncWorkRequest)
     }
 
@@ -119,12 +123,17 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
                 launch {
                     viewModel.uiState.collect { state ->
                         when (state) {
-                            is TimerListUiState.Loading -> { }
+                            is TimerListUiState.Loading -> {}
                             is TimerListUiState.Success -> {
                                 updateUI(state.timers)
                             }
+
                             is TimerListUiState.Error -> {
-                                Toast.makeText(this@TimerListActivity, state.message, Toast.LENGTH_LONG).show()
+                                Toast.makeText(
+                                    this@TimerListActivity,
+                                    state.message,
+                                    Toast.LENGTH_LONG
+                                ).show()
                                 binding.swipeRefreshLayout.isRefreshing = false
                             }
                         }
@@ -170,14 +179,11 @@ class TimerListActivity : AppCompatActivity(), TimerAdapter.OnTimerActionsListen
     }
 
     private fun showDeleteConfirmationDialog(timer: Timer) {
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.delete_timer_title))
+        AlertDialog.Builder(this).setTitle(getString(R.string.delete_timer_title))
             .setMessage(getString(R.string.delete_timer_message, timer.name))
             .setPositiveButton(getString(R.string.action_delete)) { _, _ ->
                 binding.swipeRefreshLayout.isRefreshing = true
                 viewModel.deleteTimer(timer)
-            }
-            .setNegativeButton(getString(R.string.action_cancel), null)
-            .show()
+            }.setNegativeButton(getString(R.string.action_cancel), null).show()
     }
 }

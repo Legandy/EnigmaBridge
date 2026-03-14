@@ -4,22 +4,22 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="org.tvbrowser.permission.BIND_PLUGIN" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".core.EnigmaBridgeApplication"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.EnigmaBridge"
-        android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="31">
 
         <!-- Activities -->
         <activity
-            android:name=".main.MainActivity"
+            android:name=".ui.main.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -28,39 +28,39 @@
         </activity>
 
         <activity
-            android:name=".timer.TimerListActivity"
+            android:name=".ui.timer.TimerListActivity"
             android:label="@string/label_scheduled_timers" />
 
         <activity
-            android:name=".receiversettings.ReceiverSettingsActivity"
+            android:name=".ui.receiversettings.ReceiverSettingsActivity"
             android:label="ReceiverSettings"
-            android:parentActivityName=".main.MainActivity"/>
+            android:parentActivityName=".ui.main.MainActivity" />
 
         <activity
-            android:name=".settings.SettingsActivity"
+            android:name=".ui.settings.SettingsActivity"
             android:label="@string/title_settings"
-            android:parentActivityName=".main.MainActivity"/>
+            android:parentActivityName=".ui.main.MainActivity" />
 
         <activity
-            android:name=".timer.EditTimerActivity"
+            android:name=".ui.timer.EditTimerActivity"
             android:label="@string/title_edit_schedule"
-            android:parentActivityName=".timer.TimerListActivity" />
+            android:parentActivityName=".ui.timer.TimerListActivity" />
 
         <activity
             android:name=".tvbrowser.AdvancedScheduleActivity"
-            android:theme="@style/Theme.EnigmaBridge.Dialog"
+            android:excludeFromRecents="true"
             android:label="@string/title_advanced_schedule"
             android:taskAffinity=""
-            android:excludeFromRecents="true"/>
+            android:theme="@style/Theme.EnigmaBridge.Dialog" />
 
         <activity
-            android:name=".about.AboutActivity"
+            android:name=".ui.about.AboutActivity"
             android:label="@string/title_about"
-            android:parentActivityName=".main.MainActivity" />
+            android:parentActivityName=".ui.main.MainActivity" />
 
         <!-- Services -->
         <service
-            android:name=".tvbrowser.RecordService"
+            android:name=".tvbrowser.TvBrowserPluginService"
             android:exported="true"
             android:label="1"
             android:permission="org.tvbrowser.permission.BIND_PLUGIN">
@@ -71,7 +71,7 @@
 
         <!-- Broadcast Receivers -->
         <receiver
-            android:name=".receiver.TimerCheckReceiver"
+            android:name=".broadcasts.TimerCheckReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -80,7 +80,7 @@
         </receiver>
 
         <receiver
-            android:name=".receiver.SyncTriggerReceiver"
+            android:name=".broadcasts.SyncTriggerReceiver"
             android:exported="true"
             tools:ignore="ExportedReceiver">
             <intent-filter>

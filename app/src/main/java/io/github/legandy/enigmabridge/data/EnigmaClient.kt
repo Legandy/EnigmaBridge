@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalSerializationApi::class, InternalSerializationApi::class)
 
-package io.github.legandy.enigmabridge.receiversettings
+package io.github.legandy.enigmabridge.data
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
@@ -16,18 +16,25 @@ import java.io.IOException
 import java.net.URLEncoder
 import javax.net.ssl.SSLHandshakeException
 
+// Manager for communicating with Enigma2 devices
 @Serializable
 data class BouquetResponse(@SerialName("bouquets") val bouquets: List<List<String>>)
+
 @Serializable
 data class ServiceResponse(@SerialName("services") val services: List<Service>)
+
 @Serializable
-data class Service(@SerialName("servicereference") val sRef: String, @SerialName("servicename") val sName: String)
+data class Service(
+    @SerialName("servicereference") val sRef: String,
+    @SerialName("servicename") val sName: String
+)
+
 @Serializable
 data class TimerListResponse(@SerialName("timers") val timers: List<Timer>)
+
 @Serializable
 data class SimpleResultResponse(
-    @SerialName("result") val result: Boolean,
-    @SerialName("message") val message: String
+    @SerialName("result") val result: Boolean, @SerialName("message") val message: String
 )
 
 @Parcelize
@@ -48,9 +55,6 @@ data class Timer(
     @SerialName("tags") val tags: String? = null
 ) : Parcelable
 
-/**
- * Represents the result of a connection check.
- */
 sealed class ConnectionResult {
     object Success : ConnectionResult()
     data class Failure(val error: String, val isSslIssue: Boolean = false) : ConnectionResult()
@@ -95,8 +99,14 @@ class EnigmaClient(
     }
 
     fun addTimer(
-        title: String, sRef: String, startTime: Long, endTime: Long, description: String,
-        justPlay: Int, repeated: Int, afterEvent: Int
+        title: String,
+        sRef: String,
+        startTime: Long,
+        endTime: Long,
+        description: String,
+        justPlay: Int,
+        repeated: Int,
+        afterEvent: Int
     ): String {
         val query = buildString {
             append("sRef=$sRef")
@@ -131,7 +141,8 @@ class EnigmaClient(
         afterEvent: Int,
         disabled: Int
     ): String {
-        val identificationParams = "channelOld=${originalTimer.sRef}&beginOld=${originalTimer.beginTimestamp}&endOld=${originalTimer.endTimestamp}"
+        val identificationParams =
+            "channelOld=${originalTimer.sRef}&beginOld=${originalTimer.beginTimestamp}&endOld=${originalTimer.endTimestamp}"
 
         val query = buildString {
             append("sRef=${originalTimer.sRef}")

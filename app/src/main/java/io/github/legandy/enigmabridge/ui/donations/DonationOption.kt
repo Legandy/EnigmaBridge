@@ -1,4 +1,4 @@
-package io.github.legandy.enigmabridge.about.donations
+package io.github.legandy.enigmabridge.ui.donations
 
 data class DonationOption(
     val titleResId: Int,

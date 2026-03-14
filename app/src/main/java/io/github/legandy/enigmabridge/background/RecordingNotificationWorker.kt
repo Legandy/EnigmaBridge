@@ -1,10 +1,11 @@
-package io.github.legandy.enigmabridge.notifications
+package io.github.legandy.enigmabridge.background
 
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import io.github.legandy.enigmabridge.helpers.NotificationHelper
+import io.github.legandy.enigmabridge.notifications.NotificationHelper
 
+// Worker for sending a notification when a recording starts
 class RecordingNotificationWorker(context: Context, params: WorkerParameters) :
     CoroutineWorker(context, params) {
 

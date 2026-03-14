@@ -1,26 +1,29 @@
-package io.github.legandy.enigmabridge.settings
+package io.github.legandy.enigmabridge.ui.settings
 
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import io.github.legandy.enigmabridge.R
-import io.github.legandy.enigmabridge.databinding.ActivitySettingsBinding
-import io.github.legandy.enigmabridge.databinding.ListItemAccentColorBinding
-import androidx.appcompat.app.AppCompatDelegate
-import android.content.Context
-import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
+import android.widget.Toast
 import androidx.annotation.ColorRes
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
-import io.github.legandy.enigmabridge.main.MainActivity
+import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.core.AppThemeManager
-import io.github.legandy.enigmabridge.core.PreferenceManager
+import io.github.legandy.enigmabridge.data.PreferenceManager
+import io.github.legandy.enigmabridge.databinding.ActivitySettingsBinding
+import io.github.legandy.enigmabridge.databinding.ListItemAccentColorBinding
+import io.github.legandy.enigmabridge.ui.main.MainActivity
 
+// ToDo: Refactor to Jetpack Compose
+
+// Screen for app settings
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySettingsBinding
@@ -42,12 +45,16 @@ class SettingsActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         binding.switchNotifyScheduled.isChecked = prefManager.isNotifyScheduledEnabled()
-        binding.switchNotifyRecordingStarted.isChecked = prefManager.isNotifyRecordingStartedEnabled()
+        binding.switchNotifyRecordingStarted.isChecked =
+            prefManager.isNotifyRecordingStartedEnabled()
         binding.switchNotifySyncSuccess.isChecked = prefManager.isNotifySyncSuccessEnabled()
 
         val themeOptions = resources.getStringArray(R.array.theme_options_array)
-        val themeAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, themeOptions)
-        (binding.textInputLayoutThemeMode.editText as? AutoCompleteTextView)?.setAdapter(themeAdapter)
+        val themeAdapter =
+            ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, themeOptions)
+        (binding.textInputLayoutThemeMode.editText as? AutoCompleteTextView)?.setAdapter(
+            themeAdapter
+        )
 
         val savedThemeMode = prefManager.getThemeMode()
         val initialThemeSelection = when (savedThemeMode) {
@@ -57,7 +64,8 @@ class SettingsActivity : AppCompatActivity() {
             else -> themeOptions[0]
         }
         (binding.textInputLayoutThemeMode.editText as? AutoCompleteTextView)?.post {
-            val autoCompleteTextView = (binding.textInputLayoutThemeMode.editText as? AutoCompleteTextView)
+            val autoCompleteTextView =
+                (binding.textInputLayoutThemeMode.editText as? AutoCompleteTextView)
             autoCompleteTextView?.setText(initialThemeSelection, false)
             autoCompleteTextView?.clearFocus()
             autoCompleteTextView?.requestFocus()
@@ -90,12 +98,17 @@ class SettingsActivity : AppCompatActivity() {
         )
 
         val accentColorAdapter = AccentColorAdapter(this, accentColors)
-        (binding.textInputLayoutAccentColor.editText as? AutoCompleteTextView)?.setAdapter(accentColorAdapter)
+        (binding.textInputLayoutAccentColor.editText as? AutoCompleteTextView)?.setAdapter(
+            accentColorAdapter
+        )
 
         val savedAccentColorResId = prefManager.getAccentColor()
-        val initialAccentColorSelection = accentColors.find { it.colorResId == savedAccentColorResId }?.name ?: accentColors[0].name
+        val initialAccentColorSelection =
+            accentColors.find { it.colorResId == savedAccentColorResId }?.name
+                ?: accentColors[0].name
         (binding.textInputLayoutAccentColor.editText as? AutoCompleteTextView)?.post {
-            val autoCompleteTextView = (binding.textInputLayoutAccentColor.editText as? AutoCompleteTextView)
+            val autoCompleteTextView =
+                (binding.textInputLayoutAccentColor.editText as? AutoCompleteTextView)
             autoCompleteTextView?.setText(initialAccentColorSelection, false)
             autoCompleteTextView?.clearFocus()
             autoCompleteTextView?.requestFocus()
@@ -152,7 +165,12 @@ class SettingsActivity : AppCompatActivity() {
             val item = getItem(position)
 
             if (item != null) {
-                itemBinding.colorSwatch.setBackgroundColor(ContextCompat.getColor(context, item.colorResId))
+                itemBinding.colorSwatch.setBackgroundColor(
+                    ContextCompat.getColor(
+                        context,
+                        item.colorResId
+                    )
+                )
                 itemBinding.colorName.text = item.name
             }
             return itemBinding.root

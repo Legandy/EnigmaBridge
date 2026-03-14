@@ -1,24 +1,25 @@
-package io.github.legandy.enigmabridge.about.donations
+package io.github.legandy.enigmabridge.ui.donations
 
 import android.app.Dialog
 import android.content.ActivityNotFoundException
-import android.content.ClipboardManager
 import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import androidx.core.net.toUri
 import androidx.fragment.app.DialogFragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.github.legandy.enigmabridge.R
 import io.github.legandy.enigmabridge.databinding.FragmentDonationsDialogBinding
-import androidx.core.net.toUri
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
+// Dialog for displaying donation options
 class DonationsDialogFragment : DialogFragment() {
 
     private var _binding: FragmentDonationsDialogBinding? = null
     private val binding get() = _binding!!
-    
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         _binding = FragmentDonationsDialogBinding.inflate(layoutInflater)
 
@@ -27,28 +28,22 @@ class DonationsDialogFragment : DialogFragment() {
                 titleResId = R.string.donation_option_kofi,
                 descriptionResId = R.string.donation_desc_kofi,
                 urlResId = R.string.link_kofi,
-            ),
-            DonationOption(
+            ), DonationOption(
                 titleResId = R.string.donation_option_githubsponsors,
                 descriptionResId = R.string.donation_desc_githubsponsors,
                 urlResId = R.string.link_githubsponsors,
             )
         )
-        
-        binding.donationsRecyclerView.adapter = DonationOptionsAdapter(
-            options = donationOptions,
-            onItemClick = { url ->
+
+        binding.donationsRecyclerView.adapter =
+            DonationOptionsAdapter(options = donationOptions, onItemClick = { url ->
                 openLink(url)
                 dismiss()
-            },
-            onLongItemClick = { url ->
+            }, onLongItemClick = { url ->
                 copyToClipboard(url)
-            }
-        )
-        
-        return MaterialAlertDialogBuilder(requireContext())
-            .setView(binding.root)
-            .create()
+            })
+
+        return MaterialAlertDialogBuilder(requireContext()).setView(binding.root).create()
     }
 
     private fun openLink(url: String) {
@@ -61,7 +56,8 @@ class DonationsDialogFragment : DialogFragment() {
     }
 
     private fun copyToClipboard(url: String) {
-        val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clipboard =
+            requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText("Donation Link", url)
         clipboard.setPrimaryClip(clip)
         Toast.makeText(context, R.string.toast_link_copied, Toast.LENGTH_SHORT).show()

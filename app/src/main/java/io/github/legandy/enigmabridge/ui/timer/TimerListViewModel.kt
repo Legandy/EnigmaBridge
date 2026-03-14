@@ -1,11 +1,11 @@
-package io.github.legandy.enigmabridge.timer
+package io.github.legandy.enigmabridge.ui.timer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import io.github.legandy.enigmabridge.data.Timer
 import io.github.legandy.enigmabridge.data.TimerRepository
 import io.github.legandy.enigmabridge.data.TimerResult
-import io.github.legandy.enigmabridge.receiversettings.Timer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,10 +17,6 @@ sealed class TimerListUiState {
     data class Error(val message: String) : TimerListUiState()
 }
 
-/**
- * ViewModel for the Timer List.
- * Observes the [TimerRepository] and provides a [TimerListUiState] for the Activity.
- */
 class TimerListViewModel(private val repository: TimerRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow<TimerListUiState>(TimerListUiState.Loading)
@@ -55,8 +51,7 @@ class TimerListViewModel(private val repository: TimerRepository) : ViewModel() 
     class Factory(private val repository: TimerRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(TimerListViewModel::class.java)) {
-                @Suppress("UNCHECKED_CAST")
-                return TimerListViewModel(repository) as T
+                @Suppress("UNCHECKED_CAST") return TimerListViewModel(repository) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

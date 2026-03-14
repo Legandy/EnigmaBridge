@@ -1,22 +1,17 @@
-package io.github.legandy.enigmabridge.core
+package io.github.legandy.enigmabridge.data
 
 import android.content.Context
 import androidx.core.content.edit
-import io.github.legandy.enigmabridge.receiversettings.EnigmaClient
 
-class PreferenceManager (context: Context) {
+// Manager for all app settings via SharedPreferences
+class PreferenceManager(context: Context) {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     fun isReceiverConfigured(): Boolean = getIpAddress().isNotBlank()
 
-
-     // Internal helper to create an [EnigmaClient] instance.
     fun getEnigmaClient(): EnigmaClient {
         return EnigmaClient(
-            getIpAddress(),
-            getUsername(),
-            getPassword(),
-            getUseHttps()
+            getIpAddress(), getUsername(), getPassword(), getUseHttps()
         )
     }
 
@@ -37,22 +32,31 @@ class PreferenceManager (context: Context) {
     fun setSyncIntervalHours(hours: Int) = prefs.edit { putInt(KEY_SYNC_INTERVAL_HOURS, hours) }
 
     fun getLastSyncTimestamp(): Long = prefs.getLong(KEY_LAST_SYNC_TIMESTAMP, 0L)
-    fun setLastSyncTimestamp(timestamp: Long) = prefs.edit { putLong(KEY_LAST_SYNC_TIMESTAMP, timestamp) }
+    fun setLastSyncTimestamp(timestamp: Long) =
+        prefs.edit { putLong(KEY_LAST_SYNC_TIMESTAMP, timestamp) }
 
     fun getPreviousTimersJson(): String? = prefs.getString(KEY_PREVIOUS_TIMERS, null)
     fun setPreviousTimersJson(json: String) = prefs.edit { putString(KEY_PREVIOUS_TIMERS, json) }
 
-    fun getScheduledNotificationIds(): Set<String> = prefs.getStringSet(KEY_SCHEDULED_NOTIFICATIONS, emptySet()) ?: emptySet()
-    fun setScheduledNotificationIds(ids: Set<String>) = prefs.edit { putStringSet(KEY_SCHEDULED_NOTIFICATIONS, ids) }
+    fun getScheduledNotificationIds(): Set<String> =
+        prefs.getStringSet(KEY_SCHEDULED_NOTIFICATIONS, emptySet()) ?: emptySet()
+
+    fun setScheduledNotificationIds(ids: Set<String>) =
+        prefs.edit { putStringSet(KEY_SCHEDULED_NOTIFICATIONS, ids) }
 
     fun isNotifyScheduledEnabled(): Boolean = prefs.getBoolean(KEY_NOTIFY_SCHEDULED, true)
-    fun setNotifyScheduledEnabled(enabled: Boolean) = prefs.edit { putBoolean(KEY_NOTIFY_SCHEDULED, enabled) }
+    fun setNotifyScheduledEnabled(enabled: Boolean) =
+        prefs.edit { putBoolean(KEY_NOTIFY_SCHEDULED, enabled) }
 
-    fun isNotifyRecordingStartedEnabled(): Boolean = prefs.getBoolean(KEY_NOTIFY_RECORDING_STARTED, true)
-    fun setNotifyRecordingStartedEnabled(enabled: Boolean) = prefs.edit { putBoolean(KEY_NOTIFY_RECORDING_STARTED, enabled) }
+    fun isNotifyRecordingStartedEnabled(): Boolean =
+        prefs.getBoolean(KEY_NOTIFY_RECORDING_STARTED, true)
+
+    fun setNotifyRecordingStartedEnabled(enabled: Boolean) =
+        prefs.edit { putBoolean(KEY_NOTIFY_RECORDING_STARTED, enabled) }
 
     fun isNotifySyncSuccessEnabled(): Boolean = prefs.getBoolean(KEY_NOTIFY_SYNC_SUCCESS, true)
-    fun setNotifySyncSuccessEnabled(enabled: Boolean) = prefs.edit { putBoolean(KEY_NOTIFY_SYNC_SUCCESS, enabled) }
+    fun setNotifySyncSuccessEnabled(enabled: Boolean) =
+        prefs.edit { putBoolean(KEY_NOTIFY_SYNC_SUCCESS, enabled) }
 
     fun getMinutesBefore(): Int = prefs.getInt(KEY_MINUTES_BEFORE, 2)
     fun setMinutesBefore(minutes: Int) = prefs.edit { putInt(KEY_MINUTES_BEFORE, minutes) }
@@ -61,13 +65,15 @@ class PreferenceManager (context: Context) {
     fun setMinutesAfter(minutes: Int) = prefs.edit { putInt(KEY_MINUTES_AFTER, minutes) }
 
     fun getSelectedBouquetName(): String? = prefs.getString(KEY_SELECTED_BOUQUET_NAME, null)
-    fun setSelectedBouquetName(name: String?) = prefs.edit { putString(KEY_SELECTED_BOUQUET_NAME, name) }
+    fun setSelectedBouquetName(name: String?) =
+        prefs.edit { putString(KEY_SELECTED_BOUQUET_NAME, name) }
 
     fun getBouquetsJson(): String? = prefs.getString(KEY_BOUQUETS_JSON, null)
     fun setBouquetsJson(json: String?) = prefs.edit { putString(KEY_BOUQUETS_JSON, json) }
 
     fun getSyncedChannelsJson(): String? = prefs.getString(KEY_SYNCED_CHANNELS_JSON, null)
-    fun setSyncedChannelsJson(json: String?) = prefs.edit { putString(KEY_SYNCED_CHANNELS_JSON, json) }
+    fun setSyncedChannelsJson(json: String?) =
+        prefs.edit { putString(KEY_SYNCED_CHANNELS_JSON, json) }
 
     fun getThemeMode(): Int = prefs.getInt(KEY_THEME_MODE, -1)
     fun setThemeMode(themeMode: Int) = prefs.edit { putInt(KEY_THEME_MODE, themeMode) }

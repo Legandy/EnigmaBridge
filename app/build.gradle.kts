@@ -1,6 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
-import java.io.File
 
 plugins {
     alias(libs.plugins.android.application)
@@ -22,8 +21,8 @@ android {
         applicationId = "io.github.legandy.enigmabridge"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.2"
     }
 
     signingConfigs {

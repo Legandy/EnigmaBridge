@@ -1,12 +1,13 @@
-package io.github.legandy.enigmabridge.helpers
+package io.github.legandy.enigmabridge.utils
 
 import android.content.Context
 import android.util.Log
-import io.github.legandy.enigmabridge.core.PreferenceManager
 import io.github.legandy.enigmabridge.R
+import io.github.legandy.enigmabridge.data.PreferenceManager
 import io.github.legandy.enigmabridge.data.TimerRepository
 import io.github.legandy.enigmabridge.data.TimerResult
 
+// Time calculations for recordings and sync intervals
 object SchedulingHelper {
     private const val TAG = "SchedulingHelper"
 
@@ -36,7 +37,11 @@ object SchedulingHelper {
         )
     }
 
-    private fun applyBuffer(prefManager: PreferenceManager, startTimeMillis: Long, endTimeMillis: Long): Pair<Long, Long> {
+    private fun applyBuffer(
+        prefManager: PreferenceManager,
+        startTimeMillis: Long,
+        endTimeMillis: Long
+    ): Pair<Long, Long> {
         val startSec = startTimeMillis / 1000
         val endSec = endTimeMillis / 1000
 
